@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Fellowship of the Workflows - List
+# Lists available workflows by scanning directories
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+WORKFLOWS_DIR="$REPO_ROOT/workflows"
+
+# Colors
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+show_help() {
+    cat << 'EOF'
+Usage: list [options]
+
+List available workflows.
+
+Options:
+  -h, --help             Show this help message
+  -T, --type <type>      Filter by type (rule, skill, agent)
+
+Examples:
+  list                   List all workflows
+  list --type skill      List all skills
+  list --type rule       List all rules
+EOF
+}
+
+type_filter=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -T|--type)
+            type_filter="$2"
+            shift 2
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+echo ""
+echo -e "${BOLD}Available Workflows${NC}"
+echo "==================="
+echo ""
+echo -e "${CYAN}Install with:${NC} ./bin/install <workflow-id> <target-repo> --for <cursor|claude-code>"
+echo ""
+
+# List rules
+if [[ -z "$type_filter" ]] || [[ "$type_filter" == "rule" ]]; then
+    if [[ -d "$WORKFLOWS_DIR/rules" ]]; then
+        has_rules=false
+        for file in "$WORKFLOWS_DIR/rules"/*.mdc "$WORKFLOWS_DIR/rules"/*.md; do
+            [[ -f "$file" ]] || continue
+            [[ "$(basename "$file")" == ".gitkeep" ]] && continue
+            
+            if ! $has_rules; then
+                echo -e "${BOLD}rules:${NC}"
+                has_rules=true
+            fi
+            
+            name="${file##*/}"
+            name="${name%.*}"
+            desc=$(yq --front-matter=extract '.description // ""' "$file" 2>/dev/null || echo "")
+            
+            # Truncate description
+            if [[ ${#desc} -gt 50 ]]; then
+                desc="${desc:0:47}..."
+            fi
+            
+            printf "  %-30s %s\n" "rules/$name" "$desc"
+        done
+        
+        if $has_rules; then
+            echo ""
+        fi
+    fi
+fi
+
+# List skills
+if [[ -z "$type_filter" ]] || [[ "$type_filter" == "skill" ]]; then
+    if [[ -d "$WORKFLOWS_DIR/skills" ]]; then
+        has_skills=false
+        for skill_dir in "$WORKFLOWS_DIR/skills"/*/; do
+            [[ -d "$skill_dir" ]] || continue
+            [[ -f "$skill_dir/SKILL.md" ]] || continue
+            
+            if ! $has_skills; then
+                echo -e "${BOLD}skills:${NC}"
+                has_skills=true
+            fi
+            
+            skill_name=$(basename "$skill_dir")
+            desc=$(yq --front-matter=extract '.description // ""' "$skill_dir/SKILL.md" 2>/dev/null || echo "")
+            
+            # Truncate description
+            if [[ ${#desc} -gt 50 ]]; then
+                desc="${desc:0:47}..."
+            fi
+            
+            printf "  %-30s %s\n" "skills/$skill_name" "$desc"
+        done
+        
+        if $has_skills; then
+            echo ""
+        fi
+    fi
+fi
+
+# List agents
+if [[ -z "$type_filter" ]] || [[ "$type_filter" == "agent" ]]; then
+    if [[ -d "$WORKFLOWS_DIR/agents" ]]; then
+        has_agents=false
+        for file in "$WORKFLOWS_DIR/agents"/*.md; do
+            [[ -f "$file" ]] || continue
+            [[ "$(basename "$file")" == ".gitkeep" ]] && continue
+            
+            if ! $has_agents; then
+                echo -e "${BOLD}agents:${NC}"
+                has_agents=true
+            fi
+            
+            name=$(basename "$file" .md)
+            desc=$(yq --front-matter=extract '.description // ""' "$file" 2>/dev/null || echo "")
+            
+            # Truncate description
+            if [[ ${#desc} -gt 50 ]]; then
+                desc="${desc:0:47}..."
+            fi
+            
+            printf "  %-30s %s\n" "agents/$name" "$desc"
+        done
+        
+        if $has_agents; then
+            echo ""
+        fi
+    fi
+fi

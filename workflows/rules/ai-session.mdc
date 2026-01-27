@@ -1,0 +1,34 @@
+---
+description: Maintain a session journal in ~/src/.ai/sessions/ for every Cursor CLI run.
+globs: "**/*"
+alwaysApply: true
+---
+
+Session root: `~/src/.ai/`
+
+Create a new directory within the `.ai/sessions/` directory with the format `YYYY-MM-DD_<JIRA>_<TITLE_SLUG>/`
+Example `~/src/.ai/sessions/2026-01-22_ENT-1240_Taxonomy-Codes/`
+
+Within this directory, create the following documents
+
+**SESSION.md**
+
+- Document the user prompts, summaries of your responses, explicitly and exactly list out all questions you propose to me and my answers
+- Ensure you continue to append to this document as the session goes on
+
+**DISCOVERY.md**
+
+- Refer to `01-discover-plan-implement.mdc` for exact details on the contents
+
+**PLAN.md**
+
+- Refer to `01-discover-plan-implement.mdc` for exact details on the contents
+
+## Output Style
+
+Be extremely concise. No filler phrases. One sentence per insight.
+- Bullets over paragraphs
+- Facts directly, no preamble ("It's worth noting..." ❌)
+- Omit sections with nothing to report
+- Don't pad to seem thorough
+- Avoid "AI-isms"
