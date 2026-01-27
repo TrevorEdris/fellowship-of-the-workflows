@@ -4,9 +4,11 @@ globs: "**/*"
 alwaysApply: true
 ---
 
+> *"A wizard is never late, nor is he early. He implements precisely when the plan is approved."*
+
 ## Workflow Phases
 
-### 1) Discover
+### 1) The Palantír (Discover)
 
 **Goal:** Understand the problem space without modifying code.
 
@@ -21,7 +23,7 @@ alwaysApply: true
 - Clarifying questions for stakeholders
 - Data model and API coverage analysis
 
-### 2) Plan
+### 2) The Council of Elrond (Plan)
 
 **Goal:** Produce a concrete, reviewable implementation plan before writing any code.
 
@@ -48,7 +50,7 @@ The plan must demonstrate these qualities:
 - Be prepared to iterate on the plan based on feedback
 - If requirements change, update the plan and confirm again
 
-### 3) Implement
+### 3) The Journey (Implement)
 
 **Goal:** Execute the plan with minimal, aligned diffs.
 
@@ -105,3 +107,6 @@ All session outputs (`DISCOVERY.md`, `PLAN.md`, `SESSION.md`, chat responses) mu
 - Check the current branch before making code changes
 - Suggest self-review before committing
 - Be honest about what was and wasn't verified
+
+---
+*"Fly, you fools!" — What Gandalf would say if you pushed to main without approval.*

@@ -19,6 +19,8 @@ show_help() {
 Usage: install <workflow-id> <target-repo> --for <tool> [options]
        install <workflow-id> --global --for <tool>
        install <target-repo> --interactive --for <tool>
+       install --all <target-repo> --for <tool>
+       install --all --global --for <tool>
 
 Deploy a workflow to a target repository or globally.
 
@@ -28,6 +30,7 @@ Arguments:
 
 Options:
   -h, --help         Show this help message
+  -a, --all          Install all available workflows
   -g, --global       Install globally to ~/.<tool>/ instead of project
   -i, --interactive  Interactive mode (pick workflow with fzf)
   -n, --dry-run      Show what would be copied without copying
@@ -50,6 +53,10 @@ Examples:
   # Interactive mode
   install ~/my-repo --interactive --for cursor
   install --global --interactive --for claude-code
+
+  # Install all workflows
+  install --all ~/my-repo --for cursor
+  install --all --global --for claude-code
 EOF
 }
 
@@ -139,11 +146,244 @@ get_workflow_ids() {
     done
 }
 
+# Install a single workflow
+# Returns 0 on success, 1 on failure
+install_single_workflow() {
+    local wf_id="$1"
+    local tgt_repo="$2"
+    local tool="$3"
+    local is_global="$4"
+    local is_dry_run="$5"
+    local quiet="${6:-false}"
+    
+    # Parse workflow ID
+    local wtype name
+    IFS='/' read -ra parts <<< "$wf_id"
+    wtype="${parts[0]}"
+    name="${parts[1]}"
+    
+    # Find source path
+    local source_path
+    case "$wtype" in
+        rules)
+            if [[ -f "$WORKFLOWS_DIR/rules/$name.mdc" ]]; then
+                source_path="$WORKFLOWS_DIR/rules/$name.mdc"
+            elif [[ -f "$WORKFLOWS_DIR/rules/$name.md" ]]; then
+                source_path="$WORKFLOWS_DIR/rules/$name.md"
+            else
+                [[ "$quiet" != "true" ]] && echo -e "${RED}Error: Rule not found: $name${NC}"
+                return 1
+            fi
+            ;;
+        skills)
+            if [[ -d "$WORKFLOWS_DIR/skills/$name" ]]; then
+                source_path="$WORKFLOWS_DIR/skills/$name"
+            else
+                [[ "$quiet" != "true" ]] && echo -e "${RED}Error: Skill not found: $name${NC}"
+                return 1
+            fi
+            ;;
+        agents)
+            if [[ -f "$WORKFLOWS_DIR/agents/$name.md" ]]; then
+                source_path="$WORKFLOWS_DIR/agents/$name.md"
+            else
+                [[ "$quiet" != "true" ]] && echo -e "${RED}Error: Agent not found: $name${NC}"
+                return 1
+            fi
+            ;;
+        *)
+            [[ "$quiet" != "true" ]] && echo -e "${RED}Error: Unknown workflow type: $wtype${NC}"
+            return 1
+            ;;
+    esac
+    
+    # Set base directory for global install
+    local base_dir target_dir
+    if [[ "$is_global" == "true" ]]; then
+        case "$tool" in
+            cursor) base_dir="$HOME/.cursor" ;;
+            claude-code) base_dir="$HOME/.claude" ;;
+        esac
+        case "$wtype" in
+            rules) target_dir="$base_dir/rules" ;;
+            skills) target_dir="$base_dir/skills" ;;
+            agents) target_dir="$base_dir/agents" ;;
+        esac
+    else
+        case "$tool" in
+            cursor)
+                case "$wtype" in
+                    rules) target_dir="$tgt_repo/.cursor/rules" ;;
+                    skills) target_dir="$tgt_repo/.cursor/skills" ;;
+                    agents) target_dir="$tgt_repo/.cursor/agents" ;;
+                esac
+                ;;
+            claude-code)
+                case "$wtype" in
+                    rules) target_dir="$tgt_repo/.claude/rules" ;;
+                    skills) target_dir="$tgt_repo/.claude/skills" ;;
+                    agents) target_dir="$tgt_repo/.claude/agents" ;;
+                esac
+                ;;
+        esac
+    fi
+    
+    # Determine target file/dir name
+    local is_dir target_path
+    if [[ -d "$source_path" ]]; then
+        is_dir=true
+        target_path="$target_dir/$name"
+    else
+        is_dir=false
+        local source_name target_name
+        source_name=$(basename "$source_path")
+        
+        if [[ "$wtype" == "rules" ]]; then
+            if [[ "$tool" == "cursor" ]]; then
+                target_name="${source_name%.md}"
+                [[ "$target_name" == "$source_name" ]] || target_name="${target_name}.mdc"
+                [[ "$source_name" == *.mdc ]] && target_name="$source_name"
+            else
+                target_name="${source_name%.mdc}.md"
+            fi
+            target_path="$target_dir/$target_name"
+        else
+            target_path="$target_dir/$source_name"
+        fi
+    fi
+    
+    # Show what will happen (unless quiet)
+    if [[ "$quiet" != "true" ]]; then
+        echo ""
+        echo "Workflow: $wf_id"
+        echo "Tool:     $tool"
+        if [[ "$is_global" == "true" ]]; then
+            case "$tool" in
+                cursor) echo "Scope:    Global (~/.cursor/)" ;;
+                claude-code) echo "Scope:    Global (~/.claude/)" ;;
+            esac
+        else
+            echo "Scope:    Project ($tgt_repo)"
+        fi
+        echo "Source:   $source_path"
+        echo "Target:   $target_path"
+        if [[ "$wtype" == "rules" ]] && [[ "$tool" == "claude-code" ]]; then
+            echo "Note:     Frontmatter will be translated for Claude Code"
+        fi
+        echo ""
+    fi
+    
+    if [[ "$is_dry_run" == "true" ]]; then
+        if [[ "$quiet" != "true" ]]; then
+            echo -e "${YELLOW}[DRY RUN] Would copy:${NC}"
+            if [[ "$is_dir" == "true" ]]; then
+                echo "  $source_path/ -> $target_path/"
+                find "$source_path" -type f | while read -r f; do
+                    rel=${f#$source_path/}
+                    echo "    $rel"
+                done
+            else
+                echo "  $source_path -> $target_path"
+            fi
+        fi
+        return 0
+    fi
+    
+    # Create target directory if needed
+    mkdir -p "$target_dir"
+    
+    # Copy files
+    if [[ "$is_dir" == "true" ]]; then
+        cp -rp "$source_path" "$target_path"
+        [[ "$quiet" != "true" ]] && echo -e "${GREEN}✓${NC} Copied skill directory to $target_path"
+    else
+        if [[ "$wtype" == "rules" ]] && [[ "$tool" == "claude-code" ]]; then
+            translate_frontmatter_to_claude "$source_path" "$target_path"
+            [[ "$quiet" != "true" ]] && echo -e "${GREEN}✓${NC} Copied and translated $(basename "$source_path") to $target_path"
+        else
+            cp -p "$source_path" "$target_path"
+            [[ "$quiet" != "true" ]] && echo -e "${GREEN}✓${NC} Copied $(basename "$source_path") to $target_path"
+        fi
+    fi
+    
+    return 0
+}
+
+# Install all workflows
+install_all_workflows() {
+    local tgt_repo="$1"
+    local tool="$2"
+    local is_global="$3"
+    local is_dry_run="$4"
+    
+    local success_count=0
+    local fail_count=0
+    local succeeded=()
+    local failed=()
+    
+    echo ""
+    echo "Installing all workflows..."
+    echo "Tool: $tool"
+    if [[ "$is_global" == "true" ]]; then
+        echo "Scope: Global"
+    else
+        echo "Scope: Project ($tgt_repo)"
+    fi
+    echo ""
+    
+    while IFS=$'\t' read -r wf_id desc; do
+        [[ -z "$wf_id" ]] && continue
+        
+        echo -e "${YELLOW}→${NC} Installing $wf_id..."
+        
+        if install_single_workflow "$wf_id" "$tgt_repo" "$tool" "$is_global" "$is_dry_run" "true"; then
+            succeeded+=("$wf_id")
+            success_count=$((success_count + 1))
+            echo -e "  ${GREEN}✓${NC} Done"
+        else
+            failed+=("$wf_id")
+            fail_count=$((fail_count + 1))
+            echo -e "  ${RED}✗${NC} Failed"
+        fi
+    done < <(get_workflow_ids)
+    
+    # Print summary
+    echo ""
+    echo "═══════════════════════════════════════"
+    echo "Installation Summary"
+    echo "═══════════════════════════════════════"
+    echo ""
+    
+    if [[ ${#succeeded[@]} -gt 0 ]]; then
+        echo -e "${GREEN}Succeeded (${success_count}):${NC}"
+        for wf in "${succeeded[@]}"; do
+            echo -e "  ${GREEN}✓${NC} $wf"
+        done
+        echo ""
+    fi
+    
+    if [[ ${#failed[@]} -gt 0 ]]; then
+        echo -e "${RED}Failed (${fail_count}):${NC}"
+        for wf in "${failed[@]}"; do
+            echo -e "  ${RED}✗${NC} $wf"
+        done
+        echo ""
+    fi
+    
+    echo "Total: $success_count succeeded, $fail_count failed"
+    
+    if [[ $fail_count -gt 0 ]]; then
+        return 1
+    fi
+    return 0
+}
+
 workflow_id=""
 target_repo=""
 interactive=false
 dry_run=false
 global_install=false
+install_all=false
 for_tool=""
 
 # Parse arguments
@@ -152,6 +392,10 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             show_help
             exit 0
+            ;;
+        -a|--all)
+            install_all=true
+            shift
             ;;
         -i|--interactive)
             interactive=true
@@ -211,8 +455,15 @@ if $global_install; then
     esac
 else
     # Validate target_repo for non-global installs
-    if [[ -z "$target_repo" ]] && ! $interactive; then
+    if [[ -z "$target_repo" ]] && ! $interactive && ! $install_all; then
         echo -e "${RED}Error: target-repo is required (or use --global)${NC}"
+        echo ""
+        show_help
+        exit 1
+    fi
+    
+    if [[ -z "$target_repo" ]] && $install_all; then
+        echo -e "${RED}Error: target-repo is required with --all (or use --global)${NC}"
         echo ""
         show_help
         exit 1
@@ -222,6 +473,12 @@ else
         echo -e "${RED}Error: Target repository does not exist: $target_repo${NC}"
         exit 1
     fi
+fi
+
+# Handle --all mode
+if $install_all; then
+    install_all_workflows "$target_repo" "$for_tool" "$global_install" "$dry_run"
+    exit $?
 fi
 
 # Interactive mode
@@ -250,143 +507,9 @@ if [[ -z "$workflow_id" ]]; then
     exit 1
 fi
 
-# Parse workflow ID
-IFS='/' read -ra parts <<< "$workflow_id"
-wtype="${parts[0]}"
-name="${parts[1]}"
-
-# Find source path
-case "$wtype" in
-    rules)
-        # Try .mdc first, then .md
-        if [[ -f "$WORKFLOWS_DIR/rules/$name.mdc" ]]; then
-            source_path="$WORKFLOWS_DIR/rules/$name.mdc"
-        elif [[ -f "$WORKFLOWS_DIR/rules/$name.md" ]]; then
-            source_path="$WORKFLOWS_DIR/rules/$name.md"
-        else
-            echo -e "${RED}Error: Rule not found: $name${NC}"
-            exit 1
-        fi
-        ;;
-    skills)
-        if [[ -d "$WORKFLOWS_DIR/skills/$name" ]]; then
-            source_path="$WORKFLOWS_DIR/skills/$name"
-        else
-            echo -e "${RED}Error: Skill not found: $name${NC}"
-            exit 1
-        fi
-        ;;
-    agents)
-        if [[ -f "$WORKFLOWS_DIR/agents/$name.md" ]]; then
-            source_path="$WORKFLOWS_DIR/agents/$name.md"
-        else
-            echo -e "${RED}Error: Agent not found: $name${NC}"
-            exit 1
-        fi
-        ;;
-    *)
-        echo -e "${RED}Error: Unknown workflow type: $wtype${NC}"
-        exit 1
-        ;;
-esac
-
-# Determine target directory
-if $global_install; then
-    case "$wtype" in
-        rules) target_dir="$base_dir/rules" ;;
-        skills) target_dir="$base_dir/skills" ;;
-        agents) target_dir="$base_dir/agents" ;;
-    esac
-else
-    case "$for_tool" in
-        cursor)
-            case "$wtype" in
-                rules) target_dir="$target_repo/.cursor/rules" ;;
-                skills) target_dir="$target_repo/.cursor/skills" ;;
-                agents) target_dir="$target_repo/.cursor/agents" ;;
-            esac
-            ;;
-        claude-code)
-            case "$wtype" in
-                rules) target_dir="$target_repo/.claude/rules" ;;
-                skills) target_dir="$target_repo/.claude/skills" ;;
-                agents) target_dir="$target_repo/.claude/agents" ;;
-            esac
-            ;;
-    esac
-fi
-
-# Determine target file/dir name
-if [[ -d "$source_path" ]]; then
-    is_dir=true
-    target_path="$target_dir/$name"
-else
-    is_dir=false
-    source_name=$(basename "$source_path")
-    
-    # Handle file extension translation for rules
-    if [[ "$wtype" == "rules" ]]; then
-        if [[ "$for_tool" == "cursor" ]]; then
-            target_name="${source_name%.md}"
-            [[ "$target_name" == "$source_name" ]] || target_name="${target_name}.mdc"
-            [[ "$source_name" == *.mdc ]] && target_name="$source_name"
-        else
-            target_name="${source_name%.mdc}.md"
-        fi
-        target_path="$target_dir/$target_name"
-    else
-        target_path="$target_dir/$source_name"
-    fi
-fi
-
-# Show what will happen
-echo ""
-echo "Workflow: $workflow_id"
-echo "Tool:     $for_tool"
-if $global_install; then
-    case "$for_tool" in
-        cursor) echo "Scope:    Global (~/.cursor/)" ;;
-        claude-code) echo "Scope:    Global (~/.claude/)" ;;
-    esac
-else
-    echo "Scope:    Project ($target_repo)"
-fi
-echo "Source:   $source_path"
-echo "Target:   $target_path"
-if [[ "$wtype" == "rules" ]] && [[ "$for_tool" == "claude-code" ]]; then
-    echo "Note:     Frontmatter will be translated for Claude Code"
-fi
-echo ""
-
-if $dry_run; then
-    echo -e "${YELLOW}[DRY RUN] Would copy:${NC}"
-    if $is_dir; then
-        echo "  $source_path/ -> $target_path/"
-        find "$source_path" -type f | while read -r f; do
-            rel=${f#$source_path/}
-            echo "    $rel"
-        done
-    else
-        echo "  $source_path -> $target_path"
-    fi
-    exit 0
-fi
-
-# Create target directory if needed
-mkdir -p "$target_dir"
-
-# Copy files
-if $is_dir; then
-    cp -rp "$source_path" "$target_path"
-    echo -e "${GREEN}✓${NC} Copied skill directory to $target_path"
-else
-    if [[ "$wtype" == "rules" ]] && [[ "$for_tool" == "claude-code" ]]; then
-        translate_frontmatter_to_claude "$source_path" "$target_path"
-        echo -e "${GREEN}✓${NC} Copied and translated $(basename "$source_path") to $target_path"
-    else
-        cp -p "$source_path" "$target_path"
-        echo -e "${GREEN}✓${NC} Copied $(basename "$source_path") to $target_path"
-    fi
+# Single workflow installation
+if ! install_single_workflow "$workflow_id" "$target_repo" "$for_tool" "$global_install" "$dry_run" "false"; then
+    exit 1
 fi
 
 echo ""

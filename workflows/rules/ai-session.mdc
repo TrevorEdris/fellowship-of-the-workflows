@@ -4,6 +4,8 @@ globs: "**/*"
 alwaysApply: true
 ---
 
+> *"All we have to decide is what to do with the code that is given us."*
+
 Session root: `~/src/.ai/`
 
 Create a new directory within the `.ai/sessions/` directory with the format `YYYY-MM-DD_<JIRA>_<TITLE_SLUG>/`
@@ -24,7 +26,7 @@ Within this directory, create the following documents
 
 - Refer to `01-discover-plan-implement.mdc` for exact details on the contents
 
-## Output Style
+## Output Style (The Wizard's Brevity)
 
 Be extremely concise. No filler phrases. One sentence per insight.
 - Bullets over paragraphs
