@@ -1,0 +1,112 @@
+---
+description: Enforce Discover → Plan → Implement workflow with explicit gates.
+globs: "**/*"
+alwaysApply: true
+---
+
+> *"A wizard is never late, nor is he early. He implements precisely when the plan is approved."*
+
+## Workflow Phases
+
+### 1) The Palantír (Discover)
+
+**Goal:** Understand the problem space without modifying code.
+
+- Prefer `/ask` mode for exploratory questions
+- Do NOT edit repository files during this phase
+- Read and analyze relevant code, SDKs, APIs, and documentation
+- Capture all findings in `DISCOVERY.md`
+
+**Outputs:**
+- Technical analysis of current state
+- Identified gaps, issues, or requirements
+- Clarifying questions for stakeholders
+- Data model and API coverage analysis
+
+### 2) The Council of Elrond (Plan)
+
+**Goal:** Produce a concrete, reviewable implementation plan before writing any code.
+
+- Prefer `/plan` mode for structured planning
+- Create `PLAN.md` with the following sections:
+  - **Target repos and file paths** - explicit list of what will be touched
+  - **Ordered implementation steps** - atomic, verifiable steps
+  - **Risks and assumptions** - what could go wrong, what we're assuming
+  - **Verification steps** - how to confirm the implementation is correct
+
+#### Plan Quality Principles
+
+The plan must demonstrate these qualities:
+
+- **Be extremely accurate** — Verify every claim by reading actual code. No guessing or assumptions.
+- **Proactively recommend improvements** — Suggest optimizations, best practices, or considerations that would benefit the user even if they didn't request them.
+- **Call out misconceptions** — If the user's request is based on incorrect assumptions about the codebase or approach, explicitly correct them.
+- **Tell the user when they're wrong** — If the proposed approach has flaws, won't work, or there's a better way, say so directly and explain why.
+
+#### Plan Review Gate
+
+- Present the plan to the user in a clear, readable format
+- **Wait for explicit user approval** before proceeding to implementation
+- Be prepared to iterate on the plan based on feedback
+- If requirements change, update the plan and confirm again
+
+### 3) The Journey (Implement)
+
+**Goal:** Execute the plan with minimal, aligned diffs.
+
+- Do NOT modify code until user explicitly approves the plan
+- Keep diffs minimal and traceable to plan steps
+- Update `SESSION.md` with changes made and verification results
+- Verify each repository independently (tests/build/lint)
+
+#### Branch Safety Check
+
+Before making any code changes, check the current branch:
+
+- If on `main` or `master`: **STOP** and ask for explicit consent
+  - Example: "⚠️ You are currently on the `main` branch. Making changes directly to main is not recommended. Do you want to continue, or should we create a feature branch first?"
+- Only proceed with code changes after user confirms or switches branches
+
+#### Post-Implementation
+
+After implementation is complete, before committing:
+
+- Suggest: "Implementation complete. Before committing, consider running a self-review using the `/code-review` skill to validate changes against requirements and catch any issues."
+
+## Output Style for Session Documents
+
+All session outputs (`DISCOVERY.md`, `PLAN.md`, `SESSION.md`, chat responses) must be concise:
+
+- One sentence per insight, no filler
+- Bullets over paragraphs
+- Omit empty sections entirely
+- No phrases like "It's worth noting...", "Interestingly...", "As mentioned..."
+- State facts directly without preamble
+
+## Common Pitfalls
+
+**NEVER:**
+- Start implementing without an approved plan
+- Make assumptions about the codebase without reading relevant files first
+- Present a vague or incomplete plan
+- Start implementing while the user is still reviewing the plan
+- Stay silent when the user's approach has issues — speak up
+- Withhold suggestions that would benefit the user just because they didn't ask
+- Agree with a flawed plan just to be agreeable
+- Make code changes on `main` or `master` without explicit user consent
+
+**ALWAYS:**
+- Read and analyze existing code before planning
+- Create a comprehensive plan covering files, steps, tests, and risks
+- Be extremely accurate — verify every claim by reading actual code
+- Proactively recommend improvements the user didn't think of
+- Call out misconceptions and correct incorrect assumptions
+- Tell the user when they're wrong and explain the better approach
+- Wait for explicit user approval before implementing
+- Update the plan if requirements change during discussion
+- Check the current branch before making code changes
+- Suggest self-review before committing
+- Be honest about what was and wasn't verified
+
+---
+*"Fly, you fools!" — What Gandalf would say if you pushed to main without approval.*

@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Fellowship of the Workflows - Bootstrap
+# Installs required dependencies via Homebrew
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Dependencies to install
+DEPS=("jq" "fzf" "yq")
+
+show_help() {
+    cat << 'EOF'
+Usage: bootstrap [options]
+
+Install required dependencies via Homebrew.
+
+Options:
+  -h, --help         Show this help message
+  -c, --check        Check only, don't install (exit 0 if all present, 1 if missing)
+  -f, --force        Force reinstall all dependencies
+
+Dependencies installed:
+  jq                 JSON parsing for catalog.json
+  fzf                Interactive workflow selection
+  yq                 YAML frontmatter parsing
+
+Examples:
+  bootstrap          Check and install missing dependencies
+  bootstrap --check  CI-friendly check (exit code only)
+  bootstrap --force  Reinstall all dependencies
+EOF
+}
+
+check_only=false
+force=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -c|--check)
+            check_only=true
+            shift
+            ;;
+        -f|--force)
+            force=true
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+echo ""
+echo "Fellowship of the Workflows - Bootstrap"
+echo "========================================"
+echo ""
+
+# Check for Homebrew
+if ! command -v brew &> /dev/null; then
+    echo -e "${RED}✗ Homebrew not installed${NC}"
+    echo ""
+    echo "Install Homebrew first:"
+    echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    exit 1
+fi
+
+brew_version=$(brew --version | head -n1 | awk '{print $2}')
+echo -e "${GREEN}✓${NC} brew ($brew_version)"
+
+# Check each dependency
+missing=()
+for dep in "${DEPS[@]}"; do
+    if command -v "$dep" &> /dev/null; then
+        version=$("$dep" --version 2>/dev/null | head -n1 || echo "installed")
+        echo -e "${GREEN}✓${NC} $dep ($version)"
+    else
+        echo -e "${RED}✗${NC} $dep (not installed)"
+        missing+=("$dep")
+    fi
+done
+
+echo ""
+
+# If check only, exit with appropriate code
+if $check_only; then
+    if [[ ${#missing[@]} -eq 0 ]]; then
+        echo "All dependencies installed."
+        exit 0
+    else
+        echo "Missing: ${missing[*]}"
+        exit 1
+    fi
+fi
+
+# If force, reinstall all
+if $force; then
+    missing=("${DEPS[@]}")
+fi
+
+# Install missing dependencies
+if [[ ${#missing[@]} -eq 0 ]]; then
+    echo -e "${GREEN}All dependencies installed. Ready to go!${NC}"
+    exit 0
+fi
+
+echo "Missing: ${missing[*]}"
+echo ""
+read -p "Install missing dependencies? [y/N] " -n 1 -r
+echo ""
+
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 1
+fi
+
+echo ""
+for dep in "${missing[@]}"; do
+    echo "Installing $dep..."
+    brew install "$dep"
+    echo -e "${GREEN}✓${NC} $dep installed"
+    echo ""
+done
+
+echo -e "${GREEN}All dependencies installed. Ready to go!${NC}"
