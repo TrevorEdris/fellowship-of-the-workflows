@@ -120,6 +120,13 @@ case "$wtype" in
 ---
 name: $name
 description: $description
+# context: fork                    # Uncomment for isolated execution
+# agent: agent-name                # Uncomment to link a subagent
+# allowed-tools: Read, Grep        # Uncomment to restrict tools
+# --- Claude Code only (ignored by Cursor) ---
+# model: sonnet                    # opus, sonnet, or haiku
+# argument-hint: "[args]"          # CLI autocomplete hint
+# disable-model-invocation: false  # Set true to require /command
 ---
 
 # $name
@@ -191,6 +198,8 @@ EOF
 ---
 name: $name
 description: $description
+tools: Bash, Glob, Grep, Read, Write
+model: sonnet
 ---
 
 # $name

@@ -41,6 +41,10 @@ Run any command with `--help` for full options.
 
 Rules are stored in Cursor format and automatically translated for Claude Code on install.
 
+### Claude Code Enhancements
+
+Skills and agents support additional Claude Code fields (`model`, `argument-hint`, `disable-model-invocation`, `user-invocable`) that are ignored by Cursor. These are optional—workflows work without them. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full schema.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding new workflows.
