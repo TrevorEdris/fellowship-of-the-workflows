@@ -2,11 +2,12 @@
 set -euo pipefail
 
 # Fellowship of the Workflows - Install
-# Deploys workflows to target repositories with tool-specific translation
+# Deploys workflows and starters to target repositories
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 WORKFLOWS_DIR="$REPO_ROOT/workflows"
+STARTERS_DIR="$REPO_ROOT/starters"
 
 # Colors
 RED='\033[0;31m'
@@ -18,14 +19,16 @@ show_help() {
     cat << 'EOF'
 Usage: install <workflow-id> <target-repo> --for <tool> [options]
        install <workflow-id> --global --for <tool>
+       install starters/<tier> <target-repo> --for <tool> [--to-claude-dir]
        install <target-repo> --interactive --for <tool>
        install --all <target-repo> --for <tool>
        install --all --global --for <tool>
 
-Deploy a workflow to a target repository or globally.
+Deploy a workflow or starter to a target repository.
 
 Arguments:
   workflow-id        Workflow to install (e.g., rules/ai-session, skills/code-review)
+  starters/<tier>    Starter template: starters/minimal, starters/standard, starters/full
   target-repo        Path to target repository (not needed with --global)
 
 Options:
@@ -34,15 +37,30 @@ Options:
   -g, --global       Install globally to ~/.<tool>/ instead of project
   -i, --interactive  Interactive mode (pick workflow with fzf)
   -n, --dry-run      Show what would be copied without copying
-  --for <tool>       Target tool (required): cursor, claude-code
+  --for <tool>       Target tool (required): cursor, claude-code, or both (starters only)
+  --to-claude-dir    For starters: install CLAUDE.md to .claude/ instead of project root
 
-The --for flag is required and determines:
-  - Target directory (.cursor/ vs .claude/)
-  - File extension for rules (.mdc vs .md)
-  - Frontmatter translation (globs/alwaysApply vs paths)
+The --for flag determines:
+  - For workflows: target directory, file extension, frontmatter translation
+  - For starters: output filename (CLAUDE.md vs AGENTS.md)
+
+Starters:
+  starters/minimal   - Bare essentials (~25 lines)
+  starters/standard  - Recommended defaults (~55 lines)
+  starters/full      - Power user with Gandalf persona (~115 lines)
+
+  --for claude-code  → Creates CLAUDE.md (Claude Code)
+  --for cursor       → Creates AGENTS.md (Cursor + Copilot + other tools)
+  --for both         → Creates both files
 
 Examples:
-  # Project-level installation
+  # Install starters
+  install starters/standard ~/my-repo --for claude-code   # → CLAUDE.md
+  install starters/standard ~/my-repo --for cursor        # → AGENTS.md
+  install starters/standard ~/my-repo --for both          # → Both files
+  install starters/full ~/my-repo --for claude-code --to-claude-dir  # → .claude/CLAUDE.md
+
+  # Project-level workflow installation
   install rules/ai-session ~/my-repo --for cursor
   install skills/code-review ~/my-repo --for claude-code
 
@@ -58,6 +76,99 @@ Examples:
   install --all ~/my-repo --for cursor
   install --all --global --for claude-code
 EOF
+}
+
+# Install a starter template (CLAUDE.md or AGENTS.md)
+install_starter() {
+    local tier="$1"
+    local tgt_repo="$2"
+    local tool="$3"
+    local to_claude_dir="$4"
+    local is_dry_run="$5"
+
+    # Validate tier exists
+    if [[ ! -f "$STARTERS_DIR/CLAUDE.md.$tier" ]]; then
+        echo -e "${RED}Error: Unknown starter tier: $tier${NC}"
+        echo "Available tiers: minimal, standard, full"
+        return 1
+    fi
+
+    # Determine source and target based on tool
+    local sources=()
+    local targets=()
+
+    case "$tool" in
+        claude-code)
+            sources+=("$STARTERS_DIR/CLAUDE.md.$tier")
+            if [[ "$to_claude_dir" == "true" ]]; then
+                targets+=("$tgt_repo/.claude/CLAUDE.md")
+            else
+                targets+=("$tgt_repo/CLAUDE.md")
+            fi
+            ;;
+        cursor)
+            sources+=("$STARTERS_DIR/AGENTS.md.$tier")
+            targets+=("$tgt_repo/AGENTS.md")
+            ;;
+        both)
+            sources+=("$STARTERS_DIR/CLAUDE.md.$tier")
+            sources+=("$STARTERS_DIR/AGENTS.md.$tier")
+            if [[ "$to_claude_dir" == "true" ]]; then
+                targets+=("$tgt_repo/.claude/CLAUDE.md")
+            else
+                targets+=("$tgt_repo/CLAUDE.md")
+            fi
+            targets+=("$tgt_repo/AGENTS.md")
+            ;;
+    esac
+
+    echo ""
+    echo "Starter:  $tier"
+    echo "Tool:     $tool"
+    for i in "${!sources[@]}"; do
+        echo "Source:   ${sources[$i]}"
+        echo "Target:   ${targets[$i]}"
+    done
+    echo ""
+
+    if [[ "$is_dry_run" == "true" ]]; then
+        echo -e "${YELLOW}[DRY RUN] Would copy:${NC}"
+        for i in "${!sources[@]}"; do
+            echo "  ${sources[$i]} -> ${targets[$i]}"
+        done
+        return 0
+    fi
+
+    # Check if targets exist
+    for target_path in "${targets[@]}"; do
+        if [[ -f "$target_path" ]]; then
+            echo -e "${YELLOW}Warning: $target_path already exists${NC}"
+            read -p "Overwrite? [y/N] " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "Aborted."
+                return 1
+            fi
+            break  # Only ask once
+        fi
+    done
+
+    # Copy files
+    for i in "${!sources[@]}"; do
+        local source_file="${sources[$i]}"
+        local target_path="${targets[$i]}"
+
+        mkdir -p "$(dirname "$target_path")"
+        cp "$source_file" "$target_path"
+        echo -e "${GREEN}✓${NC} Installed $(basename "$target_path")"
+    done
+
+    echo ""
+    echo "Next steps:"
+    echo "  1. Edit the starter file(s) to fill in your project details"
+    echo "  2. Install workflows: ./bin/install skills/code-review $tgt_repo --for claude-code"
+
+    return 0
 }
 
 # Translate Cursor frontmatter to Claude Code format
@@ -385,6 +496,7 @@ dry_run=false
 global_install=false
 install_all=false
 for_tool=""
+to_claude_dir=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -413,6 +525,10 @@ while [[ $# -gt 0 ]]; do
             for_tool="$2"
             shift 2
             ;;
+        --to-claude-dir)
+            to_claude_dir=true
+            shift
+            ;;
         *)
             if [[ -z "$workflow_id" ]]; then
                 if [[ "$1" == /* ]] || [[ "$1" == ~* ]] || [[ "$1" == .* ]]; then
@@ -428,7 +544,48 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Validate --for is provided
+# Handle starters
+if [[ "$workflow_id" == starters/* ]]; then
+    tier="${workflow_id#starters/}"
+
+    if [[ -z "$target_repo" ]]; then
+        echo -e "${RED}Error: target-repo is required for starters${NC}"
+        echo ""
+        show_help
+        exit 1
+    fi
+
+    if [[ ! -d "$target_repo" ]]; then
+        echo -e "${RED}Error: Target repository does not exist: $target_repo${NC}"
+        exit 1
+    fi
+
+    # Require --for flag for starters
+    if [[ -z "$for_tool" ]]; then
+        echo -e "${RED}Error: --for <tool> is required for starters${NC}"
+        echo "Options: --for claude-code, --for cursor, --for both"
+        echo ""
+        show_help
+        exit 1
+    fi
+
+    # Validate tool for starters (allows 'both' in addition to cursor/claude-code)
+    if [[ "$for_tool" != "cursor" ]] && [[ "$for_tool" != "claude-code" ]] && [[ "$for_tool" != "both" ]]; then
+        echo -e "${RED}Error: Invalid tool for starters: $for_tool${NC}"
+        echo "Supported: cursor, claude-code, both"
+        exit 1
+    fi
+
+    if install_starter "$tier" "$target_repo" "$for_tool" "$to_claude_dir" "$dry_run"; then
+        echo ""
+        echo -e "${GREEN}Installation complete!${NC}"
+        exit 0
+    else
+        exit 1
+    fi
+fi
+
+# Validate --for is provided (required for workflows, not starters)
 if [[ -z "$for_tool" ]]; then
     echo -e "${RED}Error: --for <tool> is required${NC}"
     echo ""

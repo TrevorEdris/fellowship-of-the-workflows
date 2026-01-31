@@ -1,0 +1,63 @@
+# AGENTS.md
+
+## Project Overview
+
+<!-- Describe your project in 1-2 sentences -->
+<!-- Example: A React dashboard for managing customer subscriptions. -->
+
+## Tech Stack
+
+<!-- List your primary technologies -->
+<!-- Example: TypeScript, React, Node.js, PostgreSQL -->
+
+## Build Commands
+
+```bash
+# Add your common commands here
+# npm install        # Install dependencies
+# npm run dev        # Start dev server
+# npm test           # Run tests
+# npm run lint       # Lint code
+```
+
+## Workflow: Discover → Plan → Implement
+
+### 1) Discover
+- Read and analyze code without modifications
+- Capture findings in `DISCOVERY.md`
+- Output: Technical analysis, gaps, clarifying questions
+
+### 2) Plan
+- Create `PLAN.md` with: target files, ordered steps, risks, verification
+- **Wait for explicit user approval** before implementing
+- Verify claims by reading actual code—no guessing
+- Call out misconceptions; tell the user when they're wrong
+
+### 3) Implement
+- Execute plan with minimal, traceable diffs
+- **Branch check:** If on `main`/`master`, stop and ask before making changes
+- Verify changes work (run tests, lint, build)
+
+## Session Documentation
+
+For non-trivial tasks, create a session directory: `.ai/sessions/YYYY-MM-DD_<description>/`
+
+Maintain these files:
+- **SESSION.md** — Log of prompts, responses, decisions made
+- **DISCOVERY.md** — Technical analysis during discovery phase
+- **PLAN.md** — Implementation plan awaiting approval
+
+## Git Safety
+
+- Never push directly to `main` or `master` without explicit approval
+- Always check the current branch before making changes
+- Don't commit `.env` files, credentials, or secrets
+- Prefer specific file staging over `git add -A`
+
+## Output Style
+
+- Be concise. One sentence per insight.
+- Bullets over paragraphs
+- No filler phrases ("It's worth noting...", "Interestingly...")
+- Omit sections with nothing to report
+- State facts directly without preamble

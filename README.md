@@ -8,10 +8,15 @@ A centralized repository for sharing AI agent workflows across your team. Works 
 # 1. Install dependencies (macOS with Homebrew)
 ./bin/bootstrap
 
-# 2. List available workflows
+# 2. Bootstrap a new project with a starter template
+./bin/install starters/standard ~/my-project --for claude-code  # → CLAUDE.md
+./bin/install starters/standard ~/my-project --for cursor       # → AGENTS.md
+./bin/install starters/standard ~/my-project --for both         # → Both files
+
+# 3. List available workflows
 ./bin/list
 
-# 3. Install a workflow
+# 4. Install workflows
 ./bin/install rules/ai-session ~/my-project --for cursor
 ./bin/install skills/code-review ~/my-project --for claude-code
 
@@ -25,11 +30,34 @@ A centralized repository for sharing AI agent workflows across your team. Works 
 |---------|-------------|
 | `./bin/bootstrap` | Install dependencies (jq, fzf, yq) |
 | `./bin/list` | List available workflows |
-| `./bin/install` | Deploy workflow to a project or globally |
+| `./bin/install` | Deploy workflow or starter to a project |
 | `./bin/new` | Create a new workflow from template |
 | `./bin/validate` | Validate workflow files |
 
 Run any command with `--help` for full options.
+
+## Starter Templates
+
+New to AI coding assistants? Start with a pre-configured template:
+
+```bash
+# For Claude Code → creates CLAUDE.md
+./bin/install starters/standard ~/my-project --for claude-code
+
+# For Cursor (and Copilot, Codex, etc.) → creates AGENTS.md
+./bin/install starters/standard ~/my-project --for cursor
+
+# For mixed teams → creates both files
+./bin/install starters/standard ~/my-project --for both
+```
+
+| Tier | Description |
+|------|-------------|
+| `minimal` | Git safety, output style, project placeholders (~25 lines) |
+| `standard` | Adds Discover → Plan → Implement workflow, session docs (~55 lines) |
+| `full` | Adds Gandalf persona, multi-repo safety, LotR-themed phases (~115 lines) |
+
+See [starters/README.md](starters/README.md) for details and modular snippets.
 
 ## Workflow Types
 
