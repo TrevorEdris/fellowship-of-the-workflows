@@ -7,6 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 WORKFLOWS_DIR="$REPO_ROOT/workflows"
+STARTERS_DIR="$REPO_ROOT/starters"
 
 # Colors
 RED='\033[0;31m'
@@ -18,16 +19,16 @@ show_help() {
     cat << 'EOF'
 Usage: list [options]
 
-List available workflows.
+List available workflows and starters.
 
 Options:
   -h, --help             Show this help message
-  -T, --type <type>      Filter by type (rule, skill, agent)
+  -T, --type <type>      Filter by type (rule, skill, agent, starter)
 
 Examples:
-  list                   List all workflows
+  list                   List all workflows and starters
   list --type skill      List all skills
-  list --type rule       List all rules
+  list --type starter    List all CLAUDE.md starters
 EOF
 }
 
@@ -55,8 +56,38 @@ echo ""
 echo -e "${BOLD}Available Workflows${NC}"
 echo "==================="
 echo ""
-echo -e "${CYAN}Install with:${NC} ./bin/install <workflow-id> <target-repo> --for <cursor|claude-code>"
+echo -e "${CYAN}Install workflows:${NC} ./bin/install <workflow-id> <target-repo> --for <cursor|claude-code>"
+echo -e "${CYAN}Install starters:${NC}  ./bin/install starters/<tier> <target-repo> --for <cursor|claude-code|both>"
 echo ""
+
+# List starters
+if [[ -z "$type_filter" ]] || [[ "$type_filter" == "starter" ]]; then
+    if [[ -d "$STARTERS_DIR" ]]; then
+        has_starters=false
+        for file in "$STARTERS_DIR"/CLAUDE.md.*; do
+            [[ -f "$file" ]] || continue
+
+            if ! $has_starters; then
+                echo -e "${BOLD}starters:${NC} (CLAUDE.md / AGENTS.md templates)"
+                has_starters=true
+            fi
+
+            tier="${file##*.}"
+            case "$tier" in
+                minimal)  desc="Bare essentials (~25 lines)" ;;
+                standard) desc="Recommended defaults (~55 lines)" ;;
+                full)     desc="Power user + Gandalf persona (~115 lines)" ;;
+                *)        desc="" ;;
+            esac
+
+            printf "  %-30s %s\n" "starters/$tier" "$desc"
+        done
+
+        if $has_starters; then
+            echo ""
+        fi
+    fi
+fi
 
 # List rules
 if [[ -z "$type_filter" ]] || [[ "$type_filter" == "rule" ]]; then

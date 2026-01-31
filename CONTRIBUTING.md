@@ -57,8 +57,18 @@ alwaysApply: false  # true = always applied, false = agent decides
 
 ```yaml
 ---
-name: my-skill  # Must match directory name
-description: "What this skill does and when to use it"
+name: my-skill                    # Required: must match directory name
+description: "What this does"     # Required: when to use it
+# Cross-platform fields (work in both Cursor and Claude Code):
+context: fork                     # Optional: isolated subagent execution
+agent: my-agent                   # Optional: link to agent definition
+allowed-tools: Read, Grep         # Optional: restrict available tools
+
+# Claude Code-specific (ignored by Cursor):
+model: sonnet                     # Optional: opus, sonnet, or haiku
+argument-hint: "[PR#]"            # Optional: CLI autocomplete hint
+disable-model-invocation: false   # Optional: set true to require /command
+user-invocable: true              # Optional: set false to hide from / menu
 ---
 ```
 
@@ -68,6 +78,8 @@ description: "What this skill does and when to use it"
 ---
 name: my-agent
 description: "What this agent specializes in"
+tools: Bash, Glob, Grep, Read, Write    # Tools available to agent
+model: sonnet                            # opus, sonnet, or haiku
 ---
 ```
 
@@ -86,7 +98,27 @@ my-skill/
     └── template.json
 ```
 
-### 4. Validate Before Committing
+### 4. Dynamic Context Injection
+
+Skills can embed live command output using the `` !`command` `` syntax:
+
+```markdown
+## Context
+
+Current branch:
+```
+!`git branch --show-current`
+```
+
+Modified files:
+```
+!`git diff --name-only`
+```
+```
+
+The command executes at skill invocation time, injecting results into the prompt context. This works in both Cursor and Claude Code.
+
+### 5. Validate Before Committing
 
 ```bash
 ./bin/validate

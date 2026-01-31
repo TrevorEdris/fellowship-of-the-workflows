@@ -1,0 +1,114 @@
+# CLAUDE.md
+
+> *"A wizard is never late, nor is he early. He implements precisely when the plan is approved."*
+
+## Project Overview
+
+<!-- Describe your project in 1-2 sentences -->
+<!-- Example: A React dashboard for managing customer subscriptions. -->
+
+## Tech Stack
+
+<!-- List your primary technologies -->
+<!-- Example: TypeScript, React, Node.js, PostgreSQL -->
+
+## Repository Map
+
+<!-- For multi-repo workspaces, map out your repositories -->
+<!--
+| Repository | Purpose | Tech Stack |
+|------------|---------|------------|
+| `frontend` | Web application | React, TypeScript |
+| `backend`  | API server | Node.js, Express |
+| `shared`   | Common types/utils | TypeScript |
+-->
+
+## Build Commands
+
+```bash
+# Add your common commands here
+# npm install        # Install dependencies
+# npm run dev        # Start dev server
+# npm test           # Run tests
+# npm run lint       # Lint code
+# npm run build      # Production build
+```
+
+## Workflow: The Palantír → The Council → The Journey
+
+### 1) The Palantír (Discover)
+- Read and analyze code without modifications
+- Capture findings in `DISCOVERY.md`
+- Output: Technical analysis, gaps, clarifying questions
+
+### 2) The Council of Elrond (Plan)
+- Create `PLAN.md` with: target files, ordered steps, risks, verification
+- **Wait for explicit user approval** before implementing
+- Verify claims by reading actual code—no guessing
+- Call out misconceptions; tell the user when they're wrong
+
+### 3) The Journey (Implement)
+- Execute plan with minimal, traceable diffs
+- **Branch check:** If on `main`/`master`, stop and ask before making changes
+- Verify changes work (run tests, lint, build)
+
+## Session Documentation (REQUIRED)
+
+**At the start of every session**, create a session directory and maintain documentation:
+
+1. **Create session directory:** `.ai/sessions/YYYY-MM-DD_<TICKET>_<TITLE_SLUG>/`
+   - Use ticket ID if provided, otherwise use a descriptive slug
+   - Example: `.ai/sessions/2026-01-30_PROJ-123_Add-User-Auth/`
+   - Example (no ticket): `.ai/sessions/2026-01-30_Refactor-Error-Handling/`
+
+2. **Create and maintain these files:**
+
+   **SESSION.md** (create immediately, update throughout)
+   - Log user prompts and summarized responses
+   - Record all questions asked and answers received
+   - Append as the session progresses
+
+   **DISCOVERY.md** (create during discovery phase)
+   - Technical analysis of current state
+   - Identified gaps, issues, requirements
+   - Data model and API coverage analysis
+
+   **PLAN.md** (create before implementation)
+   - Target repos and file paths
+   - Ordered implementation steps
+   - Risks and assumptions
+   - Verification steps
+
+3. **Do this automatically**—do not wait to be asked
+
+## Multi-Repo Safety Rules
+
+<!-- Remove this section if working with a single repo -->
+
+- Only operate on repos explicitly named in PLAN.md or the current task
+- Never modify repos "opportunistically"
+- Cross-repo changes: keep commits aligned, verify each repo independently
+- If repos not specified, ask before planning/editing
+
+*"Keep it secret, keep it safe."* — Especially `.env` files and credentials.
+
+## Git Safety
+
+- Never push directly to `main` or `master` without explicit approval
+- Always check the current branch before making changes
+- Don't commit `.env` files, credentials, or secrets
+- Prefer specific file staging over `git add -A`
+- Create atomic commits with clear messages
+
+*"Fly, you fools!"* — What I'll say if you try to force push to main.
+
+## Output Style
+
+- Be concise. One sentence per insight.
+- Bullets over paragraphs
+- No filler phrases ("It's worth noting...", "Interestingly...")
+- Omit sections with nothing to report
+- State facts directly without preamble
+
+---
+*"All we have to decide is what to do with the code that is given us."*
