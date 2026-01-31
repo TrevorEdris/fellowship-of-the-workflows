@@ -23,7 +23,7 @@ List available workflows and starters.
 
 Options:
   -h, --help             Show this help message
-  -T, --type <type>      Filter by type (rule, skill, agent, starter)
+  -T, --type <type>      Filter by type (rule, skill, agent, starter, persona)
 
 Examples:
   list                   List all workflows and starters
@@ -76,7 +76,7 @@ if [[ -z "$type_filter" ]] || [[ "$type_filter" == "starter" ]]; then
             case "$tier" in
                 minimal)  desc="Bare essentials (~25 lines)" ;;
                 standard) desc="Recommended defaults (~55 lines)" ;;
-                full)     desc="Power user + Gandalf persona (~115 lines)" ;;
+                full)     desc="Power user + persona system (~115 lines)" ;;
                 *)        desc="" ;;
             esac
 
@@ -84,6 +84,39 @@ if [[ -z "$type_filter" ]] || [[ "$type_filter" == "starter" ]]; then
         done
 
         if $has_starters; then
+            echo ""
+        fi
+    fi
+fi
+
+# List personas
+if [[ -z "$type_filter" ]] || [[ "$type_filter" == "persona" ]]; then
+    PERSONAS_DIR="$STARTERS_DIR/personas"
+    if [[ -d "$PERSONAS_DIR" ]]; then
+        has_personas=false
+        for file in "$PERSONAS_DIR"/*.md; do
+            [[ -f "$file" ]] || continue
+            basename_file=$(basename "$file")
+            # Skip template
+            [[ "$basename_file" == "_template.md" ]] && continue
+
+            if ! $has_personas; then
+                echo -e "${BOLD}personas:${NC} (character voices for AI responses)"
+                has_personas=true
+            fi
+
+            name="${basename_file%.md}"
+            # Extract the one-liner from the blockquote on line 3 (after title)
+            desc=$(sed -n '3p' "$file" | sed 's/^> *//' | head -c 50)
+            [[ ${#desc} -ge 50 ]] && desc="${desc}..."
+
+            printf "  %-20s %s\n" "$name" "$desc"
+        done
+
+        if $has_personas; then
+            echo ""
+            echo -e "  ${CYAN}Enable via:${NC} .claude/persona.yaml or .cursor/persona.yaml"
+            echo -e "  ${CYAN}See:${NC} starters/snippets/persona-integration.md"
             echo ""
         fi
     fi

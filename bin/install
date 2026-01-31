@@ -20,6 +20,8 @@ show_help() {
 Usage: install <workflow-id> <target-repo> --for <tool> [options]
        install <workflow-id> --global --for <tool>
        install starters/<tier> <target-repo> --for <tool> [--to-claude-dir]
+       install personas <target-repo> --for <tool>
+       install personas --global --for <tool>
        install <target-repo> --interactive --for <tool>
        install --all <target-repo> --for <tool>
        install --all --global --for <tool>
@@ -47,11 +49,18 @@ The --for flag determines:
 Starters:
   starters/minimal   - Bare essentials (~25 lines)
   starters/standard  - Recommended defaults (~55 lines)
-  starters/full      - Power user with Gandalf persona (~115 lines)
+  starters/full      - Power user + persona system (~115 lines)
+                       (full tier automatically includes personas)
 
   --for claude-code  → Creates CLAUDE.md (Claude Code)
   --for cursor       → Creates AGENTS.md (Cursor + Copilot + other tools)
   --for both         → Creates both files
+
+Personas:
+  install personas <target> --for <tool>   - Install persona definitions
+  install personas --global --for <tool>   - Install personas globally
+
+  Personas are also included when using --all or starters/full
 
 Examples:
   # Install starters
@@ -136,6 +145,34 @@ install_starter() {
         for i in "${!sources[@]}"; do
             echo "  ${sources[$i]} -> ${targets[$i]}"
         done
+
+        # Also show personas for full tier
+        if [[ "$tier" == "full" ]]; then
+            local personas_source="$STARTERS_DIR/personas"
+            local config_source="$STARTERS_DIR/snippets/persona-config-example.yaml"
+            echo ""
+            echo -e "${YELLOW}[DRY RUN] Would also install personas:${NC}"
+
+            case "$tool" in
+                claude-code)
+                    echo "  $personas_source/*.md -> $tgt_repo/.claude/personas/"
+                    echo "  $config_source -> $tgt_repo/.claude/persona.yaml"
+                    ;;
+                cursor)
+                    echo "  $personas_source/*.md -> $tgt_repo/.cursor/personas/"
+                    echo "  $config_source -> $tgt_repo/.cursor/persona.yaml"
+                    ;;
+                both)
+                    echo "  $personas_source/*.md -> $tgt_repo/.claude/personas/"
+                    echo "  $config_source -> $tgt_repo/.claude/persona.yaml"
+                    echo "  $personas_source/*.md -> $tgt_repo/.cursor/personas/"
+                    echo "  $config_source -> $tgt_repo/.cursor/persona.yaml"
+                    ;;
+            esac
+
+            local persona_count=$(ls -1 "$personas_source"/*.md 2>/dev/null | grep -v _template.md | wc -l | tr -d ' ')
+            echo "  ($persona_count persona files)"
+        fi
         return 0
     fi
 
@@ -163,10 +200,74 @@ install_starter() {
         echo -e "${GREEN}✓${NC} Installed $(basename "$target_path")"
     done
 
+    # For full tier, also install personas
+    if [[ "$tier" == "full" ]]; then
+        local personas_source="$STARTERS_DIR/personas"
+        local config_source="$STARTERS_DIR/snippets/persona-config-example.yaml"
+
+        if [[ -d "$personas_source" ]]; then
+            # Determine target directories based on tool
+            local persona_targets=()
+            local config_targets=()
+
+            case "$tool" in
+                claude-code)
+                    persona_targets+=("$tgt_repo/.claude/personas")
+                    config_targets+=("$tgt_repo/.claude/persona.yaml")
+                    ;;
+                cursor)
+                    persona_targets+=("$tgt_repo/.cursor/personas")
+                    config_targets+=("$tgt_repo/.cursor/persona.yaml")
+                    ;;
+                both)
+                    persona_targets+=("$tgt_repo/.claude/personas")
+                    persona_targets+=("$tgt_repo/.cursor/personas")
+                    config_targets+=("$tgt_repo/.claude/persona.yaml")
+                    config_targets+=("$tgt_repo/.cursor/persona.yaml")
+                    ;;
+            esac
+
+            if [[ "$is_dry_run" == "true" ]]; then
+                echo -e "${YELLOW}[DRY RUN] Would also copy personas:${NC}"
+                for pt in "${persona_targets[@]}"; do
+                    echo "  $personas_source/ -> $pt/"
+                done
+                for ct in "${config_targets[@]}"; do
+                    echo "  $config_source -> $ct"
+                done
+            else
+                for pt in "${persona_targets[@]}"; do
+                    mkdir -p "$pt"
+                    # Copy all persona files except template
+                    for pfile in "$personas_source"/*.md; do
+                        [[ -f "$pfile" ]] || continue
+                        local basename_pfile=$(basename "$pfile")
+                        [[ "$basename_pfile" == "_template.md" ]] && continue
+                        cp "$pfile" "$pt/"
+                    done
+                    local persona_count=$(ls -1 "$pt"/*.md 2>/dev/null | wc -l | tr -d ' ')
+                    echo -e "${GREEN}✓${NC} Installed $persona_count personas to $pt/"
+                done
+
+                for ct in "${config_targets[@]}"; do
+                    if [[ ! -f "$ct" ]]; then
+                        cp "$config_source" "$ct"
+                        echo -e "${GREEN}✓${NC} Created default persona config: $ct"
+                    else
+                        echo -e "${YELLOW}!${NC} Persona config already exists: $ct (skipped)"
+                    fi
+                done
+            fi
+        fi
+    fi
+
     echo ""
     echo "Next steps:"
     echo "  1. Edit the starter file(s) to fill in your project details"
     echo "  2. Install workflows: ./bin/install skills/code-review $tgt_repo --for claude-code"
+    if [[ "$tier" == "full" ]]; then
+        echo "  3. Switch personas: ./bin/install skills/switch-persona $tgt_repo --for claude-code"
+    fi
 
     return 0
 }
@@ -224,6 +325,92 @@ $paths_yaml"
     
     echo "$new_frontmatter" > "$output_file"
     echo "$content" >> "$output_file"
+}
+
+# Install personas to target location
+install_personas() {
+    local tgt_repo="$1"
+    local tool="$2"
+    local is_global="$3"
+    local is_dry_run="$4"
+    local quiet="${5:-false}"
+
+    local personas_source="$STARTERS_DIR/personas"
+    local config_source="$STARTERS_DIR/snippets/persona-config-example.yaml"
+
+    if [[ ! -d "$personas_source" ]]; then
+        [[ "$quiet" != "true" ]] && echo -e "${RED}Error: Personas directory not found${NC}"
+        return 1
+    fi
+
+    # Determine target directories
+    local base_dir persona_target config_target
+    if [[ "$is_global" == "true" ]]; then
+        case "$tool" in
+            cursor) base_dir="$HOME/.cursor" ;;
+            claude-code) base_dir="$HOME/.claude" ;;
+        esac
+    else
+        case "$tool" in
+            cursor) base_dir="$tgt_repo/.cursor" ;;
+            claude-code) base_dir="$tgt_repo/.claude" ;;
+        esac
+    fi
+
+    persona_target="$base_dir/personas"
+    config_target="$base_dir/persona.yaml"
+
+    if [[ "$quiet" != "true" ]]; then
+        echo ""
+        echo "Personas: starters/personas/"
+        echo "Tool:     $tool"
+        if [[ "$is_global" == "true" ]]; then
+            echo "Scope:    Global ($base_dir/)"
+        else
+            echo "Scope:    Project ($tgt_repo)"
+        fi
+        echo "Target:   $persona_target/"
+        echo "Config:   $config_target"
+        echo ""
+    fi
+
+    if [[ "$is_dry_run" == "true" ]]; then
+        if [[ "$quiet" != "true" ]]; then
+            echo -e "${YELLOW}[DRY RUN] Would copy:${NC}"
+            echo "  $personas_source/ -> $persona_target/"
+            for pfile in "$personas_source"/*.md; do
+                [[ -f "$pfile" ]] || continue
+                local bn=$(basename "$pfile")
+                [[ "$bn" == "_template.md" ]] && continue
+                echo "    $bn"
+            done
+            echo "  $config_source -> $config_target"
+        fi
+        return 0
+    fi
+
+    # Copy persona files
+    mkdir -p "$persona_target"
+    local copied_count=0
+    for pfile in "$personas_source"/*.md; do
+        [[ -f "$pfile" ]] || continue
+        local bn=$(basename "$pfile")
+        [[ "$bn" == "_template.md" ]] && continue
+        cp "$pfile" "$persona_target/"
+        copied_count=$((copied_count + 1))
+    done
+
+    [[ "$quiet" != "true" ]] && echo -e "${GREEN}✓${NC} Copied $copied_count personas to $persona_target/"
+
+    # Copy config if it doesn't exist
+    if [[ ! -f "$config_target" ]]; then
+        cp "$config_source" "$config_target"
+        [[ "$quiet" != "true" ]] && echo -e "${GREEN}✓${NC} Created default persona config: $config_target"
+    else
+        [[ "$quiet" != "true" ]] && echo -e "${YELLOW}!${NC} Persona config already exists: $config_target (skipped)"
+    fi
+
+    return 0
 }
 
 # Get all workflow IDs for fzf
@@ -457,6 +644,18 @@ install_all_workflows() {
             echo -e "  ${RED}✗${NC} Failed"
         fi
     done < <(get_workflow_ids)
+    
+    # Also install personas
+    echo -e "${YELLOW}→${NC} Installing personas..."
+    if install_personas "$tgt_repo" "$tool" "$is_global" "$is_dry_run" "true"; then
+        succeeded+=("personas")
+        success_count=$((success_count + 1))
+        echo -e "  ${GREEN}✓${NC} Done"
+    else
+        failed+=("personas")
+        fail_count=$((fail_count + 1))
+        echo -e "  ${RED}✗${NC} Failed"
+    fi
 
     # Print summary
     echo ""
@@ -543,6 +742,50 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Handle personas standalone install
+if [[ "$workflow_id" == "personas" ]]; then
+    # Require --for flag
+    if [[ -z "$for_tool" ]]; then
+        echo -e "${RED}Error: --for <tool> is required${NC}"
+        echo "Options: --for claude-code, --for cursor"
+        echo ""
+        show_help
+        exit 1
+    fi
+
+    # Validate tool
+    if [[ "$for_tool" != "cursor" ]] && [[ "$for_tool" != "claude-code" ]]; then
+        echo -e "${RED}Error: Invalid tool: $for_tool${NC}"
+        echo "Supported: cursor, claude-code"
+        exit 1
+    fi
+
+    # Require target repo or global
+    if [[ -z "$target_repo" ]] && [[ "$global_install" != "true" ]]; then
+        echo -e "${RED}Error: target-repo is required (or use --global)${NC}"
+        echo ""
+        show_help
+        exit 1
+    fi
+
+    if [[ -n "$target_repo" ]] && [[ ! -d "$target_repo" ]]; then
+        echo -e "${RED}Error: Target repository does not exist: $target_repo${NC}"
+        exit 1
+    fi
+
+    if install_personas "$target_repo" "$for_tool" "$global_install" "$dry_run" "false"; then
+        echo ""
+        echo -e "${GREEN}Personas installed!${NC}"
+        echo ""
+        echo "Next steps:"
+        echo "  1. Edit persona.yaml to choose your persona and intensity"
+        echo "  2. Or use: /switch-persona (if skill is installed)"
+        exit 0
+    else
+        exit 1
+    fi
+fi
 
 # Handle starters
 if [[ "$workflow_id" == starters/* ]]; then
