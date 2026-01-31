@@ -1,0 +1,314 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Fellowship of the Workflows - Generate Persona Samples
+# Automates collection of persona voice samples using Claude CLI
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+PERSONAS_DIR="$REPO_ROOT/starters/personas"
+DEFAULT_OUTPUT="$REPO_ROOT/docs/persona-samples.md"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Default prompts that showcase different persona behaviors
+DEFAULT_PROMPTS=(
+    "greeting:Greet me at the start of a new coding session."
+    "warning:I'm about to force push to main. What do you think?"
+    "success:The tests passed and the build is green. We're ready to deploy."
+    "failure:The deployment failed with a cryptic error. Help me debug."
+    "review:Review this code snippet: function add(a, b) { return a + b; }"
+)
+
+show_help() {
+    cat << 'EOF'
+Usage: generate-samples [options]
+
+Generate persona voice samples using Claude CLI for documentation.
+
+Options:
+  -h, --help              Show this help message
+  -o, --output <file>     Output file (default: docs/persona-samples.md)
+  -p, --persona <name>    Generate for specific persona only (can repeat)
+  -i, --intensity <level> Intensity level: minimal, noticeable, excessive (default: noticeable)
+  -n, --dry-run           Show what would be done without calling Claude
+  -q, --quiet             Suppress progress output
+  --prompts-file <file>   Custom prompts file (one per line, format: category:prompt)
+  --list-personas         List available personas and exit
+
+Examples:
+  generate-samples                          Generate samples for all personas
+  generate-samples -p gandalf -p yoda       Generate for specific personas
+  generate-samples -i excessive             Use excessive intensity
+  generate-samples -n                       Preview without API calls
+  generate-samples --list-personas          Show available personas
+EOF
+}
+
+list_personas() {
+    echo ""
+    echo -e "${BOLD}Available Personas${NC}"
+    echo "=================="
+    echo ""
+    for file in "$PERSONAS_DIR"/*.md; do
+        [[ -f "$file" ]] || continue
+        basename_file=$(basename "$file")
+        [[ "$basename_file" == "_template.md" ]] && continue
+
+        name="${basename_file%.md}"
+        desc=$(sed -n '3p' "$file" | sed 's/^> *//')
+        printf "  ${CYAN}%-18s${NC} %s\n" "$name" "$desc"
+    done
+    echo ""
+}
+
+# Build system prompt for a persona
+build_system_prompt() {
+    local persona="$1"
+    local intensity="$2"
+    local persona_file="$PERSONAS_DIR/$persona.md"
+
+    if [[ ! -f "$persona_file" ]]; then
+        echo "Error: Persona file not found: $persona_file" >&2
+        return 1
+    fi
+
+    # Read persona content
+    local persona_content
+    persona_content=$(cat "$persona_file")
+
+    cat << EOF
+You are roleplaying as a coding assistant with the following persona. Respond naturally in character.
+
+INTENSITY LEVEL: $intensity
+- minimal: Flavor only at key moments (greetings, warnings, major events)
+- noticeable: Light flavor in most responses (recommended)
+- excessive: Full character immersion in every response
+
+---
+$persona_content
+---
+
+Instructions:
+- Stay in character according to the intensity level
+- Keep responses concise (2-4 sentences typical)
+- Use the persona's speech patterns, signature phrases, and thematic mappings
+- This is for generating documentation samples, so make responses representative of the persona's voice
+EOF
+}
+
+# Defaults
+output_file="$DEFAULT_OUTPUT"
+intensity="noticeable"
+dry_run=false
+quiet=false
+prompts_file=""
+declare -a selected_personas=()
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -o|--output)
+            output_file="$2"
+            shift 2
+            ;;
+        -p|--persona)
+            selected_personas+=("$2")
+            shift 2
+            ;;
+        -i|--intensity)
+            intensity="$2"
+            shift 2
+            ;;
+        -n|--dry-run)
+            dry_run=true
+            shift
+            ;;
+        -q|--quiet)
+            quiet=true
+            shift
+            ;;
+        --prompts-file)
+            prompts_file="$2"
+            shift 2
+            ;;
+        --list-personas)
+            list_personas
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# Check for claude CLI
+if ! command -v claude &> /dev/null && ! $dry_run; then
+    echo -e "${RED}Error: 'claude' CLI not found${NC}"
+    echo ""
+    echo "Install Claude Code CLI:"
+    echo "  npm install -g @anthropic-ai/claude-code"
+    echo ""
+    echo "Or use --dry-run to preview without API calls."
+    exit 1
+fi
+
+# Build persona list
+personas=()
+if [[ ${#selected_personas[@]} -gt 0 ]]; then
+    personas=("${selected_personas[@]}")
+else
+    for file in "$PERSONAS_DIR"/*.md; do
+        [[ -f "$file" ]] || continue
+        basename_file=$(basename "$file")
+        [[ "$basename_file" == "_template.md" ]] && continue
+        personas+=("${basename_file%.md}")
+    done
+fi
+
+# Validate personas exist
+for persona in "${personas[@]}"; do
+    if [[ ! -f "$PERSONAS_DIR/$persona.md" ]]; then
+        echo -e "${RED}Error: Persona not found: $persona${NC}"
+        echo "Use --list-personas to see available options."
+        exit 1
+    fi
+done
+
+# Load prompts
+prompts=()
+if [[ -n "$prompts_file" ]] && [[ -f "$prompts_file" ]]; then
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && [[ ! "$line" =~ ^# ]] && prompts+=("$line")
+    done < "$prompts_file"
+else
+    prompts=("${DEFAULT_PROMPTS[@]}")
+fi
+
+# Create temp directory for system prompt files
+WORK_DIR=$(mktemp -d)
+trap 'rm -rf "$WORK_DIR"' EXIT
+
+log() {
+    if ! $quiet; then
+        echo -e "$@"
+    fi
+}
+
+# Start output file
+mkdir -p "$(dirname "$output_file")"
+
+{
+    echo "# Persona Voice Samples"
+    echo ""
+    echo "> Auto-generated samples showing how each persona sounds during typical coding sessions."
+    echo "> Generated with \`./bin/generate-samples\` using intensity: **${intensity}**"
+    echo ""
+    echo "---"
+    echo ""
+} > "$output_file"
+
+log ""
+log "${BOLD}Fellowship of the Workflows - Generate Persona Samples${NC}"
+log "========================================================"
+log ""
+log "Personas:  ${#personas[@]} (${personas[*]})"
+log "Prompts:   ${#prompts[@]}"
+log "Intensity: $intensity"
+log "Output:    $output_file"
+log ""
+
+if $dry_run; then
+    log "${YELLOW}DRY RUN - No API calls will be made${NC}"
+    log ""
+fi
+
+total=$((${#personas[@]} * ${#prompts[@]}))
+current=0
+
+for persona in "${personas[@]}"; do
+    log "${CYAN}[$persona]${NC}"
+
+    # Build system prompt for this persona
+    system_prompt_file="$WORK_DIR/${persona}_system.txt"
+    build_system_prompt "$persona" "$intensity" > "$system_prompt_file"
+
+    # Add persona section to output
+    {
+        # Extract tagline from persona file
+        tagline=""
+        if [[ -f "$PERSONAS_DIR/$persona.md" ]]; then
+            tagline=$(sed -n '3p' "$PERSONAS_DIR/$persona.md" | sed 's/^> *//')
+        fi
+
+        echo "## $persona"
+        echo ""
+        if [[ -n "$tagline" ]]; then
+            echo "> $tagline"
+            echo ""
+        fi
+    } >> "$output_file"
+
+    for prompt_entry in "${prompts[@]}"; do
+        current=$((current + 1))
+
+        # Parse category:prompt format
+        category="${prompt_entry%%:*}"
+        prompt="${prompt_entry#*:}"
+
+        log "  [$current/$total] $category..."
+
+        {
+            echo "### $category"
+            echo ""
+            echo "**Prompt:** $prompt"
+            echo ""
+        } >> "$output_file"
+
+        if $dry_run; then
+            {
+                echo "\`\`\`"
+                echo "[DRY RUN] Would call claude with persona system prompt"
+                echo "Persona: $persona"
+                echo "Intensity: $intensity"
+                echo "Prompt: $prompt"
+                echo "\`\`\`"
+                echo ""
+            } >> "$output_file"
+        else
+            # Call claude CLI with system prompt injection
+            # Use --system-prompt to set the persona context
+            system_prompt=$(cat "$system_prompt_file")
+            response=$(echo "$prompt" | claude -p --system-prompt "$system_prompt" 2>/dev/null || echo "[Error: Failed to get response]")
+
+            {
+                echo "$response"
+                echo ""
+            } >> "$output_file"
+        fi
+    done
+
+    echo "---" >> "$output_file"
+    echo "" >> "$output_file"
+
+    log ""
+done
+
+log "${GREEN}Done!${NC} Output written to: $output_file"
+log ""
+
+if $dry_run; then
+    log "${YELLOW}Note: This was a dry run. Remove -n flag to generate actual samples.${NC}"
+fi
