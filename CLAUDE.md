@@ -24,10 +24,11 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 ./bin/new rule/my-rule       # New rule file
 ./bin/new agent/my-agent     # New agent definition
 
-# Install to target project
+# Install to target project (prompts before overwriting)
 ./bin/install starters/standard ~/project --for claude-code
 ./bin/install skills/code-review ~/project --for claude-code
 ./bin/install rules/ai-session --global --for cursor
+./bin/install skills/code-review ~/project --for claude-code --force  # Skip prompt
 
 # Validate before committing
 ./bin/validate               # Check all workflows
