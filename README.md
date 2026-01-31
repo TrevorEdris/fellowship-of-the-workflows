@@ -55,7 +55,7 @@ New to AI coding assistants? Start with a pre-configured template:
 |------|-------------|
 | `minimal` | Git safety, output style, project placeholders (~25 lines) |
 | `standard` | Adds Discover → Plan → Implement workflow, session docs (~55 lines) |
-| `full` | Adds Gandalf persona, multi-repo safety, LotR-themed phases (~115 lines) |
+| `full` | Adds persona system (12 characters), multi-repo safety (~115 lines) |
 
 See [starters/README.md](starters/README.md) for details and modular snippets.
 

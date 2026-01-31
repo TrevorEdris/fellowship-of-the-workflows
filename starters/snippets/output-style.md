@@ -13,6 +13,7 @@ Add this to your CLAUDE.md to enforce concise, professional output.
 - State facts directly without preamble
 
 ### Avoid These Patterns
+
 - "I'll help you with..." — Just do it
 - "Great question!" — Skip the flattery
 - "It's important to note that..." — State the fact directly

@@ -19,7 +19,7 @@ Both files use identical content — only the filename differs.
 |------|-------|----------|
 | `minimal` | ~25 | Quick setup, small projects |
 | `standard` | ~55 | Most projects (recommended) |
-| `full` | ~115 | Power users, multi-repo workspaces, Gandalf persona |
+| `full` | ~115 | Power users, multi-repo workspaces, persona support |
 
 ## Installation
 
@@ -56,7 +56,7 @@ Everything in Minimal, plus:
 
 ### Full
 Everything in Standard, plus:
-- Gandalf persona (LotR-themed phase names and quips)
+- Persona system integration (12 personas available)
 - Multi-repo safety rules
 - Repository map for workspaces
 - Required session documentation
@@ -71,7 +71,8 @@ Prefer to build your own? Mix and match from `snippets/`:
 | `session-documentation.md` | Session tracking for complex tasks |
 | `git-safety.md` | Safe git practices |
 | `output-style.md` | Concise, professional output |
-| `gandalf-persona.md` | Optional Middle-earth flavor |
+| `persona-integration.md` | Enable the persona system |
+| `persona-config-example.yaml` | Config file template |
 
 ## What Each Section Does
 
@@ -102,8 +103,61 @@ Reduces verbose AI patterns:
 - Use bullets over paragraphs
 - State facts directly
 
-### Gandalf Persona (Full only)
-Adds thematic elements without overwhelming:
-- LotR-themed workflow phase names
-- Witty safety reminders
-- Opening and closing quotes
+## Persona System
+
+Add personality to your AI assistant with themed personas. Each persona provides:
+- **Voice Guide** — Speech patterns, tone, signature phrases
+- **Thematic Mappings** — Dev concepts mapped to the character's world
+- **Static Elements** — Consistent phase names and severity levels
+- **Contextual Guidance** — How to respond in different situations
+- **Example Quotes** — Fallback pool for inspiration
+
+### Available Personas
+
+| ID | Source | Vibe |
+|----|--------|------|
+| `gandalf` | Lord of the Rings | Wise wizard, patient mentor |
+| `yoda` | Star Wars | Inverted syntax, cryptic wisdom |
+| `picard` | Star Trek: TNG | Commanding presence, diplomatic |
+| `the-dude` | Big Lebowski | Laid-back, philosophical slacker |
+| `princess-bride` | The Princess Bride | Quotable adventure, wit |
+| `spock` | Star Trek | Logical, analytical, precise |
+| `bob-ross` | Joy of Painting | Encouraging, positive, gentle |
+| `mr-rogers` | Mister Rogers | Kind, thoughtful, nurturing |
+| `attenborough` | Nature docs | Documentary narration, wonder |
+| `ron-swanson` | Parks & Rec | Minimalist, anti-bureaucracy |
+| `monty-python` | Monty Python | Absurdist British humor |
+| `chewbacca` | Star Wars | RRWWWWGGG (unintelligible loyalty) |
+
+### Enabling a Persona
+
+1. **Add the integration snippet** to your CLAUDE.md/AGENTS.md:
+   - Copy content from `snippets/persona-integration.md`
+
+2. **Create a config file** in your project:
+   ```yaml
+   # .claude/persona.yaml (for Claude Code)
+   # .cursor/persona.yaml (for Cursor)
+
+   persona: gandalf
+   intensity: noticeable
+   ```
+
+3. **Intensity Levels:**
+   | Level | Behavior |
+   |-------|----------|
+   | `off` | Standard professional responses |
+   | `minimal` | Flavor at key moments only |
+   | `noticeable` | Light flavor in most responses (recommended) |
+   | `excessive` | Full character immersion |
+
+### Creating Custom Personas
+
+Use `personas/_template.md` as a starting point. Key sections:
+1. Voice Guide — Define how the character speaks
+2. Thematic Mappings — Map dev concepts to their world
+3. Static Elements — Set phase names and severity levels
+4. Contextual Guidance — Define behavior for different situations
+5. Example Quotes — Provide reference material
+
+See existing personas in `personas/` for examples
