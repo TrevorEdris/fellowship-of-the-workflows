@@ -36,6 +36,7 @@ Arguments:
 Options:
   -h, --help         Show this help message
   -a, --all          Install all available workflows
+  -f, --force        Overwrite existing files without prompting
   -g, --global       Install globally to ~/.<tool>/ instead of project
   -i, --interactive  Interactive mode (pick workflow with fzf)
   -n, --dry-run      Show what would be copied without copying
@@ -94,6 +95,7 @@ install_starter() {
     local tool="$3"
     local to_claude_dir="$4"
     local is_dry_run="$5"
+    local is_force="${6:-false}"
 
     # Validate tier exists
     if [[ ! -f "$STARTERS_DIR/CLAUDE.md.$tier" ]]; then
@@ -176,19 +178,21 @@ install_starter() {
         return 0
     fi
 
-    # Check if targets exist
-    for target_path in "${targets[@]}"; do
-        if [[ -f "$target_path" ]]; then
-            echo -e "${YELLOW}Warning: $target_path already exists${NC}"
-            read -p "Overwrite? [y/N] " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                echo "Aborted."
-                return 1
+    # Check if targets exist (unless force)
+    if [[ "$is_force" != "true" ]]; then
+        for target_path in "${targets[@]}"; do
+            if [[ -f "$target_path" ]]; then
+                echo -e "${YELLOW}Warning: $target_path already exists${NC}"
+                read -p "Overwrite? [y/N] " -n 1 -r
+                echo
+                if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                    echo "Aborted."
+                    return 1
+                fi
+                break  # Only ask once
             fi
-            break  # Only ask once
-        fi
-    done
+        done
+    fi
 
     # Copy files
     for i in "${!sources[@]}"; do
@@ -452,7 +456,8 @@ install_single_workflow() {
     local tool="$3"
     local is_global="$4"
     local is_dry_run="$5"
-    local quiet="${6:-false}"
+    local is_force="${6:-false}"
+    local quiet="${7:-false}"
 
     # Parse workflow ID
     local wtype name
@@ -571,6 +576,26 @@ install_single_workflow() {
         echo ""
     fi
 
+    # Check if target exists (skip for dry-run)
+    if [[ "$is_dry_run" != "true" ]] && [[ "$is_force" != "true" ]]; then
+        local exists=false
+        if [[ "$is_dir" == "true" ]] && [[ -d "$target_path" ]]; then
+            exists=true
+        elif [[ "$is_dir" != "true" ]] && [[ -f "$target_path" ]]; then
+            exists=true
+        fi
+
+        if [[ "$exists" == "true" ]]; then
+            echo -e "${YELLOW}Warning: $target_path already exists${NC}"
+            read -p "Overwrite? [y/N] " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "Skipped."
+                return 1
+            fi
+        fi
+    fi
+
     if [[ "$is_dry_run" == "true" ]]; then
         if [[ "$quiet" != "true" ]]; then
             echo -e "${YELLOW}[DRY RUN] Would copy:${NC}"
@@ -634,7 +659,7 @@ install_all_workflows() {
 
         echo -e "${YELLOW}→${NC} Installing $wf_id..."
 
-        if install_single_workflow "$wf_id" "$tgt_repo" "$tool" "$is_global" "$is_dry_run" "true"; then
+        if install_single_workflow "$wf_id" "$tgt_repo" "$tool" "$is_global" "$is_dry_run" "true" "true"; then
             succeeded+=("$wf_id")
             success_count=$((success_count + 1))
             echo -e "  ${GREEN}✓${NC} Done"
@@ -692,6 +717,7 @@ workflow_id=""
 target_repo=""
 interactive=false
 dry_run=false
+force=false
 global_install=false
 install_all=false
 for_tool=""
@@ -706,6 +732,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -a|--all)
             install_all=true
+            shift
+            ;;
+        -f|--force)
+            force=true
             shift
             ;;
         -i|--interactive)
@@ -819,7 +849,7 @@ if [[ "$workflow_id" == starters/* ]]; then
         exit 1
     fi
 
-    if install_starter "$tier" "$target_repo" "$for_tool" "$to_claude_dir" "$dry_run"; then
+    if install_starter "$tier" "$target_repo" "$for_tool" "$to_claude_dir" "$dry_run" "$force"; then
         echo ""
         echo -e "${GREEN}Installation complete!${NC}"
         exit 0
@@ -908,7 +938,7 @@ if [[ -z "$workflow_id" ]]; then
 fi
 
 # Single workflow installation
-if ! install_single_workflow "$workflow_id" "$target_repo" "$for_tool" "$global_install" "$dry_run" "false"; then
+if ! install_single_workflow "$workflow_id" "$target_repo" "$for_tool" "$global_install" "$dry_run" "$force" "false"; then
     exit 1
 fi
 

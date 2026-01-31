@@ -36,6 +36,19 @@ A centralized repository for sharing AI agent workflows across your team. Works 
 
 Run any command with `--help` for full options.
 
+### Install Options
+
+The install command will prompt before overwriting existing files. Use `--force` to skip the prompt:
+
+```bash
+./bin/install skills/code-review ~/my-project --for claude-code --force
+```
+
+Other useful flags:
+- `--dry-run` — Preview what would be installed without copying
+- `--global` — Install to `~/.claude/` or `~/.cursor/` (available in all projects)
+- `--interactive` — Pick workflow with fuzzy finder
+
 ## Starter Templates
 
 New to AI coding assistants? Start with a pre-configured template:
