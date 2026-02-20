@@ -6,8 +6,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from fotw.services.agents import AgentConfig, expand_tools, get_agent_config
 from fotw.services.catalog import REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
-from fotw.services.frontmatter_translator import translate_content, translate_to_claude
+from fotw.services.frontmatter_translator import translate_content, translate_to_target
 from fotw.ui.console import console, err_console
 from fotw.ui.diff import files_are_identical, show_diff
 
@@ -169,33 +170,32 @@ def _resolve_dir_conflict(ctx: InstallContext, target_dir: Path, source_dir: Pat
 # Tool directory resolution
 # ---------------------------------------------------------------------------
 
+def _get_agent_cfg(ctx: InstallContext) -> AgentConfig:
+    """Look up agent config for the context's tool, with fallback."""
+    cfg = get_agent_config(ctx.tool)
+    if cfg is None:
+        # Shouldn't happen — validated at command layer
+        raise ValueError(f"Unknown tool: {ctx.tool}")
+    return cfg
+
+
 def _base_dir(ctx: InstallContext) -> Path:
-    """Return the base tool directory (.claude/ or .cursor/)."""
+    """Return the base tool directory (e.g., .claude/, .cursor/, .github/)."""
+    cfg = _get_agent_cfg(ctx)
     if ctx.is_global:
-        home = Path.home()
-        return home / ".cursor" if ctx.tool == "cursor" else home / ".claude"
-    return ctx.target_repo / (".cursor" if ctx.tool == "cursor" else ".claude")
-
-
-def _rules_dir(ctx: InstallContext) -> Path:
-    return _base_dir(ctx) / "rules"
-
-
-def _skills_dir(ctx: InstallContext) -> Path:
-    return _base_dir(ctx) / "skills"
-
-
-def _agents_dir(ctx: InstallContext) -> Path:
-    return _base_dir(ctx) / "agents"
+        return Path.home() / cfg.config_dir
+    return ctx.target_repo / cfg.config_dir
 
 
 def _target_dir_for_type(ctx: InstallContext, wtype: str) -> Path:
+    cfg = _get_agent_cfg(ctx)
+    base = _base_dir(ctx)
     if wtype == "rules":
-        return _rules_dir(ctx)
+        return base / cfg.rules_subdir
     elif wtype == "skills":
-        return _skills_dir(ctx)
+        return base / cfg.skills_subdir
     elif wtype == "agents":
-        return _agents_dir(ctx)
+        return base / cfg.agents_subdir
     raise ValueError(f"Unknown workflow type: {wtype}")
 
 
@@ -223,24 +223,22 @@ def _find_source(wtype: str, name: str) -> Path | None:
     return None
 
 
-def _target_filename(source: Path, wtype: str, tool: str) -> str:
+def _target_filename(source: Path, wtype: str, cfg: AgentConfig) -> str:
     """Determine the target filename, handling extension translation."""
     if wtype == "rules":
-        if tool == "cursor":
-            # Keep .mdc for Cursor
-            if source.suffix == ".mdc":
-                return source.name
-            return source.stem + ".mdc"
-        else:
-            # Convert to .md for Claude
-            return source.stem + ".md"
+        return source.stem + cfg.rule_extension
     return source.name
 
 
-def _get_new_content(source: Path, wtype: str, tool: str) -> str:
+def _needs_translation(wtype: str, cfg: AgentConfig) -> bool:
+    """Check if the file needs frontmatter translation."""
+    return wtype == "rules" and cfg.frontmatter_format != "cursor"
+
+
+def _get_new_content(source: Path, wtype: str, cfg: AgentConfig) -> str:
     """Get the content that would be written to the target file."""
-    if wtype == "rules" and tool == "claude-code":
-        return translate_content(source)
+    if _needs_translation(wtype, cfg):
+        return translate_content(source, cfg.frontmatter_format)
     return source.read_text()
 
 
@@ -261,13 +259,26 @@ def install_single_workflow(
             err_console.print(f"[red]Error: {wtype[:-1].title()} not found: {name}[/red]")
         return False
 
+    cfg = _get_agent_cfg(ctx)
+
+    # Check if this workflow type is supported by the target agent
+    if wtype == "agents" and not cfg.supports_agents:
+        if not ctx.quiet:
+            console.print(f"  [dim]Skipped {wf_id} ({cfg.name} does not support agents)[/dim]")
+        return True
+
+    if wtype == "skills" and not cfg.supports_skills:
+        if not ctx.quiet:
+            console.print(f"  [dim]Skipped {wf_id} ({cfg.name} does not support skills)[/dim]")
+        return True
+
     target_dir = _target_dir_for_type(ctx, wtype)
     is_dir = source.is_dir()
 
     if is_dir:
         target_path = target_dir / name
     else:
-        target_name = _target_filename(source, wtype, ctx.tool)
+        target_name = _target_filename(source, wtype, cfg)
         target_path = target_dir / target_name
 
     # Info output
@@ -279,8 +290,8 @@ def install_single_workflow(
         console.print(f"Scope:    {scope}")
         console.print(f"Source:   {source}")
         console.print(f"Target:   {target_path}")
-        if wtype == "rules" and ctx.tool == "claude-code":
-            console.print("Note:     Frontmatter will be translated for Claude Code")
+        if _needs_translation(wtype, cfg):
+            console.print(f"Note:     Frontmatter will be translated for {cfg.name}")
         console.print()
 
     # Dry run
@@ -312,7 +323,7 @@ def install_single_workflow(
         return True
 
     # File install (rules, agents)
-    new_content = _get_new_content(source, wtype, ctx.tool)
+    new_content = _get_new_content(source, wtype, cfg)
 
     if not _resolve_conflict(ctx, target_path, new_content):
         if not ctx.quiet:
@@ -320,8 +331,8 @@ def install_single_workflow(
         return True  # Skip is not a failure
 
     target_dir.mkdir(parents=True, exist_ok=True)
-    if wtype == "rules" and ctx.tool == "claude-code":
-        translate_to_claude(source, target_path)
+    if _needs_translation(wtype, cfg):
+        translate_to_target(source, target_path, cfg.frontmatter_format)
         if not ctx.quiet:
             console.print(f"[green]\u2713[/green] Translated and installed {source.name} -> {target_path}")
     else:
@@ -421,13 +432,21 @@ def install_starter(tier: str, ctx: InstallContext) -> bool:
 
     # Determine targets based on tool
     targets: list[Path] = []
-    if ctx.tool in ("claude-code", "both"):
+    if ctx.tool == "both":
+        # Special case: install for both claude-code and cursor
         if ctx.to_claude_dir:
             targets.append(ctx.target_repo / ".claude" / "CLAUDE.md")
         else:
             targets.append(ctx.target_repo / "CLAUDE.md")
-    if ctx.tool in ("cursor", "both"):
         targets.append(ctx.target_repo / "AGENTS.md")
+    else:
+        cfg = get_agent_config(ctx.tool)
+        if cfg:
+            starter_name = cfg.starter_filename
+            if ctx.to_claude_dir and ctx.tool == "claude-code":
+                targets.append(ctx.target_repo / cfg.config_dir / starter_name)
+            else:
+                targets.append(ctx.target_repo / starter_name)
 
     # Info
     console.print()
@@ -460,15 +479,10 @@ def install_starter(tier: str, ctx: InstallContext) -> bool:
         shutil.copy2(source, t)
         console.print(f"[green]\u2713[/green] Installed {t.name}")
 
+    tools_to_install = expand_tools(ctx.tool)
+
     # Full tier gets personas
     if tier == "full":
-        # Personas for each tool target
-        tools_to_install = []
-        if ctx.tool in ("claude-code", "both"):
-            tools_to_install.append("claude-code")
-        if ctx.tool in ("cursor", "both"):
-            tools_to_install.append("cursor")
-
         for t in tools_to_install:
             persona_ctx = InstallContext(
                 tool=t,
@@ -480,24 +494,20 @@ def install_starter(tier: str, ctx: InstallContext) -> bool:
             )
             install_personas(persona_ctx)
 
-        # Show persona summary (install_personas already did the work quietly)
+        # Show persona summary
         persona_source = STARTERS_DIR / "personas"
         persona_count = sum(1 for p in persona_source.glob("*.md") if p.name != "_template.md")
-        base = _base_dir(ctx)
-        console.print(f"[green]\u2713[/green] Installed {persona_count} personas to {base / 'personas'}/")
+        for t in tools_to_install:
+            cfg = get_agent_config(t)
+            if cfg:
+                base = ctx.target_repo / cfg.config_dir
+                console.print(f"[green]\u2713[/green] Installed {persona_count} personas to {base / 'personas'}/")
 
     # Bundle tier rules
     rules = TIER_RULES.get(tier, [])
     if rules:
         console.print()
         console.print(f"Bundled rules for {tier} tier: {' '.join(rules)}")
-        # Install rules for each tool target
-        tools_to_install = []
-        if ctx.tool in ("claude-code", "both"):
-            tools_to_install.append("claude-code")
-        if ctx.tool in ("cursor", "both"):
-            tools_to_install.append("cursor")
-
         for t in tools_to_install:
             rule_ctx = InstallContext(
                 tool=t,
@@ -514,7 +524,7 @@ def install_starter(tier: str, ctx: InstallContext) -> bool:
     # Next steps
     console.print()
     console.print("Next steps:")
-    console.print(f"  1. Edit the starter file(s) to fill in your project details")
+    console.print("  1. Edit the starter file(s) to fill in your project details")
     console.print(f"  2. Install workflows: ./bin/install skills/code-review {ctx.target_repo} --for claude-code")
     if tier == "full":
         console.print(f"  3. Switch personas: ./bin/install skills/switch-persona {ctx.target_repo} --for claude-code")

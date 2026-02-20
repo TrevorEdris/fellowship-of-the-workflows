@@ -5,6 +5,7 @@ from typing import Optional
 
 import typer
 
+from fotw.services.agents import is_valid_tool, list_tools
 from fotw.services.installer import (
     InstallContext,
     InstallQuit,
@@ -14,9 +15,6 @@ from fotw.services.installer import (
     install_starter,
 )
 from fotw.ui.console import console, err_console
-
-VALID_TOOLS = ("cursor", "claude-code")
-VALID_STARTER_TOOLS = ("cursor", "claude-code", "both")
 
 
 def _normalize_workflow_id(wf_id: str) -> str:
@@ -100,9 +98,9 @@ def _install_cmd_inner(
 
     # --- Personas standalone ---
     if workflow_id == "personas":
-        if for_tool not in VALID_TOOLS:
-            err_console.print(f"[red]Error: Invalid tool for personas: {for_tool}[/red]")
-            err_console.print(f"Supported: {', '.join(VALID_TOOLS)}")
+        if not is_valid_tool(for_tool):
+            err_console.print(f"[red]Error: Invalid tool: {for_tool}[/red]")
+            err_console.print(f"Supported: {', '.join(list_tools())}")
             raise typer.Exit(1)
 
         if not target_repo and not global_install:
@@ -136,9 +134,9 @@ def _install_cmd_inner(
             err_console.print(f"[red]Error: Target does not exist: {resolved_target}[/red]")
             raise typer.Exit(1)
 
-        if for_tool not in VALID_STARTER_TOOLS:
-            err_console.print(f"[red]Error: Invalid tool for starters: {for_tool}[/red]")
-            err_console.print(f"Supported: {', '.join(VALID_STARTER_TOOLS)}")
+        if not is_valid_tool(for_tool):
+            err_console.print(f"[red]Error: Invalid tool: {for_tool}[/red]")
+            err_console.print(f"Supported: {', '.join(list_tools())}, both")
             raise typer.Exit(1)
 
         ctx = InstallContext(
@@ -152,10 +150,10 @@ def _install_cmd_inner(
             raise typer.Exit(1)
         return
 
-    # --- From here on, --for must be cursor or claude-code ---
-    if for_tool not in VALID_TOOLS:
+    # --- From here on, --for must be a valid agent target ---
+    if not is_valid_tool(for_tool):
         err_console.print(f"[red]Error: Invalid tool: {for_tool}[/red]")
-        err_console.print(f"Supported: {', '.join(VALID_TOOLS)}")
+        err_console.print(f"Supported: {', '.join(list_tools())}")
         raise typer.Exit(1)
 
     # --- Install all ---

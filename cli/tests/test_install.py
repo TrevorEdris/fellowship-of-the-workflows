@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from fotw.services.agents import ALL_AGENTS, get_agent_config, is_valid_tool
 from fotw.services.frontmatter_translator import translate_content
 from fotw.services.installer import (
     InstallContext,
@@ -220,3 +221,117 @@ def test_files_are_identical():
     assert files_are_identical("hello\n", "hello\n")
     assert files_are_identical("hello\n", "hello")  # Trailing whitespace ignored
     assert not files_are_identical("hello\n", "world\n")
+
+
+# --- Agent configs ---
+
+
+def test_agent_config_all_agents():
+    """All expected agent targets are configured."""
+    expected = {"claude-code", "cursor", "copilot", "codex", "windsurf", "roo", "gemini", "goose", "universal"}
+    assert expected == set(ALL_AGENTS.keys())
+
+
+def test_is_valid_tool():
+    assert is_valid_tool("claude-code")
+    assert is_valid_tool("copilot")
+    assert is_valid_tool("windsurf")
+    assert not is_valid_tool("unknown-tool")
+
+
+# --- Multi-agent install ---
+
+
+def test_install_rule_copilot(tmp_target: Path):
+    """Install a rule for copilot creates .github/instructions/<name>.instructions.md."""
+    ctx = InstallContext(tool="copilot", target_repo=tmp_target, force=True, quiet=True)
+    assert install_single_workflow("rules/git-safety", ctx)
+    target = tmp_target / ".github" / "instructions" / "git-safety.instructions.md"
+    assert target.is_file()
+    content = target.read_text()
+    assert "applyTo:" in content  # Copilot frontmatter
+    assert "globs:" not in content
+
+
+def test_install_rule_codex(tmp_target: Path):
+    """Install a rule for codex creates .codex/rules/<name>.md."""
+    ctx = InstallContext(tool="codex", target_repo=tmp_target, force=True, quiet=True)
+    assert install_single_workflow("rules/git-safety", ctx)
+    target = tmp_target / ".codex" / "rules" / "git-safety.md"
+    assert target.is_file()
+
+
+def test_install_rule_windsurf(tmp_target: Path):
+    """Install a rule for windsurf creates .windsurf/rules/<name>.md."""
+    ctx = InstallContext(tool="windsurf", target_repo=tmp_target, force=True, quiet=True)
+    assert install_single_workflow("rules/git-safety", ctx)
+    target = tmp_target / ".windsurf" / "rules" / "git-safety.md"
+    assert target.is_file()
+
+
+def test_copilot_skips_agents(tmp_target: Path):
+    """Copilot does not support agents — should skip gracefully."""
+    ctx = InstallContext(tool="copilot", target_repo=tmp_target, force=True, quiet=True)
+    assert install_single_workflow("agents/pragmatic-code-review", ctx)
+    # Should not create the file
+    agents_dir = tmp_target / ".github" / "agents"
+    assert not agents_dir.exists()
+
+
+def test_install_all_copilot(tmp_target: Path):
+    """--all for copilot installs rules and skills but not agents."""
+    ctx = InstallContext(tool="copilot", target_repo=tmp_target, force=True, quiet=True)
+    assert install_all(ctx)
+    assert (tmp_target / ".github" / "instructions").is_dir()
+    assert (tmp_target / ".github" / "skills").is_dir()
+    # No agents directory for copilot
+    assert not (tmp_target / ".github" / "agents").exists()
+
+
+def test_install_starter_copilot(tmp_target: Path):
+    """Starter for copilot creates AGENTS.md."""
+    ctx = InstallContext(tool="copilot", target_repo=tmp_target, force=True)
+    assert install_starter("minimal", ctx)
+    assert (tmp_target / "AGENTS.md").is_file()
+    assert (tmp_target / ".github" / "instructions" / "git-safety.instructions.md").is_file()
+
+
+def test_install_starter_both(tmp_target: Path):
+    """Starter for 'both' creates CLAUDE.md and AGENTS.md with rules."""
+    ctx = InstallContext(tool="both", target_repo=tmp_target, force=True)
+    assert install_starter("minimal", ctx)
+    assert (tmp_target / "CLAUDE.md").is_file()
+    assert (tmp_target / "AGENTS.md").is_file()
+    assert (tmp_target / ".claude" / "rules" / "git-safety.md").is_file()
+    assert (tmp_target / ".cursor" / "rules" / "git-safety.mdc").is_file()
+
+
+def test_install_starter_both_full(tmp_target: Path):
+    """Full starter for 'both' installs personas for both tools."""
+    ctx = InstallContext(tool="both", target_repo=tmp_target, force=True)
+    assert install_starter("full", ctx)
+    assert (tmp_target / ".claude" / "personas").is_dir()
+    assert (tmp_target / ".cursor" / "personas").is_dir()
+
+
+def test_translate_content_copilot():
+    """Copilot translation uses applyTo field."""
+    rule = WORKFLOWS_DIR / "rules" / "git-safety.mdc"
+    if not rule.exists():
+        pytest.skip("git-safety.mdc not found")
+    content = translate_content(rule, fmt="copilot")
+    assert "applyTo:" in content
+    assert "globs:" not in content
+    assert "paths:" not in content
+
+
+def test_translate_content_generic():
+    """Generic translation has description only, no file-pattern fields."""
+    rule = WORKFLOWS_DIR / "rules" / "git-safety.mdc"
+    if not rule.exists():
+        pytest.skip("git-safety.mdc not found")
+    content = translate_content(rule, fmt="generic")
+    assert "description:" in content
+    assert "globs:" not in content
+    assert "paths:" not in content
+    assert "applyTo:" not in content
