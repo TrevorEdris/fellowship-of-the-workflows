@@ -55,7 +55,9 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         *)
-            shift
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Run 'validate --help' for usage."
+            exit 1
             ;;
     esac
 done

@@ -41,16 +41,42 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -T|--type)
+            if [[ $# -lt 2 ]]; then
+                echo -e "${RED}Error: --type requires a value${NC}"
+                echo "Valid types: rule, skill, agent, starter, persona"
+                exit 1
+            fi
             type_filter="$2"
             shift 2
             ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
-            show_help
+            echo "Run 'list --help' for usage."
             exit 1
             ;;
     esac
 done
+
+# Normalize plural to singular (rules -> rule, skills -> skill, etc.)
+case "$type_filter" in
+    rules)    type_filter="rule" ;;
+    skills)   type_filter="skill" ;;
+    agents)   type_filter="agent" ;;
+    starters) type_filter="starter" ;;
+    personas) type_filter="persona" ;;
+esac
+
+# Validate --type value
+if [[ -n "$type_filter" ]]; then
+    case "$type_filter" in
+        rule|skill|agent|starter|persona) ;;
+        *)
+            echo -e "${RED}Unknown type: $type_filter${NC}"
+            echo "Valid types: rule, skill, agent, starter, persona"
+            exit 1
+            ;;
+    esac
+fi
 
 echo ""
 echo -e "${BOLD}Available Workflows${NC}"

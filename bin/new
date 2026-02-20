@@ -67,8 +67,8 @@ done
 
 if [[ -z "$workflow_path" ]]; then
     echo -e "${RED}Error: Workflow path required${NC}"
-    echo ""
-    show_help
+    echo "Example: new rule/my-rule, new skill/my-skill"
+    echo "Run 'new --help' for full usage."
     exit 1
 fi
 
@@ -77,12 +77,20 @@ IFS='/' read -ra parts <<< "$workflow_path"
 
 if [[ ${#parts[@]} -lt 2 ]]; then
     echo -e "${RED}Error: Invalid workflow path. Expected format: type/name${NC}"
-    show_help
+    echo "Example: new rule/my-rule, new skill/my-skill"
+    echo "Run 'new --help' for full usage."
     exit 1
 fi
 
 wtype="${parts[0]}"
 name="${parts[1]}"
+
+# Normalize plural to singular
+case "$wtype" in
+    rules)  wtype="rule" ;;
+    skills) wtype="skill" ;;
+    agents) wtype="agent" ;;
+esac
 
 # Validate type
 case "$wtype" in
@@ -94,6 +102,28 @@ case "$wtype" in
         exit 1
         ;;
 esac
+
+# Check for existing workflow (duplicate detection)
+exists=false
+case "$wtype" in
+    rule)  [[ -f "$WORKFLOWS_DIR/rules/$name.mdc" ]] || [[ -f "$WORKFLOWS_DIR/rules/$name.md" ]] && exists=true ;;
+    skill) [[ -d "$WORKFLOWS_DIR/skills/$name" ]] && exists=true ;;
+    agent) [[ -f "$WORKFLOWS_DIR/agents/$name.md" ]] && exists=true ;;
+esac
+
+if $exists; then
+    echo -e "${YELLOW}Warning: $wtype/$name already exists${NC}"
+    if $skip_prompts; then
+        echo "Overwriting (--yes)."
+    else
+        read -p "Overwrite? [y/N] " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Aborted."
+            exit 0
+        fi
+    fi
+fi
 
 # Get metadata from user
 if $skip_prompts; then

@@ -15,9 +15,9 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 
 # List available workflows
 ./bin/list                   # All workflows
-./bin/list --skills          # Skills only
-./bin/list --rules           # Rules only
-./bin/list --agents          # Agents only
+./bin/list --type skill      # Skills only
+./bin/list --type rule       # Rules only
+./bin/list --type agent      # Agents only
 
 # Create new workflows
 ./bin/new skill/my-skill     # New skill package

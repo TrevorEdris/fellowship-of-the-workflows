@@ -751,6 +751,11 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --for)
+            if [[ $# -lt 2 ]]; then
+                echo -e "${RED}Error: --for requires a value${NC}"
+                echo "Options: --for claude-code, --for cursor"
+                exit 1
+            fi
             for_tool="$2"
             shift 2
             ;;
@@ -773,14 +778,23 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Normalize singular/plural in workflow_id (rule/ -> rules/, skill/ -> skills/, etc.)
+if [[ -n "$workflow_id" ]]; then
+    case "$workflow_id" in
+        rule/*)    workflow_id="rules/${workflow_id#rule/}" ;;
+        skill/*)   workflow_id="skills/${workflow_id#skill/}" ;;
+        agent/*)   workflow_id="agents/${workflow_id#agent/}" ;;
+        starter/*) workflow_id="starters/${workflow_id#starter/}" ;;
+    esac
+fi
+
 # Handle personas standalone install
 if [[ "$workflow_id" == "personas" ]]; then
     # Require --for flag
     if [[ -z "$for_tool" ]]; then
         echo -e "${RED}Error: --for <tool> is required${NC}"
         echo "Options: --for claude-code, --for cursor"
-        echo ""
-        show_help
+        echo "Run 'install --help' for full usage."
         exit 1
     fi
 
@@ -794,8 +808,7 @@ if [[ "$workflow_id" == "personas" ]]; then
     # Require target repo or global
     if [[ -z "$target_repo" ]] && [[ "$global_install" != "true" ]]; then
         echo -e "${RED}Error: target-repo is required (or use --global)${NC}"
-        echo ""
-        show_help
+        echo "Run 'install --help' for full usage."
         exit 1
     fi
 
@@ -823,8 +836,7 @@ if [[ "$workflow_id" == starters/* ]]; then
 
     if [[ -z "$target_repo" ]]; then
         echo -e "${RED}Error: target-repo is required for starters${NC}"
-        echo ""
-        show_help
+        echo "Run 'install --help' for full usage."
         exit 1
     fi
 
@@ -837,8 +849,7 @@ if [[ "$workflow_id" == starters/* ]]; then
     if [[ -z "$for_tool" ]]; then
         echo -e "${RED}Error: --for <tool> is required for starters${NC}"
         echo "Options: --for claude-code, --for cursor, --for both"
-        echo ""
-        show_help
+        echo "Run 'install --help' for full usage."
         exit 1
     fi
 
@@ -861,8 +872,8 @@ fi
 # Validate --for is provided (required for workflows, not starters)
 if [[ -z "$for_tool" ]]; then
     echo -e "${RED}Error: --for <tool> is required${NC}"
-    echo ""
-    show_help
+    echo "Options: --for claude-code, --for cursor"
+    echo "Run 'install --help' for full usage."
     exit 1
 fi
 
@@ -887,15 +898,13 @@ else
     # Validate target_repo for non-global installs
     if [[ -z "$target_repo" ]] && ! $interactive && ! $install_all; then
         echo -e "${RED}Error: target-repo is required (or use --global)${NC}"
-        echo ""
-        show_help
+        echo "Run 'install --help' for full usage."
         exit 1
     fi
 
     if [[ -z "$target_repo" ]] && $install_all; then
         echo -e "${RED}Error: target-repo is required with --all (or use --global)${NC}"
-        echo ""
-        show_help
+        echo "Run 'install --help' for full usage."
         exit 1
     fi
 
@@ -915,7 +924,7 @@ fi
 if $interactive; then
     if ! $global_install && [[ -z "$target_repo" ]]; then
         echo -e "${RED}Error: Target repository required (or use --global)${NC}"
-        show_help
+        echo "Run 'install --help' for full usage."
         exit 1
     fi
     
@@ -932,8 +941,8 @@ fi
 # Validate workflow_id
 if [[ -z "$workflow_id" ]]; then
     echo -e "${RED}Error: workflow-id is required${NC}"
-    echo ""
-    show_help
+    echo "Example: install rules/ai-session ~/my-repo --for claude-code"
+    echo "Run 'install --help' for full usage."
     exit 1
 fi
 
