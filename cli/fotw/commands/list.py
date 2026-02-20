@@ -5,6 +5,7 @@ from typing import Optional
 
 import typer
 
+from fotw.models.workflow import _PLURAL_MAP
 from fotw.services.catalog import scan_all, scan_personas, scan_starters
 from fotw.ui.console import console, err_console
 from fotw.ui.tables import print_workflows
@@ -14,14 +15,7 @@ VALID_TYPES = ("rule", "skill", "agent", "starter", "persona")
 
 def _normalize_type(value: str) -> str:
     """Normalize plural to singular."""
-    mapping = {
-        "rules": "rule",
-        "skills": "skill",
-        "agents": "agent",
-        "starters": "starter",
-        "personas": "persona",
-    }
-    return mapping.get(value, value)
+    return _PLURAL_MAP.get(value, value)
 
 
 def list_cmd(

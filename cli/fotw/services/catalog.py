@@ -1,5 +1,6 @@
 """Scan and parse the workflow catalog from disk."""
 
+import os
 from pathlib import Path
 
 import frontmatter
@@ -14,7 +15,14 @@ from fotw.models.workflow import (
 
 
 def _repo_root() -> Path:
-    """Find the repository root (parent of cli/)."""
+    """Find the repository root (parent of cli/).
+
+    Supports FOTW_REPO_ROOT env var for testing and non-standard layouts.
+    """
+    env_root = os.environ.get("FOTW_REPO_ROOT")
+    if env_root:
+        return Path(env_root).resolve()
+
     here = Path(__file__).resolve()
     # Walk up until we find bin/ directory (repo root marker)
     for parent in here.parents:
