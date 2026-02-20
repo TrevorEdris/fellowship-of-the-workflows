@@ -141,9 +141,8 @@ writing-clearly-and-concisely/
 
 ## Installation
 
-**Claude Code:**
 ```bash
-cp -r skills/writing-clearly-and-concisely ~/.claude/skills/
+./bin/fotw install skills/writing-clearly-and-concisely ~/my-project --for claude-code
 ```
 
 **Claude.ai:**

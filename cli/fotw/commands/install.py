@@ -5,7 +5,7 @@ from typing import Optional
 
 import typer
 
-from fotw.services.agents import is_valid_tool, list_tools
+from fotw.services.agents import BOTH_TARGET, expand_tools, is_valid_tool, list_tools
 from fotw.services.installer import (
     InstallContext,
     InstallQuit,
@@ -39,7 +39,7 @@ def install_cmd(
         None, help="Path to target repository"
     ),
     for_tool: str = typer.Option(
-        ..., "--for", help="Target tool: cursor, claude-code, or both (starters only)"
+        ..., "--for", help="Target tool (e.g., claude-code, cursor, copilot, codex, windsurf, roo, gemini, goose, universal, both)"
     ),
     all_workflows: bool = typer.Option(
         False, "--all", "-a", help="Install all available workflows"
@@ -100,7 +100,7 @@ def _install_cmd_inner(
     if workflow_id == "personas":
         if not is_valid_tool(for_tool):
             err_console.print(f"[red]Error: Invalid tool: {for_tool}[/red]")
-            err_console.print(f"Supported: {', '.join(list_tools())}")
+            err_console.print(f"Supported: {', '.join(list_tools())}, both")
             raise typer.Exit(1)
 
         if not target_repo and not global_install:
@@ -156,6 +156,9 @@ def _install_cmd_inner(
         err_console.print(f"Supported: {', '.join(list_tools())}")
         raise typer.Exit(1)
 
+    # Expand "both" into individual tools for non-starter paths
+    tools = expand_tools(for_tool)
+
     # --- Install all ---
     if all_workflows:
         if not target_repo and not global_install:
@@ -166,11 +169,15 @@ def _install_cmd_inner(
             err_console.print(f"[red]Error: Target does not exist: {resolved_target}[/red]")
             raise typer.Exit(1)
 
-        ctx = InstallContext(
-            tool=for_tool, target_repo=resolved_target,
-            is_global=global_install, dry_run=dry_run, force=force,
-        )
-        if not install_all(ctx):
+        any_failed = False
+        for t in tools:
+            ctx = InstallContext(
+                tool=t, target_repo=resolved_target,
+                is_global=global_install, dry_run=dry_run, force=force,
+            )
+            if not install_all(ctx):
+                any_failed = True
+        if any_failed:
             raise typer.Exit(1)
         return
 
@@ -188,12 +195,13 @@ def _install_cmd_inner(
         err_console.print(f"[red]Error: Target does not exist: {resolved_target}[/red]")
         raise typer.Exit(1)
 
-    ctx = InstallContext(
-        tool=for_tool, target_repo=resolved_target,
-        is_global=global_install, dry_run=dry_run, force=force,
-    )
-    if install_single_workflow(workflow_id, ctx):
-        console.print()
-        console.print("[green]Installation complete![/green]")
-    else:
-        raise typer.Exit(1)
+    for t in tools:
+        ctx = InstallContext(
+            tool=t, target_repo=resolved_target,
+            is_global=global_install, dry_run=dry_run, force=force,
+        )
+        if install_single_workflow(workflow_id, ctx):
+            console.print()
+            console.print("[green]Installation complete![/green]")
+        else:
+            raise typer.Exit(1)

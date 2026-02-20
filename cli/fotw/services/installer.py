@@ -525,9 +525,9 @@ def install_starter(tier: str, ctx: InstallContext) -> bool:
     console.print()
     console.print("Next steps:")
     console.print("  1. Edit the starter file(s) to fill in your project details")
-    console.print(f"  2. Install workflows: ./bin/install skills/code-review {ctx.target_repo} --for claude-code")
+    console.print(f"  2. Install workflows: ./bin/fotw install skills/code-review {ctx.target_repo} --for {tools_to_install[0]}")
     if tier == "full":
-        console.print(f"  3. Switch personas: ./bin/install skills/switch-persona {ctx.target_repo} --for claude-code")
+        console.print(f"  3. Switch personas: ./bin/fotw install skills/switch-persona {ctx.target_repo} --for {tools_to_install[0]}")
 
     return True
 

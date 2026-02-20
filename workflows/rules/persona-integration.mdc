@@ -6,7 +6,7 @@ alwaysApply: false
 
 ## Persona System
 
-If a persona config exists (`.claude/persona.yaml` or `.cursor/persona.yaml`), adopt that persona's voice and style.
+If a persona config exists (`.<tool>/persona.yaml`, e.g., `.claude/persona.yaml` or `.cursor/persona.yaml`), adopt that persona's voice and style.
 
 ### Config Format
 ```yaml

@@ -134,10 +134,10 @@ Add personality to your AI assistant with themed personas. Each persona provides
 1. **Add the integration snippet** to your CLAUDE.md/AGENTS.md:
    - Copy content from `snippets/persona-integration.md`
 
-2. **Create a config file** in your project:
+2. **Create a config file** in your tool's config directory:
    ```yaml
-   # .claude/persona.yaml (for Claude Code)
-   # .cursor/persona.yaml (for Cursor)
+   # .<tool>/persona.yaml
+   # e.g., .claude/persona.yaml, .cursor/persona.yaml, .windsurf/persona.yaml
 
    persona: gandalf
    intensity: noticeable

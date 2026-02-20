@@ -169,7 +169,7 @@ setup_python_cli() {
     echo -e "${GREEN}✓${NC} fotw CLI installed (cli/.venv/)"
 }
 
-setup_python_cli || echo -e "${YELLOW}Warning: Python CLI setup failed. Bash bin/ scripts still work.${NC}"
+setup_python_cli || echo -e "${YELLOW}Warning: Python CLI setup failed. Run bootstrap again after installing Python 3.10+.${NC}"
 
 echo ""
 echo -e "${GREEN}All dependencies installed. Ready to go!${NC}"

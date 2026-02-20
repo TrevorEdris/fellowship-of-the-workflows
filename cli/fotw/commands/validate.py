@@ -4,7 +4,7 @@ from typing import Optional
 
 import typer
 from fotw.services.catalog import validate_all
-from fotw.ui.console import console
+from fotw.ui.console import console, err_console
 
 
 def validate_cmd(
@@ -24,10 +24,10 @@ def validate_cmd(
 
     for result in results:
         for err in result.errors:
-            console.print(f"[red]ERROR:[/red] {result.workflow_id}: {err}")
+            err_console.print(f"[red]ERROR:[/red] {result.workflow_id}: {err}")
             errors += 1
         for warn in result.warnings:
-            console.print(f"[yellow]WARNING:[/yellow] {result.workflow_id}: {warn}")
+            err_console.print(f"[yellow]WARNING:[/yellow] {result.workflow_id}: {warn}")
             warnings += 1
         if result.ok and not result.warnings and verbose:
             console.print(f"[green]\u2713[/green] {result.workflow_id}")

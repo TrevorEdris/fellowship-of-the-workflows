@@ -1,11 +1,10 @@
 """Tests for the install command and installer service."""
 
-import shutil
 from pathlib import Path
 
 import pytest
 
-from fotw.services.agents import ALL_AGENTS, get_agent_config, is_valid_tool
+from fotw.services.agents import ALL_AGENTS, is_valid_tool
 from fotw.services.frontmatter_translator import translate_content
 from fotw.services.installer import (
     InstallContext,
@@ -14,7 +13,7 @@ from fotw.services.installer import (
     install_single_workflow,
     install_starter,
 )
-from fotw.services.catalog import WORKFLOWS_DIR, STARTERS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR
 from fotw.ui.diff import files_are_identical
 
 

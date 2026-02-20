@@ -12,7 +12,7 @@ alwaysApply: true
 
 **Goal:** Understand the problem space without modifying code.
 
-- Prefer `/ask` mode for exploratory questions
+- Focus on exploratory questions before modifying anything
 - Do NOT edit repository files during this phase
 - Read and analyze relevant code, SDKs, APIs, and documentation
 - Capture all findings in `DISCOVERY.md`
@@ -27,7 +27,7 @@ alwaysApply: true
 
 **Goal:** Produce a concrete, reviewable implementation plan before writing any code.
 
-- Prefer `/plan` mode for structured planning
+- Focus on structured planning before writing code
 - Create `PLAN.md` with the following sections:
   - **Target repos and file paths** - explicit list of what will be touched
   - **Ordered implementation steps** - atomic, verifiable steps

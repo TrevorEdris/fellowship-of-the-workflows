@@ -1,5 +1,5 @@
 ---
-description: Maintain a session journal in ~/src/.ai/sessions/ for every Cursor CLI run.
+description: Maintain a session journal in ~/src/.ai/sessions/ for every AI coding session.
 globs: "**/*"
 alwaysApply: true
 ---

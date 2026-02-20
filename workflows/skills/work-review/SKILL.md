@@ -20,7 +20,7 @@ Review and summarize work accomplished over a specified time period by correlati
 
 For full functionality, configure Atlassian MCP with browser-based OAuth:
 
-1. Add to `~/.cursor/mcp.json`:
+1. Add to your tool's MCP config (e.g., `~/.claude/mcp.json`, `~/.cursor/mcp.json`):
    ```json
    {
      "mcpServers": {
@@ -32,7 +32,7 @@ For full functionality, configure Atlassian MCP with browser-based OAuth:
    }
    ```
 
-2. Restart Cursor
+2. Restart your AI tool
 3. On first use, authenticate via browser
 
 ### Git Access

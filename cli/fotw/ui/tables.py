@@ -24,10 +24,10 @@ def print_workflows(
     console.print("=" * 40)
     console.print()
     console.print(
-        "[cyan]Install workflows:[/cyan] ./bin/install <workflow-id> <target-repo> --for <cursor|claude-code>"
+        "[cyan]Install workflows:[/cyan] ./bin/fotw install <workflow-id> <target-repo> --for <tool>"
     )
     console.print(
-        "[cyan]Install starters:[/cyan]  ./bin/install starters/<tier> <target-repo> --for <cursor|claude-code|both>"
+        "[cyan]Install starters:[/cyan]  ./bin/fotw install starters/<tier> <target-repo> --for <tool>"
     )
     console.print()
 
@@ -52,7 +52,7 @@ def print_workflows(
                 table.add_row(p.name, _truncate(p.tagline))
             console.print(table)
             console.print()
-            console.print("  [cyan]Enable via:[/cyan] .claude/persona.yaml or .cursor/persona.yaml")
+            console.print("  [cyan]Enable via:[/cyan] .<tool>/persona.yaml (e.g., .claude/persona.yaml)")
             console.print()
 
     # Group workflows by type
