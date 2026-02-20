@@ -253,7 +253,7 @@ Check for existing persona installations in order:
 **If no location found:**
 - "No existing persona installation found."
 - "Would you like to install personas first?"
-- Suggest: `./bin/install personas --global --for claude-code`
+- Suggest: `./bin/fotw install personas --global --for claude-code`
 - Or offer to create the directory and save anyway
 
 ### Step 7: Save Persona

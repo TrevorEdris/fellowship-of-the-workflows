@@ -126,5 +126,5 @@ Claude: Persona disabled. Returning to standard professional responses.
 ## Notes
 
 - Persona changes take effect on the NEXT message (after config is saved)
-- If personas aren't installed, suggest: `./bin/install personas --global --for claude-code`
+- If personas aren't installed, suggest: `./bin/fotw install personas --global --for claude-code`
 - The skill reads from local personas directory if available, falls back to the list above

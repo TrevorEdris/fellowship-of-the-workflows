@@ -6,16 +6,16 @@ Thank you for contributing! This guide explains how to add new workflows.
 
 ```bash
 # Create a new skill
-./bin/new skill/my-skill
+./bin/fotw new skill/my-skill
 
 # Create a new rule
-./bin/new rule/my-rule
+./bin/fotw new rule/my-rule
 
 # Create a new agent
-./bin/new agent/my-agent
+./bin/fotw new agent/my-agent
 
 # Validate your changes
-./bin/validate
+./bin/fotw validate
 ```
 
 ## Adding Workflows
@@ -25,9 +25,9 @@ Thank you for contributing! This guide explains how to add new workflows.
 The easiest way to add a workflow is using the `new` script:
 
 ```bash
-./bin/new rule/code-style
-./bin/new skill/pr-review
-./bin/new agent/researcher
+./bin/fotw new rule/code-style
+./bin/fotw new skill/pr-review
+./bin/fotw new agent/researcher
 ```
 
 This will:
@@ -39,7 +39,7 @@ This will:
 
 #### Rules (`.mdc` files)
 
-Rules are stored in Cursor format and automatically translated when installing for Claude Code.
+Rules are stored in Cursor format and automatically translated when installing for other tools (Claude Code, Copilot, etc.).
 
 ```yaml
 ---
@@ -59,7 +59,7 @@ alwaysApply: false  # true = always applied, false = agent decides
 ---
 name: my-skill                    # Required: must match directory name
 description: "What this does"     # Required: when to use it
-# Cross-platform fields (work in both Cursor and Claude Code):
+# Cross-platform fields (work in all supported tools):
 context: fork                     # Optional: isolated subagent execution
 agent: my-agent                   # Optional: link to agent definition
 allowed-tools: Read, Grep         # Optional: restrict available tools
@@ -116,12 +116,12 @@ Modified files:
 ```
 ```
 
-The command executes at skill invocation time, injecting results into the prompt context. This works in both Cursor and Claude Code.
+The command executes at skill invocation time, injecting results into the prompt context.
 
 ### 5. Validate Before Committing
 
 ```bash
-./bin/validate
+./bin/fotw validate
 ```
 
 This checks:
