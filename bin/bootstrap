@@ -58,7 +58,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
-            show_help
+            echo "Run 'bootstrap --help' for usage."
             exit 1
             ;;
     esac
@@ -95,13 +95,39 @@ done
 
 echo ""
 
+# Check Python 3.10+
+python_ok=false
+if command -v python3 &> /dev/null; then
+    py_version=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    py_major=$(echo "$py_version" | cut -d. -f1)
+    py_minor=$(echo "$py_version" | cut -d. -f2)
+    if [[ "$py_major" -gt 3 ]] || { [[ "$py_major" -eq 3 ]] && [[ "$py_minor" -ge 10 ]]; }; then
+        echo -e "${GREEN}✓${NC} python3 ($py_version)"
+        python_ok=true
+    else
+        echo -e "${RED}✗${NC} python3 ($py_version — need 3.10+)"
+    fi
+else
+    echo -e "${RED}✗${NC} python3 (not installed)"
+fi
+
+# Check venv
+if [[ -f "$REPO_ROOT/cli/.venv/bin/python" ]]; then
+    echo -e "${GREEN}✓${NC} fotw CLI (cli/.venv/)"
+else
+    echo -e "${YELLOW}!${NC} fotw CLI (not installed — run bootstrap without --check)"
+fi
+
+echo ""
+
 # If check only, exit with appropriate code
 if $check_only; then
-    if [[ ${#missing[@]} -eq 0 ]]; then
+    if [[ ${#missing[@]} -eq 0 ]] && $python_ok; then
         echo "All dependencies installed."
         exit 0
     else
-        echo "Missing: ${missing[*]}"
+        [[ ${#missing[@]} -gt 0 ]] && echo "Missing brew: ${missing[*]}"
+        $python_ok || echo "Missing: Python 3.10+"
         exit 1
     fi
 fi
@@ -111,28 +137,66 @@ if $force; then
     missing=("${DEPS[@]}")
 fi
 
-# Install missing dependencies
+# Install missing brew dependencies
 if [[ ${#missing[@]} -eq 0 ]]; then
-    echo -e "${GREEN}All dependencies installed. Ready to go!${NC}"
-    exit 0
-fi
-
-echo "Missing: ${missing[*]}"
-echo ""
-read -p "Install missing dependencies? [y/N] " -n 1 -r
-echo ""
-
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborted."
-    exit 1
-fi
-
-echo ""
-for dep in "${missing[@]}"; do
-    echo "Installing $dep..."
-    brew install "$dep"
-    echo -e "${GREEN}✓${NC} $dep installed"
+    echo -e "${GREEN}All brew dependencies present.${NC}"
+else
+    echo "Missing: ${missing[*]}"
     echo ""
-done
+    read -p "Install missing dependencies? [y/N] " -n 1 -r
+    echo ""
 
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+
+    echo ""
+    for dep in "${missing[@]}"; do
+        echo "Installing $dep..."
+        brew install "$dep"
+        echo -e "${GREEN}✓${NC} $dep installed"
+        echo ""
+    done
+
+    echo -e "${GREEN}All brew dependencies installed.${NC}"
+fi
+
+# --- Python CLI setup ---
+setup_python_cli() {
+    echo ""
+    echo "Setting up fotw CLI..."
+    echo ""
+
+    # Reuse the python_ok flag from the top-level check
+    if ! $python_ok; then
+        echo -e "${RED}✗ Python 3.10+ not available. Skipping CLI setup.${NC}"
+        return 1
+    fi
+
+    # Create project-local venv
+    local VENV_DIR="$REPO_ROOT/cli/.venv"
+    if [[ ! -d "$VENV_DIR" ]] || $force; then
+        echo "Creating Python virtualenv at cli/.venv/..."
+        if command -v uv &>/dev/null; then
+            uv venv "$VENV_DIR"
+        else
+            python3 -m venv "$VENV_DIR"
+        fi
+        echo -e "${GREEN}✓${NC} venv created"
+    fi
+
+    # Install fotw package into venv
+    echo "Installing fotw CLI into venv..."
+    if command -v uv &>/dev/null; then
+        uv pip install --quiet -e "$REPO_ROOT/cli[dev]" -p "$VENV_DIR/bin/python"
+    else
+        "$VENV_DIR/bin/pip" install --quiet -e "$REPO_ROOT/cli[dev]"
+    fi
+    echo -e "${GREEN}✓${NC} fotw CLI installed (cli/.venv/)"
+}
+
+setup_python_cli || echo -e "${YELLOW}Warning: Python CLI setup failed. Bash bin/ scripts still work.${NC}"
+
+echo ""
 echo -e "${GREEN}All dependencies installed. Ready to go!${NC}"

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Fellowship of the Workflows - Unified CLI entry point
+# Delegates to the Python CLI package in cli/.venv/
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+VENV_PYTHON="$REPO_ROOT/cli/.venv/bin/python"
+
+if [[ ! -f "$VENV_PYTHON" ]]; then
+    echo "Error: fotw CLI not installed. Run ./bin/bootstrap first." >&2
+    exit 1
+fi
+
+exec "$VENV_PYTHON" -m fotw "$@"

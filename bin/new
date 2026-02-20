@@ -106,7 +106,7 @@ esac
 # Check for existing workflow (duplicate detection)
 exists=false
 case "$wtype" in
-    rule)  [[ -f "$WORKFLOWS_DIR/rules/$name.mdc" ]] || [[ -f "$WORKFLOWS_DIR/rules/$name.md" ]] && exists=true ;;
+    rule)  { [[ -f "$WORKFLOWS_DIR/rules/$name.mdc" ]] || [[ -f "$WORKFLOWS_DIR/rules/$name.md" ]]; } && exists=true ;;
     skill) [[ -d "$WORKFLOWS_DIR/skills/$name" ]] && exists=true ;;
     agent) [[ -f "$WORKFLOWS_DIR/agents/$name.md" ]] && exists=true ;;
 esac
