@@ -4,35 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Fellowship of the Workflows is a centralized repository for sharing AI agent workflows. It provides starter templates, reusable workflows (skills, rules, agents), and a persona system for both Cursor and Claude Code.
+Fellowship of the Workflows is a centralized repository for sharing AI agent workflows. It provides starter templates, reusable workflows (skills, rules, agents), and a persona system for 9 AI tool targets.
 
 ## Commands
 
 ```bash
 # Setup
-./bin/bootstrap              # Install deps (jq, fzf, yq)
+./bin/bootstrap              # Set up CLI (Python 3.10+ required)
 ./bin/bootstrap --check      # CI-friendly check only
 
 # List available workflows
-./bin/list                   # All workflows
-./bin/list --type skill      # Skills only
-./bin/list --type rule       # Rules only
-./bin/list --type agent      # Agents only
+./bin/fotw list              # All workflows
+./bin/fotw list --type skill # Skills only
+./bin/fotw list --json       # JSON output
 
 # Create new workflows
-./bin/new skill/my-skill     # New skill package
-./bin/new rule/my-rule       # New rule file
-./bin/new agent/my-agent     # New agent definition
+./bin/fotw new skill/my-skill     # New skill package
+./bin/fotw new rule/my-rule       # New rule file
+./bin/fotw new agent/my-agent     # New agent definition
 
 # Install to target project (prompts before overwriting)
-./bin/install starters/standard ~/project --for claude-code
-./bin/install skills/code-review ~/project --for claude-code
-./bin/install rules/ai-session --global --for cursor
-./bin/install skills/code-review ~/project --for claude-code --force  # Skip prompt
+./bin/fotw install starters/standard ~/project --for claude-code
+./bin/fotw install skills/code-review ~/project --for copilot
+./bin/fotw install rules/ai-session --global --for cursor
+./bin/fotw install --all ~/project --for claude-code --force  # Install everything
 
 # Validate before committing
-./bin/validate               # Check all workflows
-./bin/validate --verbose     # Show each file
+./bin/fotw validate          # Check all workflows
+./bin/fotw validate --verbose
 ```
 
 ## Architecture
@@ -110,13 +109,16 @@ The command executes at skill invocation, injecting results into the prompt.
 
 ### Installation Translation
 
-Rules stored in Cursor format (`.mdc`) are automatically translated when installing for Claude Code:
-- `globs` → `paths` (as array)
-- `alwaysApply: true` → `paths: ["**/*"]`
+Rules stored in Cursor format (`.mdc`) are automatically translated per target tool:
+- **Claude Code:** `globs` → `paths` (as array), `alwaysApply: true` → `paths: ["**/*"]`
+- **Copilot:** `globs` → `applyTo`, `alwaysApply: true` → `applyTo: "**"`
+- **Generic** (codex, windsurf, gemini, roo, goose, universal): description only
+
+Supported `--for` targets: claude-code, cursor, copilot, codex, windsurf, gemini, roo, goose, universal, both.
 
 ## Key Directories
 
-- `bin/` — CLI tools (bash scripts)
+- `bin/` — CLI wrapper scripts (delegate to Python CLI)
 - `workflows/` — Skills, rules, agents
 - `starters/` — CLAUDE.md/AGENTS.md templates
 - `starters/personas/` — 12 themed persona definitions
