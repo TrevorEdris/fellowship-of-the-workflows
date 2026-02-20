@@ -10,7 +10,7 @@ from fotw.services.agents import AgentConfig, expand_tools, get_agent_config
 from fotw.services.catalog import REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
 from fotw.services.frontmatter_translator import translate_content, translate_to_target
 from fotw.ui.console import console, err_console
-from fotw.ui.diff import files_are_identical, show_diff
+from fotw.ui.diff import files_are_identical, show_diff, show_dir_diff
 
 # ---------------------------------------------------------------------------
 # Conflict resolution
@@ -149,21 +149,28 @@ def _resolve_dir_conflict(ctx: InstallContext, target_dir: Path, source_dir: Pat
         console.print(f"  [yellow]Non-interactive: skipping {target_dir.name}/[/yellow]")
         return False
 
-    console.print(f"\n  [yellow]Conflict:[/yellow] {target_dir.name}/ already exists")
-    console.print(r"  \[o]verwrite  \[s]kip  \[O]verwrite-all  \[S]kip-all  \[q]uit")
-    choice = console.input(r"  Choice \[s]: ").strip().lower() or "s"
+    while True:
+        console.print(f"\n  [yellow]Conflict:[/yellow] {target_dir.name}/ already exists")
+        console.print(r"  \[o]verwrite  \[s]kip  \[d]iff  \[O]verwrite-all  \[S]kip-all  \[q]uit")
+        choice = console.input(r"  Choice \[s]: ").strip().lower() or "s"
 
-    if choice == "o":
-        return True
-    elif choice in ("oa", "overwrite-all"):
-        ctx.sticky_action = ConflictAction.OVERWRITE_ALL
-        return True
-    elif choice in ("sa", "skip-all"):
-        ctx.sticky_action = ConflictAction.SKIP_ALL
-        return False
-    elif choice == "q":
-        raise InstallQuit()
-    return False
+        if choice == "o":
+            return True
+        elif choice == "s":
+            return False
+        elif choice == "d":
+            show_dir_diff(target_dir, source_dir, target_dir.name)
+            # Loop to ask again after showing diff
+        elif choice in ("oa", "overwrite-all"):
+            ctx.sticky_action = ConflictAction.OVERWRITE_ALL
+            return True
+        elif choice in ("sa", "skip-all"):
+            ctx.sticky_action = ConflictAction.SKIP_ALL
+            return False
+        elif choice == "q":
+            raise InstallQuit()
+        else:
+            console.print(f"  [red]Unknown choice: {choice}[/red]")
 
 
 # ---------------------------------------------------------------------------

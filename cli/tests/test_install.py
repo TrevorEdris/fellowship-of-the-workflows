@@ -17,7 +17,7 @@ from fotw.services.installer import (
     install_starter,
 )
 from fotw.services.catalog import WORKFLOWS_DIR
-from fotw.ui.diff import files_are_identical, show_diff
+from fotw.ui.diff import files_are_identical, show_diff, show_dir_diff
 
 
 @pytest.fixture
@@ -423,3 +423,70 @@ def test_show_diff_identical_skips_pager():
     with patch("fotw.ui.diff.console") as mock_console:
         show_diff("same\n", "same\n", "test.md")
         mock_console.pager.assert_not_called()
+
+
+# --- Directory diff ---
+
+
+def test_show_dir_diff_uses_pager(tmp_path: Path):
+    """show_dir_diff should pipe output through console.pager()."""
+    existing = tmp_path / "existing"
+    existing.mkdir()
+    (existing / "file.md").write_text("old content\n")
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "file.md").write_text("new content\n")
+
+    with patch("fotw.ui.diff.console") as mock_console:
+        mock_console.pager.return_value.__enter__ = lambda self: self
+        mock_console.pager.return_value.__exit__ = lambda self, *a: None
+        show_dir_diff(existing, source, "test-skill")
+        mock_console.pager.assert_called_once_with(styles=True)
+
+
+def test_show_dir_diff_identical_dirs(tmp_path: Path):
+    """Identical directories should print 'identical' and skip the pager."""
+    existing = tmp_path / "existing"
+    existing.mkdir()
+    (existing / "file.md").write_text("same\n")
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "file.md").write_text("same\n")
+
+    with patch("fotw.ui.diff.console") as mock_console:
+        show_dir_diff(existing, source, "test-skill")
+        mock_console.pager.assert_not_called()
+        mock_console.print.assert_called_once()
+        assert "identical" in str(mock_console.print.call_args)
+
+
+def test_show_dir_diff_new_and_removed_files(tmp_path: Path):
+    """Directory diff handles files that only exist on one side."""
+    existing = tmp_path / "existing"
+    existing.mkdir()
+    (existing / "old-only.md").write_text("only in existing\n")
+    (existing / "shared.md").write_text("shared\n")
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "new-only.md").write_text("only in source\n")
+    (source / "shared.md").write_text("shared\n")
+
+    with patch("fotw.ui.diff.console") as mock_console:
+        mock_console.pager.return_value.__enter__ = lambda self: self
+        mock_console.pager.return_value.__exit__ = lambda self, *a: None
+        show_dir_diff(existing, source, "test-skill")
+        mock_console.pager.assert_called_once_with(styles=True)
+
+
+def test_dir_conflict_prompt_offers_diff():
+    """Directory conflict prompt must include [d]iff option."""
+    buf = StringIO()
+    test_console = Console(file=buf, force_terminal=False)
+    test_console.print(
+        r"  \[o]verwrite  \[s]kip  \[d]iff  \[O]verwrite-all  \[S]kip-all  \[q]uit"
+    )
+    output = buf.getvalue()
+    assert "[d]iff" in output
