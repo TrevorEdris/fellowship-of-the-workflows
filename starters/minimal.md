@@ -1,4 +1,4 @@
-# AGENTS.md
+# CLAUDE.md
 
 ## Project Overview
 
@@ -18,16 +18,3 @@
 # npm run dev        # Start dev server
 # npm test           # Run tests
 ```
-
-## Git Safety
-
-- Never push directly to `main` or `master` without explicit approval
-- Always check the current branch before making changes
-- Don't commit `.env` files or credentials
-
-## Output Style
-
-- Be concise. One sentence per insight.
-- Bullets over paragraphs
-- No filler phrases ("It's worth noting...", "Interestingly...")
-- State facts directly without preamble

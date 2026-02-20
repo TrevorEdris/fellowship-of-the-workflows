@@ -3,8 +3,6 @@
 from typing import Optional
 
 import typer
-from rich.table import Table
-
 from fotw.services.catalog import validate_all
 from fotw.ui.console import console
 

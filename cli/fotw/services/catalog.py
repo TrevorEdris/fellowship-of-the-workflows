@@ -116,23 +116,41 @@ def scan_starters() -> list[Starter]:
         return []
 
     tier_descs = {
-        "minimal": "Bare essentials (~25 lines)",
-        "standard": "Recommended defaults (~55 lines)",
-        "full": "Power user + persona system (~115 lines)",
+        "minimal": "Bare essentials (~20 lines)",
+        "standard": "Recommended defaults (~30 lines)",
+        "full": "Power user + persona system (~40 lines)",
     }
 
     results = []
+    seen_tiers = set()
+
+    # Check for new consolidated format (minimal.md, standard.md, full.md)
+    for tier_name in ("minimal", "standard", "full"):
+        path = STARTERS_DIR / f"{tier_name}.md"
+        if path.is_file():
+            seen_tiers.add(tier_name)
+            results.append(
+                Starter(
+                    tier=tier_name,
+                    description=tier_descs.get(tier_name, ""),
+                    path=path,
+                )
+            )
+
+    # Fall back to old paired format (CLAUDE.md.minimal, etc.)
     for path in sorted(STARTERS_DIR.iterdir()):
         if not path.name.startswith("CLAUDE.md."):
             continue
         tier = path.name.split(".")[-1]
-        results.append(
-            Starter(
-                tier=tier,
-                description=tier_descs.get(tier, ""),
-                path=path,
+        if tier not in seen_tiers:
+            results.append(
+                Starter(
+                    tier=tier,
+                    description=tier_descs.get(tier, ""),
+                    path=path,
+                )
             )
-        )
+
     return results
 
 

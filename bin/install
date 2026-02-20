@@ -48,9 +48,9 @@ The --for flag determines:
   - For starters: output filename (CLAUDE.md vs AGENTS.md)
 
 Starters:
-  starters/minimal   - Bare essentials (~25 lines)
-  starters/standard  - Recommended defaults (~55 lines)
-  starters/full      - Power user + persona system (~115 lines)
+  starters/minimal   - Bare essentials (~20 lines)
+  starters/standard  - Recommended defaults (~30 lines)
+  starters/full      - Power user + persona system (~40 lines)
                        (full tier automatically includes personas)
 
   --for claude-code  → Creates CLAUDE.md (Claude Code)
@@ -97,20 +97,25 @@ install_starter() {
     local is_dry_run="$5"
     local is_force="${6:-false}"
 
-    # Validate tier exists
-    if [[ ! -f "$STARTERS_DIR/CLAUDE.md.$tier" ]]; then
+    # Validate tier exists (support both old paired format and new consolidated format)
+    local source_file=""
+    if [[ -f "$STARTERS_DIR/$tier.md" ]]; then
+        source_file="$STARTERS_DIR/$tier.md"
+    elif [[ -f "$STARTERS_DIR/CLAUDE.md.$tier" ]]; then
+        source_file="$STARTERS_DIR/CLAUDE.md.$tier"
+    else
         echo -e "${RED}Error: Unknown starter tier: $tier${NC}"
         echo "Available tiers: minimal, standard, full"
         return 1
     fi
 
-    # Determine source and target based on tool
+    # Determine target filename based on tool
     local sources=()
     local targets=()
 
     case "$tool" in
         claude-code)
-            sources+=("$STARTERS_DIR/CLAUDE.md.$tier")
+            sources+=("$source_file")
             if [[ "$to_claude_dir" == "true" ]]; then
                 targets+=("$tgt_repo/.claude/CLAUDE.md")
             else
@@ -118,12 +123,12 @@ install_starter() {
             fi
             ;;
         cursor)
-            sources+=("$STARTERS_DIR/AGENTS.md.$tier")
+            sources+=("$source_file")
             targets+=("$tgt_repo/AGENTS.md")
             ;;
         both)
-            sources+=("$STARTERS_DIR/CLAUDE.md.$tier")
-            sources+=("$STARTERS_DIR/AGENTS.md.$tier")
+            sources+=("$source_file")
+            sources+=("$source_file")
             if [[ "$to_claude_dir" == "true" ]]; then
                 targets+=("$tgt_repo/.claude/CLAUDE.md")
             else
@@ -265,6 +270,9 @@ install_starter() {
         fi
     fi
 
+    # Install tier-appropriate rules
+    install_tier_rules "$tier" "$tgt_repo" "$tool" "$is_dry_run" "$is_force"
+
     echo ""
     echo "Next steps:"
     echo "  1. Edit the starter file(s) to fill in your project details"
@@ -274,6 +282,40 @@ install_starter() {
     fi
 
     return 0
+}
+
+# Install tier-appropriate rules alongside a starter
+install_tier_rules() {
+    local tier="$1"
+    local tgt_repo="$2"
+    local tool="$3"
+    local is_dry_run="$4"
+    local is_force="${5:-false}"
+
+    # Define tier -> rules mapping
+    local rules=()
+    case "$tier" in
+        minimal)
+            rules=("git-safety" "output-style")
+            ;;
+        standard)
+            rules=("git-safety" "output-style" "discover-plan-implement" "ai-session")
+            ;;
+        full)
+            rules=("git-safety" "output-style" "discover-plan-implement" "ai-session" "multi-repo-safety" "persona-integration")
+            ;;
+    esac
+
+    if [[ ${#rules[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    echo ""
+    echo "Bundled rules for $tier tier: ${rules[*]}"
+
+    for rule_name in "${rules[@]}"; do
+        install_single_workflow "rules/$rule_name" "$tgt_repo" "$tool" "false" "$is_dry_run" "$is_force" "true"
+    done
 }
 
 # Translate Cursor frontmatter to Claude Code format

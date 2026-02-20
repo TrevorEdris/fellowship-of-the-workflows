@@ -13,19 +13,20 @@ class WorkflowType(str, Enum):
     STARTER = "starter"
     PERSONA = "persona"
 
-    _PLURAL_MAP: dict[str, str] = {
-        "rules": "rule",
-        "skills": "skill",
-        "agents": "agent",
-        "starters": "starter",
-        "personas": "persona",
-    }
-
     @classmethod
     def from_str(cls, value: str) -> "WorkflowType":
         """Parse from string, accepting both singular and plural forms."""
-        normalized = cls._PLURAL_MAP.get(value, value)
+        normalized = _PLURAL_MAP.get(value, value)
         return cls(normalized)
+
+
+_PLURAL_MAP: dict[str, str] = {
+    "rules": "rule",
+    "skills": "skill",
+    "agents": "agent",
+    "starters": "starter",
+    "personas": "persona",
+}
 
 
 @dataclass

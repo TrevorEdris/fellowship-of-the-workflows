@@ -92,9 +92,9 @@ model: sonnet
 
 | Tier | Content |
 |------|---------|
-| `minimal` | Git safety, output style (~25 lines) |
-| `standard` | + Discover → Plan → Implement workflow (~55 lines) |
-| `full` | + Persona system, multi-repo safety (~115 lines) |
+| `minimal` | Git safety, output style (~20 lines) |
+| `standard` | + Discover → Plan → Implement workflow (~30 lines) |
+| `full` | + Persona system, multi-repo safety (~40 lines) |
 
 ### Dynamic Context Injection
 

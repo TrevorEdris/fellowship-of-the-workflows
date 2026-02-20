@@ -90,23 +90,23 @@ echo ""
 if [[ -z "$type_filter" ]] || [[ "$type_filter" == "starter" ]]; then
     if [[ -d "$STARTERS_DIR" ]]; then
         has_starters=false
-        for file in "$STARTERS_DIR"/CLAUDE.md.*; do
-            [[ -f "$file" ]] || continue
+        # Check for new consolidated starters (minimal.md, standard.md, full.md)
+        for tier in minimal standard full; do
+            if [[ -f "$STARTERS_DIR/$tier.md" ]] || [[ -f "$STARTERS_DIR/CLAUDE.md.$tier" ]]; then
+                if ! $has_starters; then
+                    echo -e "${BOLD}starters:${NC} (CLAUDE.md / AGENTS.md templates)"
+                    has_starters=true
+                fi
 
-            if ! $has_starters; then
-                echo -e "${BOLD}starters:${NC} (CLAUDE.md / AGENTS.md templates)"
-                has_starters=true
+                case "$tier" in
+                    minimal)  desc="Bare essentials (~20 lines)" ;;
+                    standard) desc="Recommended defaults (~30 lines)" ;;
+                    full)     desc="Power user + persona system (~40 lines)" ;;
+                    *)        desc="" ;;
+                esac
+
+                printf "  %-30s %s\n" "starters/$tier" "$desc"
             fi
-
-            tier="${file##*.}"
-            case "$tier" in
-                minimal)  desc="Bare essentials (~25 lines)" ;;
-                standard) desc="Recommended defaults (~55 lines)" ;;
-                full)     desc="Power user + persona system (~115 lines)" ;;
-                *)        desc="" ;;
-            esac
-
-            printf "  %-30s %s\n" "starters/$tier" "$desc"
         done
 
         if $has_starters; then

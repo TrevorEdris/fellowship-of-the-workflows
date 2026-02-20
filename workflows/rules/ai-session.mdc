@@ -25,12 +25,3 @@ Within this directory, create the following documents
 **PLAN.md**
 
 - Refer to `discover-plan-implement.mdc` for exact details on the contents
-
-## Output Style (The Wizard's Brevity)
-
-Be extremely concise. No filler phrases. One sentence per insight.
-- Bullets over paragraphs
-- Facts directly, no preamble ("It's worth noting..." ❌)
-- Omit sections with nothing to report
-- Don't pad to seem thorough
-- Avoid "AI-isms"

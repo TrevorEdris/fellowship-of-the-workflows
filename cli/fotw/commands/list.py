@@ -5,7 +5,6 @@ from typing import Optional
 
 import typer
 
-from fotw.models.workflow import WorkflowType
 from fotw.services.catalog import scan_all, scan_personas, scan_starters
 from fotw.ui.console import console, err_console
 from fotw.ui.tables import print_workflows
@@ -26,17 +25,17 @@ def _normalize_type(value: str) -> str:
 
 
 def list_cmd(
-    type: Optional[str] = typer.Option(
+    type_: Optional[str] = typer.Option(
         None, "--type", "-T", help="Filter by type (rule, skill, agent, starter, persona)"
     ),
     as_json: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """List available workflows and starters."""
     type_filter = None
-    if type is not None:
-        type_filter = _normalize_type(type)
+    if type_ is not None:
+        type_filter = _normalize_type(type_)
         if type_filter not in VALID_TYPES:
-            err_console.print(f"[red]Unknown type: {type}[/red]")
+            err_console.print(f"[red]Unknown type: {type_}[/red]")
             err_console.print(f"Valid types: {', '.join(VALID_TYPES)}")
             raise typer.Exit(1)
 

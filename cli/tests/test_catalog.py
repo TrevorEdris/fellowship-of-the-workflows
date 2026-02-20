@@ -1,5 +1,6 @@
 """Tests for catalog scanning."""
 
+from fotw.models.workflow import WorkflowType
 from fotw.services.catalog import (
     scan_agents,
     scan_all,
@@ -73,3 +74,17 @@ def test_validate_all_no_errors():
     results = validate_all()
     errors = [r for r in results if not r.ok]
     assert len(errors) == 0, f"Validation errors: {errors}"
+
+
+def test_workflow_type_from_str_singular():
+    assert WorkflowType.from_str("rule") == WorkflowType.RULE
+    assert WorkflowType.from_str("skill") == WorkflowType.SKILL
+    assert WorkflowType.from_str("agent") == WorkflowType.AGENT
+
+
+def test_workflow_type_from_str_plural():
+    assert WorkflowType.from_str("rules") == WorkflowType.RULE
+    assert WorkflowType.from_str("skills") == WorkflowType.SKILL
+    assert WorkflowType.from_str("agents") == WorkflowType.AGENT
+    assert WorkflowType.from_str("starters") == WorkflowType.STARTER
+    assert WorkflowType.from_str("personas") == WorkflowType.PERSONA

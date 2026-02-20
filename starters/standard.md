@@ -17,17 +17,14 @@
 # npm install        # Install dependencies
 # npm run dev        # Start dev server
 # npm test           # Run tests
+# npm run lint       # Lint code
 ```
 
-## Git Safety
+## Session Documentation
 
-- Never push directly to `main` or `master` without explicit approval
-- Always check the current branch before making changes
-- Don't commit `.env` files or credentials
+For non-trivial tasks, create a session directory: `.ai/sessions/YYYY-MM-DD_<description>/`
 
-## Output Style
-
-- Be concise. One sentence per insight.
-- Bullets over paragraphs
-- No filler phrases ("It's worth noting...", "Interestingly...")
-- State facts directly without preamble
+Maintain these files:
+- **SESSION.md** — Log of prompts, responses, decisions made
+- **DISCOVERY.md** — Technical analysis during discovery phase
+- **PLAN.md** — Implementation plan awaiting approval
