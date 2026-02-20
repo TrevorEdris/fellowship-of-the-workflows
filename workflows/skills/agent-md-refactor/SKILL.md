@@ -113,7 +113,7 @@ Organize remaining instructions into logical categories.
 ```
 project-root/
 ├── CLAUDE.md (or AGENTS.md)     # Minimal root with links
-└── .claude/                      # Or docs/agent-instructions/
+└── .<tool>/                      # e.g., .claude/, .cursor/, or docs/
     ├── typescript.md
     ├── testing.md
     ├── code-style.md
@@ -137,11 +137,11 @@ One-sentence description of the project.
 ## Detailed Instructions
 
 For specific guidelines, see:
-- [TypeScript Conventions](.claude/typescript.md)
-- [Testing Guidelines](.claude/testing.md)
-- [Code Style](.claude/code-style.md)
-- [Git Workflow](.claude/git-workflow.md)
-- [Architecture Patterns](.claude/architecture.md)
+- [TypeScript Conventions](<tool-config>/typescript.md)
+- [Testing Guidelines](<tool-config>/testing.md)
+- [Code Style](<tool-config>/code-style.md)
+- [Git Workflow](<tool-config>/git-workflow.md)
+- [Architecture Patterns](<tool-config>/architecture.md)
 ```
 
 **Each linked file template:**
@@ -266,9 +266,9 @@ React dashboard for real-time analytics visualization.
 - `pnpm build` - Production build
 
 ## Guidelines
-- [Code Style](.claude/code-style.md)
-- [Testing](.claude/testing.md)
-- [TypeScript](.claude/typescript.md)
+- [Code Style](<tool-config>/code-style.md)
+- [Testing](<tool-config>/testing.md)
+- [TypeScript](<tool-config>/typescript.md)
 ```
 
 ---

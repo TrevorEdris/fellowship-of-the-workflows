@@ -1,16 +1,20 @@
 # Snippet: Persona System Integration
 
-Add this section to your CLAUDE.md (or equivalent) to enable the persona system.
+Add this section to your agent instruction file (CLAUDE.md, AGENTS.md, etc.) to enable the persona system.
 
 ---
 
 ## Persona System
 
-If a persona config exists (`.claude/persona.yaml` or similar), adopt that persona's voice and style.
+If a persona config exists (`.<tool>/persona.yaml`, e.g., `.claude/persona.yaml`, `.cursor/persona.yaml`), adopt that persona's voice and style.
 
 ### Config Location
-- Claude Code: `.claude/persona.yaml`
-- Cursor: `.cursor/persona.yaml`
+
+Create `persona.yaml` in your tool's config directory:
+- `.claude/persona.yaml` (Claude Code)
+- `.cursor/persona.yaml` (Cursor)
+- `.windsurf/persona.yaml` (Windsurf)
+- Or the equivalent directory for your AI tool
 
 ### Config Format
 ```yaml
@@ -30,7 +34,7 @@ intensity: noticeable  # off | minimal | noticeable | excessive
 ### Implementation Notes
 
 When a persona is active:
-1. **Read the persona file** from `starters/personas/{persona}.md`
+1. **Read the persona file** from the installed personas directory (e.g., `.<tool>/personas/{persona}.md`)
 2. **Use static elements consistently:** Phase names and severity levels should always match the persona's definitions
 3. **Generate dynamic quips:** Don't repeat canned quotes. Use the Voice Guide and Contextual Guidance to generate fresh, contextually appropriate responses in character
 4. **Match intensity:** At `minimal`, only flavor key moments. At `excessive`, go full method actor.

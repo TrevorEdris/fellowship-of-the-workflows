@@ -69,8 +69,8 @@ Generates the new file hierarchy with properly linked documentation:
 
 ```
 project-root/
-├── CLAUDE.md              # Minimal root with links
-└── .claude/               # Categorized instructions
+├── CLAUDE.md (or AGENTS.md)  # Minimal root with links
+└── .<tool>/                   # e.g., .claude/, .cursor/, or docs/
     ├── typescript.md
     ├── testing.md
     ├── code-style.md
@@ -142,9 +142,9 @@ One-sentence description of the project.
 
 ## Detailed Instructions
 
-- [TypeScript Conventions](.claude/typescript.md)
-- [Testing Guidelines](.claude/testing.md)
-- [Code Style](.claude/code-style.md)
+- [TypeScript Conventions](<tool-config>/typescript.md)
+- [Testing Guidelines](<tool-config>/testing.md)
+- [Code Style](<tool-config>/code-style.md)
 ```
 
 **Organized linked files with consistent structure:**

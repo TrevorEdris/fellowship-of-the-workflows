@@ -1,0 +1,11 @@
+# Python venv (created by bootstrap)
+cli/.venv/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# OS files
+.DS_Store

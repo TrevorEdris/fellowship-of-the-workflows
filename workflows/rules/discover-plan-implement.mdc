@@ -12,7 +12,7 @@ alwaysApply: true
 
 **Goal:** Understand the problem space without modifying code.
 
-- Prefer `/ask` mode for exploratory questions
+- Focus on exploratory questions before modifying anything
 - Do NOT edit repository files during this phase
 - Read and analyze relevant code, SDKs, APIs, and documentation
 - Capture all findings in `DISCOVERY.md`
@@ -27,7 +27,7 @@ alwaysApply: true
 
 **Goal:** Produce a concrete, reviewable implementation plan before writing any code.
 
-- Prefer `/plan` mode for structured planning
+- Focus on structured planning before writing code
 - Create `PLAN.md` with the following sections:
   - **Target repos and file paths** - explicit list of what will be touched
   - **Ordered implementation steps** - atomic, verifiable steps
@@ -59,29 +59,11 @@ The plan must demonstrate these qualities:
 - Update `SESSION.md` with changes made and verification results
 - Verify each repository independently (tests/build/lint)
 
-#### Branch Safety Check
-
-Before making any code changes, check the current branch:
-
-- If on `main` or `master`: **STOP** and ask for explicit consent
-  - Example: "⚠️ You are currently on the `main` branch. Making changes directly to main is not recommended. Do you want to continue, or should we create a feature branch first?"
-- Only proceed with code changes after user confirms or switches branches
-
 #### Post-Implementation
 
 After implementation is complete, before committing:
 
 - Suggest: "Implementation complete. Before committing, consider running a self-review using the `/code-review` skill to validate changes against requirements and catch any issues."
-
-## Output Style for Session Documents
-
-All session outputs (`DISCOVERY.md`, `PLAN.md`, `SESSION.md`, chat responses) must be concise:
-
-- One sentence per insight, no filler
-- Bullets over paragraphs
-- Omit empty sections entirely
-- No phrases like "It's worth noting...", "Interestingly...", "As mentioned..."
-- State facts directly without preamble
 
 ## Common Pitfalls
 

@@ -237,12 +237,10 @@ Loop back to refinement menu until user selects "Done - save persona".
 
 ### Step 6: Detect Install Location
 
-Check for existing persona installations in order:
+Check for existing persona installations in the tool's config directory:
 
-1. `.claude/personas/` (project-level, Claude Code)
-2. `.cursor/personas/` (project-level, Cursor)
-3. `~/.claude/personas/` (global, Claude Code)
-4. `~/.cursor/personas/` (global, Cursor)
+1. `.<tool>/personas/` (project-level, e.g., `.claude/personas/`, `.cursor/personas/`)
+2. `~/.<tool>/personas/` (global, e.g., `~/.claude/personas/`)
 
 **If one location found:** Use it automatically.
 
@@ -253,7 +251,7 @@ Check for existing persona installations in order:
 **If no location found:**
 - "No existing persona installation found."
 - "Would you like to install personas first?"
-- Suggest: `./bin/install personas --global --for claude-code`
+- Suggest: `./bin/fotw install personas --global --for claude-code`
 - Or offer to create the directory and save anyway
 
 ### Step 7: Save Persona

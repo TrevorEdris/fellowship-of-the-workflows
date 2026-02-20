@@ -119,14 +119,17 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -o|--output)
+            [[ $# -lt 2 ]] && { echo -e "${RED}Error: --output requires a value${NC}"; exit 1; }
             output_file="$2"
             shift 2
             ;;
         -p|--persona)
+            [[ $# -lt 2 ]] && { echo -e "${RED}Error: --persona requires a value${NC}"; exit 1; }
             selected_personas+=("$2")
             shift 2
             ;;
         -i|--intensity)
+            [[ $# -lt 2 ]] && { echo -e "${RED}Error: --intensity requires a value${NC}"; exit 1; }
             intensity="$2"
             shift 2
             ;;
@@ -139,6 +142,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --prompts-file)
+            [[ $# -lt 2 ]] && { echo -e "${RED}Error: --prompts-file requires a value${NC}"; exit 1; }
             prompts_file="$2"
             shift 2
             ;;
@@ -148,11 +152,21 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
-            show_help
+            echo "Run 'generate-samples --help' for usage."
             exit 1
             ;;
     esac
 done
+
+# Validate intensity
+case "$intensity" in
+    minimal|noticeable|excessive) ;;
+    *)
+        echo -e "${RED}Unknown intensity: $intensity${NC}"
+        echo "Valid values: minimal, noticeable, excessive"
+        exit 1
+        ;;
+esac
 
 # Check for claude CLI
 if ! command -v claude &> /dev/null && ! $dry_run; then

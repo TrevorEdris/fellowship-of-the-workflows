@@ -27,9 +27,7 @@ Interactively switch between AI assistant personas or directly set a specific pe
 
 ### Step 1: Locate Config
 
-Find the persona config file. Check in order:
-1. `.claude/persona.yaml` (Claude Code)
-2. `.cursor/persona.yaml` (Cursor)
+Find the persona config file. Check the tool's config directory (e.g., `.claude/persona.yaml`, `.cursor/persona.yaml`, `.windsurf/persona.yaml`, etc.).
 
 If no config exists, offer to create one.
 
@@ -87,7 +85,7 @@ Intensity: <intensity>
 The new persona will take effect in your next message.
 ```
 
-If a persona file exists in `.claude/personas/` or `.cursor/personas/`, briefly preview the persona's vibe by reading the first few lines (the blockquote tagline).
+If a persona file exists in the tool's personas directory (e.g., `.claude/personas/`), briefly preview the persona's vibe by reading the first few lines (the blockquote tagline).
 
 ## Example Interactions
 
@@ -126,5 +124,5 @@ Claude: Persona disabled. Returning to standard professional responses.
 ## Notes
 
 - Persona changes take effect on the NEXT message (after config is saved)
-- If personas aren't installed, suggest: `./bin/install personas --global --for claude-code`
+- If personas aren't installed, suggest: `./bin/fotw install personas --global --for claude-code`
 - The skill reads from local personas directory if available, falls back to the list above

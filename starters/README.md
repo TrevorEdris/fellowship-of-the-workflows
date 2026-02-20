@@ -17,24 +17,24 @@ Both files use identical content — only the filename differs.
 
 | Tier | Lines | Best For |
 |------|-------|----------|
-| `minimal` | ~25 | Quick setup, small projects |
-| `standard` | ~55 | Most projects (recommended) |
-| `full` | ~115 | Power users, multi-repo workspaces, persona support |
+| `minimal` | ~20 | Quick setup, small projects |
+| `standard` | ~30 | Most projects (recommended) |
+| `full` | ~40 | Power users, multi-repo workspaces, persona support |
 
 ## Installation
 
 ```bash
 # For Claude Code users
-./bin/install starters/standard ~/my-project --for claude-code
+./bin/fotw install starters/standard ~/my-project --for claude-code
 
 # For Cursor users (creates AGENTS.md)
-./bin/install starters/standard ~/my-project --for cursor
+./bin/fotw install starters/standard ~/my-project --for cursor
 
 # For teams with mixed tooling (creates both files)
-./bin/install starters/standard ~/my-project --for both
+./bin/fotw install starters/standard ~/my-project --for both
 
 # Install CLAUDE.md to .claude/ directory instead of project root
-./bin/install starters/standard ~/my-project --for claude-code --to-claude-dir
+./bin/fotw install starters/standard ~/my-project --for claude-code --to-claude-dir
 ```
 
 Then edit the template to fill in your project-specific details.
@@ -134,10 +134,10 @@ Add personality to your AI assistant with themed personas. Each persona provides
 1. **Add the integration snippet** to your CLAUDE.md/AGENTS.md:
    - Copy content from `snippets/persona-integration.md`
 
-2. **Create a config file** in your project:
+2. **Create a config file** in your tool's config directory:
    ```yaml
-   # .claude/persona.yaml (for Claude Code)
-   # .cursor/persona.yaml (for Cursor)
+   # .<tool>/persona.yaml
+   # e.g., .claude/persona.yaml, .cursor/persona.yaml, .windsurf/persona.yaml
 
    persona: gandalf
    intensity: noticeable
