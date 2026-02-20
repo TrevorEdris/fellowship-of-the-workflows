@@ -35,7 +35,7 @@ A centralized repository for sharing AI agent workflows across your team. Works 
 | `./bin/fotw new` | Create a new workflow from template |
 | `./bin/fotw validate` | Validate workflow files |
 
-Run any command with `--help` for full options. The `./bin/list`, `./bin/install`, `./bin/new`, and `./bin/validate` shortcuts also work.
+Run any command with `--help` for full options.
 
 ### Install Options
 

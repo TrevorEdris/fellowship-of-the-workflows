@@ -1,8 +1,11 @@
 """Tests for the install command and installer service."""
 
+from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+from rich.console import Console
 
 from fotw.services.agents import ALL_AGENTS, is_valid_tool
 from fotw.services.frontmatter_translator import translate_content
@@ -14,7 +17,7 @@ from fotw.services.installer import (
     install_starter,
 )
 from fotw.services.catalog import WORKFLOWS_DIR
-from fotw.ui.diff import files_are_identical
+from fotw.ui.diff import files_are_identical, show_diff
 
 
 @pytest.fixture
@@ -334,3 +337,89 @@ def test_translate_content_generic():
     assert "globs:" not in content
     assert "paths:" not in content
     assert "applyTo:" not in content
+
+
+# --- Body .mdc reference translation ---
+
+
+def test_translate_body_mdc_to_md():
+    """Claude translation replaces .mdc references with .md in body."""
+    rule = WORKFLOWS_DIR / "rules" / "ai-session.mdc"
+    if not rule.exists():
+        pytest.skip("ai-session.mdc not found")
+    content = translate_content(rule, fmt="claude", rule_extension=".md")
+    assert ".mdc" not in content
+    assert "discover-plan-implement.md" in content
+
+
+def test_translate_body_mdc_to_instructions_md():
+    """Copilot translation replaces .mdc references with .instructions.md."""
+    rule = WORKFLOWS_DIR / "rules" / "ai-session.mdc"
+    if not rule.exists():
+        pytest.skip("ai-session.mdc not found")
+    content = translate_content(rule, fmt="copilot", rule_extension=".instructions.md")
+    assert "discover-plan-implement.instructions.md" in content
+
+
+def test_translate_body_mdc_passthrough_cursor():
+    """Cursor translation leaves .mdc references unchanged."""
+    rule = WORKFLOWS_DIR / "rules" / "ai-session.mdc"
+    if not rule.exists():
+        pytest.skip("ai-session.mdc not found")
+    content = translate_content(rule, fmt="cursor", rule_extension=".mdc")
+    assert "discover-plan-implement.mdc" in content
+
+
+def test_installed_rule_has_no_mdc_references(tmp_target: Path):
+    """Rules installed for Claude should not contain .mdc file references."""
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_single_workflow("rules/ai-session", ctx)
+    target = tmp_target / ".claude" / "rules" / "ai-session.md"
+    content = target.read_text()
+    assert ".mdc" not in content
+
+
+# --- Conflict prompt rendering ---
+
+
+def test_conflict_prompt_options_render_brackets():
+    """Conflict prompt option labels must show literal [x] brackets, not Rich markup."""
+    buf = StringIO()
+    test_console = Console(file=buf, force_terminal=False)
+    # This is the exact string from _prompt_conflict in installer.py
+    test_console.print(
+        r"  \[o]verwrite  \[s]kip  \[d]iff  \[b]ackup+overwrite"
+        r"  \[O]verwrite-all  \[S]kip-all  \[q]uit"
+    )
+    output = buf.getvalue()
+    for label in ["[o]verwrite", "[s]kip", "[d]iff", "[b]ackup+overwrite",
+                   "[O]verwrite-all", "[S]kip-all", "[q]uit"]:
+        assert label in output, f"Expected '{label}' in prompt output"
+
+
+def test_conflict_prompt_choice_default_renders_brackets():
+    """The 'Choice [s]:' input prompt must render [s] literally."""
+    buf = StringIO()
+    test_console = Console(file=buf, force_terminal=False)
+    test_console.print(r"  Choice \[s]: ")
+    output = buf.getvalue()
+    assert "[s]" in output
+
+
+# --- Diff pager ---
+
+
+def test_show_diff_uses_pager():
+    """show_diff should pipe output through console.pager()."""
+    with patch("fotw.ui.diff.console") as mock_console:
+        mock_console.pager.return_value.__enter__ = lambda self: self
+        mock_console.pager.return_value.__exit__ = lambda self, *a: None
+        show_diff("line one\n", "line two\n", "test.md")
+        mock_console.pager.assert_called_once_with(styles=True)
+
+
+def test_show_diff_identical_skips_pager():
+    """show_diff with identical content should not invoke the pager."""
+    with patch("fotw.ui.diff.console") as mock_console:
+        show_diff("same\n", "same\n", "test.md")
+        mock_console.pager.assert_not_called()

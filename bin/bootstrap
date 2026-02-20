@@ -13,9 +13,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Optional legacy dependencies (no longer required when Python CLI is available)
-OPTIONAL_DEPS=("jq" "fzf" "yq")
-
 show_help() {
     cat << 'EOF'
 Usage: bootstrap [options]
@@ -29,11 +26,6 @@ Options:
 
 Required:
   python3 (3.10+)    Python runtime for the fotw CLI
-
-Optional (legacy bash fallback):
-  jq                 JSON parsing (bash scripts only)
-  fzf                Interactive selection (bash scripts only)
-  yq                 YAML frontmatter parsing (bash scripts only)
 
 Examples:
   bootstrap          Check and install missing dependencies
@@ -84,20 +76,6 @@ fi
 brew_version=$(brew --version | head -n1 | awk '{print $2}')
 echo -e "${GREEN}✓${NC} brew ($brew_version)"
 
-# Check optional legacy dependencies
-optional_missing=()
-for dep in "${OPTIONAL_DEPS[@]}"; do
-    if command -v "$dep" &> /dev/null; then
-        version=$("$dep" --version 2>/dev/null | head -n1 || echo "installed")
-        echo -e "${GREEN}✓${NC} $dep ($version)"
-    else
-        echo -e "${YELLOW}!${NC} $dep (not installed — optional, needed for bash fallback only)"
-        optional_missing+=("$dep")
-    fi
-done
-
-echo ""
-
 # Check Python 3.10+
 python_ok=false
 if command -v python3 &> /dev/null; then
@@ -127,7 +105,6 @@ echo ""
 if $check_only; then
     if $python_ok; then
         echo "All required dependencies installed."
-        [[ "${optional_missing[*]:-}" ]] && echo "Optional (legacy bash): ${optional_missing[*]}"
         exit 0
     else
         echo "Missing: Python 3.10+"

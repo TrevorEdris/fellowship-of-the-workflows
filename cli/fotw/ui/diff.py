@@ -28,7 +28,9 @@ def show_diff(existing_content: str, new_content: str, filename: str) -> None:
 
     diff_text = "".join(diff_lines)
     syntax = Syntax(diff_text, "diff", theme="monokai", line_numbers=False)
-    console.print(Panel(syntax, title=f"Diff: {filename}", border_style="yellow"))
+    panel = Panel(syntax, title=f"Diff: {filename}", border_style="yellow")
+    with console.pager(styles=True):
+        console.print(panel)
 
 
 def files_are_identical(existing_content: str, new_content: str) -> bool:

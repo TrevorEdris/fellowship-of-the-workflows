@@ -63,8 +63,8 @@ def _prompt_conflict(filename: str, existing: str, new_content: str) -> Conflict
 
     while True:
         console.print(f"\n  [yellow]Conflict:[/yellow] {filename} already exists")
-        console.print("  [o]verwrite  [s]kip  [d]iff  [b]ackup+overwrite  [O]verwrite-all  [S]kip-all  [q]uit")
-        choice = console.input("  Choice [s]: ").strip().lower() or "s"
+        console.print(r"  \[o]verwrite  \[s]kip  \[d]iff  \[b]ackup+overwrite  \[O]verwrite-all  \[S]kip-all  \[q]uit")
+        choice = console.input(r"  Choice \[s]: ").strip().lower() or "s"
 
         if choice == "o":
             return ConflictAction.OVERWRITE
@@ -150,8 +150,8 @@ def _resolve_dir_conflict(ctx: InstallContext, target_dir: Path, source_dir: Pat
         return False
 
     console.print(f"\n  [yellow]Conflict:[/yellow] {target_dir.name}/ already exists")
-    console.print("  [o]verwrite  [s]kip  [O]verwrite-all  [S]kip-all  [q]uit")
-    choice = console.input("  Choice [s]: ").strip().lower() or "s"
+    console.print(r"  \[o]verwrite  \[s]kip  \[O]verwrite-all  \[S]kip-all  \[q]uit")
+    choice = console.input(r"  Choice \[s]: ").strip().lower() or "s"
 
     if choice == "o":
         return True
@@ -238,7 +238,7 @@ def _needs_translation(wtype: str, cfg: AgentConfig) -> bool:
 def _get_new_content(source: Path, wtype: str, cfg: AgentConfig) -> str:
     """Get the content that would be written to the target file."""
     if _needs_translation(wtype, cfg):
-        return translate_content(source, cfg.frontmatter_format)
+        return translate_content(source, cfg.frontmatter_format, cfg.rule_extension)
     return source.read_text()
 
 
@@ -332,7 +332,7 @@ def install_single_workflow(
 
     target_dir.mkdir(parents=True, exist_ok=True)
     if _needs_translation(wtype, cfg):
-        translate_to_target(source, target_path, cfg.frontmatter_format)
+        translate_to_target(source, target_path, cfg.frontmatter_format, cfg.rule_extension)
         if not ctx.quiet:
             console.print(f"[green]\u2713[/green] Translated and installed {source.name} -> {target_path}")
     else:
