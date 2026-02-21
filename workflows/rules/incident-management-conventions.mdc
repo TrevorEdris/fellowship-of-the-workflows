@@ -1,0 +1,87 @@
+---
+description: Enforce incident management conventions — symptom-based alerting, severity classification, runbook requirements, and on-call sustainability standards when working with alerting or incident management configuration.
+globs: "**/*.tf,**/*.hcl,**/*.yml,**/*.yaml"
+alwaysApply: false
+---
+
+## Incident Management Conventions
+
+Apply these rules when reviewing or generating alerting, on-call, or incident management configuration — regardless of platform (Grafana IRM, incident.io, Better Stack, Datadog, PagerDuty).
+
+### Alert Design
+
+**Page on symptoms (user-visible impact only):**
+- Error rate exceeded threshold
+- P95/P99 latency exceeded threshold
+- Service availability below SLO burn rate
+
+**Never page on causes (internal metrics):**
+- CPU > N%
+- Memory > N%
+- Pod restart count
+- GC pause duration
+- Disk usage (unless > 95% AND rising — then ticket only, never page)
+
+**Every alert must include:**
+- Runbook URL pointing to the specific procedure
+- Current value, threshold, and estimated impact
+- Dashboard link for immediate context
+- Team or rotation notification handle
+
+### Severity Classification
+
+| Level | Condition | Response |
+|---|---|---|
+| SEV0 | Total service failure; all users affected | Immediate page; incident bridge |
+| SEV1 | Majority of users degraded | Page; 15-min acknowledge SLA |
+| SEV2 | Subset of users or features impacted | Ticket; next-business-hour |
+| SEV3 | No user impact; trending anomaly | Ticket; sprint review |
+
+Do not create alerts that fire at SEV0 level for conditions that are SEV2 by this taxonomy. Over-classification causes alert fatigue.
+
+### Escalation Policy Requirements
+
+Every production service alert integration must have:
+1. Tier 1: Primary on-call schedule, immediate notification
+2. Tier 2: Secondary on-call or backup, escalated after ≤ 10 minutes
+3. Tier 3: Engineering manager, escalated after ≤ 20 minutes total
+
+Escalation policies with only one tier (no backup) are a deployment blocker for production services.
+
+### On-Call Rotation Minimums
+
+- Minimum 4 engineers in the rotation pool before enabling primary on-call
+- Primary shift length: 1 week (daily shifts create excessive handoff overhead)
+- Secondary schedule required before the primary schedule goes live
+- PTO coverage must be explicitly configured in the rotation tool (not verbal)
+
+### Runbook Requirements
+
+Every alert that pages a human must link to a runbook with:
+1. What the alert means and why it matters
+2. Immediate triage steps (completable in < 2 minutes)
+3. Common causes with remediation steps
+4. Escalation criteria (when to escalate vs. handle solo)
+5. Rollback procedure (if relevant)
+6. Post-incident actions
+
+A runbook with only a description and no remediation steps does not satisfy this requirement.
+
+### SLO Burn Rate Alerting (Standard)
+
+Prefer burn-rate-based alerting over raw threshold alerting for availability SLOs:
+
+```
+Fast burn (page):   1h window at 14x burn rate, confirmed by 5h window
+Slow burn (ticket): 6h window at 5x burn rate, confirmed by 3d window
+```
+
+Do not use raw error count as a paging threshold — it does not account for traffic volume changes.
+
+### Platform Status Warnings
+
+Flag these when encountered in configuration or planning:
+
+- **OpsGenie** configuration: Warn that OpsGenie shuts down April 5, 2027. Recommend migration planning.
+- **Grafana OnCall OSS** resources: Warn that OSS is archived March 2026. Recommend Grafana Cloud IRM migration.
+- **FireHydrant** or **Squadcast** integration: Note acquisition uncertainty (Freshworks and SolarWinds respectively). Advise against new feature investment.
