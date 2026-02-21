@@ -1,0 +1,129 @@
+---
+description: "Pulumi IaC conventions: stack naming, state backend selection, Output/Input typing discipline, resource naming for drift detection, CrossGuard policy patterns, and configuration secrets handling."
+globs: "Pulumi.yaml,Pulumi.*.yaml,**/Pulumi.yaml"
+alwaysApply: false
+---
+
+## Pulumi Conventions
+
+### Stack Naming
+
+Always use `<project>/<env>` format:
+- `my-infra/dev`, `my-infra/staging`, `my-infra/prod`
+- Never use environment names alone (`dev`, `prod`) — they conflict with other projects in the same organization
+- Stack names are immutable after creation; choose deliberately
+
+### State Backend
+
+| Environment | Backend | Why |
+|-------------|---------|-----|
+| Local dev (solo) | `pulumi login --local` | No setup required |
+| Shared / CI | Pulumi Cloud | Secrets encryption, concurrency locking, audit log |
+| AWS-only, no SaaS | `pulumi login s3://bucket` | S3 backend with DynamoDB lock |
+| GCP-only, no SaaS | `pulumi login gs://bucket` | GCS backend with built-in locking |
+| Azure-only, no SaaS | `pulumi login azblob://container` | Azure Blob backend |
+
+**Never use local backend for shared environments.** Local state has no concurrency locking — concurrent `pulumi up` runs will corrupt state. Shared teams must use a backend with locking.
+
+### Output/Input Typing
+
+```typescript
+// Correct: use .apply() for Output transformations
+const connectionUrl = db.endpoint.apply(ep => `postgres://${ep}:5432/mydb`);
+
+// Correct: combine multiple Outputs
+const fullArn = pulumi.all([bucket.bucket, bucket.region])
+  .apply(([name, region]) => `arn:aws:s3:::${name}`);
+
+// Correct: pulumi.interpolate for string templates with Outputs
+const url = pulumi.interpolate`https://${lb.dnsName}/api`;
+
+// Wrong: .get() outside of unit tests
+const name = bucket.id.get(); // Only valid with pulumi.runtime.setMocks()
+```
+
+### Secrets Configuration
+
+```bash
+# Correct: mark config values as secrets (encrypted in state)
+pulumi config set --secret databasePassword "hunter2"
+
+# Wrong: plaintext secrets in Pulumi.<stack>.yaml
+# config:
+#   my-app:databasePassword: hunter2   # NEVER do this
+```
+
+Secrets set with `--secret` are encrypted in state using the stack's secrets provider (Pulumi Cloud managed, or a KMS key for self-managed backends).
+
+### Resource Naming
+
+Provide explicit `name` arguments for resources where stable identity matters:
+
+```typescript
+// Provides stable name for drift detection and cross-stack references
+const bucket = new aws.s3.Bucket("app-assets", {
+  bucket: `${pulumi.getProject()}-${pulumi.getStack()}-assets`,
+  tags: {
+    Environment: pulumi.getStack(),
+    Project: pulumi.getProject(),
+    ManagedBy: "pulumi",
+  },
+});
+```
+
+Auto-generated names (Pulumi appends random suffix by default) make drift correlation difficult in large stacks.
+
+### CrossGuard Policy Packs
+
+```typescript
+import { PolicyPack, validateResourceOfType } from "@pulumi/policy";
+
+new PolicyPack("required-tags", {
+  policies: [{
+    name: "resources-must-have-env-tag",
+    description: "All resources must have an Environment tag",
+    enforcementLevel: "mandatory",
+    validateResource: (args, reportViolation) => {
+      const tags = (args.props as any).tags ?? {};
+      if (!tags.Environment) {
+        reportViolation("Resource is missing required 'Environment' tag");
+      }
+    },
+  }],
+});
+```
+
+Run policy packs: `pulumi preview --policy-pack path/to/policy-pack`
+
+### Stack References (Cross-Stack)
+
+```typescript
+// Import outputs from another Pulumi stack
+const infraStack = new pulumi.StackReference("org/infra/prod");
+const vpcId = infraStack.getOutput("vpcId"); // Returns Output<any>
+```
+
+Stack references are Pulumi's equivalent of CloudFormation `Fn::ImportValue`. Unlike CFN exports, they do not create deployment ordering constraints — but do create a logical dependency.
+
+### Anti-Patterns
+
+- `pulumi login --local` for team or CI environments — no locking, state corruption risk
+- Stack names without project prefix (`dev` instead of `my-infra/dev`) — ambiguous across projects
+- Calling `.get()` on Output values in production code — only valid in unit tests with mocked providers
+- Storing secrets as plaintext in `Pulumi.<stack>.yaml` — always use `pulumi config set --secret`
+- Using default auto-generated resource names in environments where drift detection matters
+- Running `pulumi up` without first reviewing `pulumi preview` output in shared environments
+
+### Tooling
+
+| Tool | Command | Purpose |
+|------|---------|---------|
+| `pulumi preview` | `pulumi preview --diff` | Review planned changes before apply |
+| `pulumi up` | `pulumi up --yes` (CI only) | Apply changes |
+| `pulumi refresh` | `pulumi refresh` | Sync state with actual cloud resources |
+| `pulumi destroy` | `pulumi destroy` | Tear down stack |
+| `pulumi config` | `pulumi config set --secret` | Manage stack configuration |
+
+### Deep Reference
+
+For comprehensive Pulumi patterns, multi-cloud programs, CrossGuard policy authoring, and migration from Terraform/CloudFormation, use the `/pulumi` skill.

@@ -1,0 +1,140 @@
+---
+description: "AWS CDK construct authoring conventions: L1/L2/L3 construct selection, security defaults, stack and stage structure, cdk-nag security scanning, and assertions testing. Apply when cdk.json is present in the project."
+globs: "**/cdk.json,**/bin/*.ts,**/lib/*.ts,**/cdk/**/*.ts,**/cdk/**/*.py"
+alwaysApply: false
+---
+
+## AWS CDK Conventions
+
+**Scope:** Apply these conventions when `cdk.json` is present in the project. The TypeScript and Python globs are broad by necessity — confirm CDK context before applying.
+
+### Construct Level Selection
+
+| Level | Class Pattern | When to Use |
+|-------|--------------|-------------|
+| L3 (Patterns) | `aws-ecs-patterns.*`, `aws-apigatewayv2-integrations.*` | Multi-resource compositions with opinionated architecture |
+| L2 (High-level) | `s3.Bucket`, `lambda.Function`, `rds.DatabaseInstance` | **Default choice** — enforces security defaults |
+| L1 (Cfn*) | `CfnBucket`, `CfnFunction` | Only when L2 lacks a required property |
+
+**Always prefer L2 over L1.** L2 constructs set encryption defaults, block public access, configure security groups, and enforce IAM boundaries automatically. L1 requires every security property to be set manually.
+
+### Stack and Stage Structure
+
+```typescript
+// bin/app.ts — Use stages from day one; enables promotion pipeline
+const app = new cdk.App();
+
+// Development: direct stack for fast iteration
+new MyStack(app, 'MyStack-Dev', {
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: 'us-east-1' }
+});
+
+// Production: stage-based for pipeline compatibility
+const prod = new MyProdStage(app, 'Prod', {
+  env: { account: '123456789012', region: 'us-east-1' }
+});
+```
+
+Never use env-agnostic stacks (no `env` prop) in production — account/region resolution is non-deterministic.
+
+### Security: cdk-nag
+
+Run `cdk-nag` as an Aspect before any deployment to production:
+
+```typescript
+import { Aspects } from 'aws-cdk-lib';
+import { AwsSolutionsChecks } from 'cdk-nag';
+
+// In bin/app.ts or the stack itself
+Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
+```
+
+Suppress intentional deviations with documented rationale:
+```typescript
+import { NagSuppressions } from 'cdk-nag';
+NagSuppressions.addResourceSuppressions(myBucket, [{
+  id: 'AwsSolutions-S1',
+  reason: 'Access logging not required for temporary build artifact bucket'
+}]);
+```
+
+### Required Workflow
+
+```bash
+cdk synth          # Always synthesize first — catches type errors before any cloud calls
+cdk diff           # Review changes against deployed stack
+cdk deploy         # Deploy with --require-approval broadening for safety
+```
+
+Never run `cdk deploy` without first reviewing `cdk diff` output. Flag any **replacement** operations (destroy + recreate) — they require explicit acknowledgment.
+
+### Testing with Assertions
+
+```typescript
+import { Template } from 'aws-cdk-lib/assertions';
+
+test('S3 bucket has versioning enabled', () => {
+  const app = new cdk.App();
+  const stack = new MyStack(app, 'TestStack');
+  const template = Template.fromStack(stack);
+
+  template.hasResourceProperties('AWS::S3::Bucket', {
+    VersioningConfiguration: { Status: 'Enabled' },
+  });
+});
+
+test('Lambda has correct runtime', () => {
+  const template = Template.fromStack(stack);
+  template.hasResourceProperties('AWS::Lambda::Function', {
+    Runtime: 'nodejs20.x',
+  });
+});
+```
+
+Every CDK stack must have assertions tests covering security-critical properties (encryption, versioning, public access settings).
+
+### Environment-Specific Configuration
+
+Do not hardcode environment-specific values in the stack:
+```typescript
+// Wrong: hardcoded
+const tableName = 'prod-users';
+
+// Correct: CDK context
+const tableName = this.node.tryGetContext('tableName') ?? `${stack.stackName}-users`;
+
+// Correct: SSM lookup (evaluated at synth time)
+const amiId = ssm.StringParameter.valueFromLookup(this, '/my-app/ami-id');
+```
+
+### Outputs and Cross-Stack References
+
+Prefer SSM Parameter Store over `CfnOutput` exports for cross-stack values:
+```typescript
+// Avoids tight deployment ordering and circular dependency risk
+new ssm.StringParameter(this, 'VpcIdParam', {
+  parameterName: '/my-app/vpc-id',
+  stringValue: vpc.vpcId,
+});
+```
+
+### Anti-Patterns
+
+- `new CfnBucket(...)` when `new s3.Bucket(...)` exists — misses encryption and public access defaults
+- Singleton `App` without stages — no promotion path; impossible to add CDK Pipelines later
+- Skipping `cdk diff` before deploy in CI — blindly applies changes including destructive ones
+- `this.node.tryGetContext()` for secrets — use Secrets Manager or SSM SecureString instead
+- `CfnOutput` with cross-stack `exportName` — creates deployment coupling; prefer SSM
+
+### Tooling
+
+| Tool | Command | Purpose |
+|------|---------|---------|
+| `cdk synth` | `cdk synth` | Synthesize CFN template; validate before any deploy |
+| `cdk diff` | `cdk diff` | Preview changes against deployed stack |
+| `cdk-nag` | Aspect in app | Security rule scanning (AwsSolutions, HIPAA, PCI) |
+| `jest` / `vitest` | `npm test` | Assertions-based stack tests |
+
+### Deep Reference
+
+For comprehensive CDK patterns, CDK Pipelines, projen scaffolding, and migration from CloudFormation, use the `/aws-iac` skill.
