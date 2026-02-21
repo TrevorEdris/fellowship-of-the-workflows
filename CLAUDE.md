@@ -116,6 +116,28 @@ Rules stored in Cursor format (`.mdc`) are automatically translated per target t
 
 Supported `--for` targets: claude-code, cursor, copilot, codex, windsurf, gemini, roo, goose, universal, both.
 
+## Maintenance Rules
+
+### Agent Catalog
+
+The orchestration skill maintains an agent catalog at `workflows/skills/orchestrate/references/agent-catalog.md`. This catalog maps each agent to its domain, capabilities, model, and tools — enabling the orchestrator to route subtasks to the best-fit agent.
+
+**When adding or modifying any agent** (`workflows/agents/*.md`):
+1. Add/update a row in the Routing Guide table
+2. Add/update the Agent Capability Details section
+3. Run `./bin/fotw validate` to confirm the new agent is indexed
+
+**When removing an agent:** Remove its row and capability section from the catalog.
+
+### Persona Independence
+
+Workflow files (skills, agents, rules) must be **persona-agnostic**. No character names (Gandalf, Treebeard, etc.) or character role-play in workflow definitions. The persona system (`persona.yaml` + `persona-integration.mdc`) handles voice/style at runtime.
+
+Standard severity levels used across all workflow files: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**.
+
+Project-level conventions that are **not** persona and should be preserved:
+- Phase names: The Palantír, The Council of Elrond, The Journey
+
 ## Key Directories
 
 - `bin/` — CLI wrapper scripts (delegate to Python CLI)

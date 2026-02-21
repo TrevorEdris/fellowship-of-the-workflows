@@ -4,8 +4,6 @@ globs: "**/*"
 alwaysApply: true
 ---
 
-> *"A wizard is never late, nor is he early. He implements precisely when the plan is approved."*
-
 ## Workflow Phases
 
 ### 1) The Palantír (Discover)
@@ -91,4 +89,4 @@ After implementation is complete, before committing:
 - Be honest about what was and wasn't verified
 
 ---
-*"Fly, you fools!" — What Gandalf would say if you pushed to main without approval.*
+*Do not push to main without approval.*
