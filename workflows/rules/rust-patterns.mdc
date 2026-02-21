@@ -1,0 +1,59 @@
+---
+description: Rust idioms, ownership, error handling, and tooling conventions.
+globs: "**/*.rs, **/Cargo.toml, **/Cargo.lock"
+alwaysApply: false
+---
+
+## Rust Patterns
+
+### Core Principles
+
+- **Ownership-first design** — model data ownership explicitly; shared ownership (`Arc`) should be the exception
+- **Zero-cost abstractions** — prefer iterators and traits over manual loops; trust the compiler to optimize
+- **No `unwrap()` in production code** — `unwrap`/`expect` are acceptable in tests and prototypes only
+- **Prefer borrowing over cloning** — clone only when ownership transfer is genuinely needed
+- **Newtype pattern for type safety** — wrap primitives in structs to prevent mixing up IDs, amounts, etc.
+
+### Error Handling
+
+- Libraries: use `thiserror` to define domain error enums with `#[derive(Error)]`
+- Binaries/applications: use `anyhow` for ergonomic error propagation with context
+- Always propagate with `?`; add context with `.context("doing X")` or `with_context(|| ...)`
+
+```rust
+// Library error type
+#[derive(Debug, thiserror::Error)]
+pub enum StoreError {
+    #[error("record {0} not found")]
+    NotFound(String),
+    #[error("database error: {0}")]
+    Db(#[from] sqlx::Error),
+}
+
+// Application usage
+fn load_user(id: &str) -> anyhow::Result<User> {
+    store.get(id).with_context(|| format!("loading user {id}"))
+}
+```
+
+### Tooling
+
+| Tool | Command | Purpose |
+|------|---------|---------|
+| `cargo fmt` | `cargo fmt --all` | Format code |
+| `cargo clippy` | `cargo clippy --all-targets -- -D warnings` | Lint (treat warnings as errors) |
+| `cargo test` | `cargo test --all-features` | Run all tests |
+| `cargo doc` | `cargo doc --no-deps --open` | Generate docs |
+| `cargo audit` | `cargo audit` | Check dependency vulnerabilities |
+
+### Anti-Patterns
+
+- **Excessive `clone()`** — signals ownership design problem; refactor to borrow or restructure data flow
+- **`Mutex<T>` wrapped in `Arc` everywhere** — prefer message-passing channels for concurrent state
+- **Deeply nested `match` on `Result`/`Option`** — flatten with `?`, `.map()`, `.and_then()`, `if let`
+- **Ignoring `#[must_use]`** — `Result` and `Future` are `#[must_use]`; dropping them silently is a bug
+- **`unsafe` without documentation** — every `unsafe` block requires a comment explaining the invariant upheld
+
+### Deep Reference
+
+For comprehensive patterns, code examples, and project structure guidance, use the `/rust-patterns` skill.
