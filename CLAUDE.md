@@ -10,8 +10,9 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 
 ```bash
 # Setup
-./bin/bootstrap              # Set up CLI (Python 3.10+ required)
-./bin/bootstrap --check      # CI-friendly check only
+./bin/bootstrap              # Set up CLI (Python 3.10+ required, creates cli/.venv/)
+./bin/bootstrap --check      # CI-friendly check only (exit 0/1)
+./bin/bootstrap --force       # Full reinstall
 
 # List available workflows
 ./bin/fotw list              # All workflows
@@ -34,25 +35,58 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 ./bin/fotw validate --verbose
 ```
 
+### Testing
+
+```bash
+# Run all tests
+cd cli && python -m pytest
+
+# Run a single test file
+cd cli && python -m pytest tests/test_catalog.py
+
+# Run a single test
+cd cli && python -m pytest tests/test_install.py::test_translate_frontmatter_claude -v
+
+# Install dev dependencies (if not already)
+cd cli && pip install -e ".[dev]"
+```
+
+Tests use `FOTW_REPO_ROOT` env var to override repo root detection, allowing tests to run against fixture directories.
+
 ## Architecture
+
+### Core Design: Single Source, Multi-Target Translation
+
+Rules are authored **once** in Cursor `.mdc` format and translated to each tool's native format at install time. This is the central architectural pattern — avoids maintaining 9 copies of every rule.
+
+Translation is handled by `cli/fotw/services/frontmatter_translator.py`:
+- **Claude Code:** `globs` → `paths` (array), `alwaysApply: true` → `paths: ["**/*"]`, body `.mdc` refs → `.md`
+- **Copilot:** `globs` → `applyTo` (string), `alwaysApply: true` → `applyTo: "**"`, body `.mdc` refs → `.instructions.md`
+- **Generic** (codex, windsurf, gemini, roo, goose, universal): frontmatter stripped to description only
+
+Supported `--for` targets: claude-code, cursor, copilot, codex, windsurf, gemini, roo, goose, universal, both.
 
 ### Workflow Types
 
 | Type | Storage | Description |
 |------|---------|-------------|
 | **Skills** | `workflows/skills/<name>/SKILL.md` | Executable packages with references, scripts, assets |
-| **Rules** | `workflows/rules/*.mdc` | Conditional context files (Cursor format, auto-translated for Claude Code) |
+| **Rules** | `workflows/rules/*.mdc` | Conditional context files (Cursor format, auto-translated) |
 | **Agents** | `workflows/agents/*.md` | Subagent definitions with tool restrictions |
 
-### Skill Package Structure
+### CLI Architecture
 
-```
-skills/<name>/
-├── SKILL.md           # Required - main instructions with YAML frontmatter
-├── references/        # Additional documentation
-├── scripts/           # Executable helpers
-└── assets/            # Templates, configs
-```
+Python package at `cli/fotw/` built with **Typer** (CLI) + **Rich** (terminal UI) + **python-frontmatter** (YAML parsing).
+
+| Layer | Path | Purpose |
+|-------|------|---------|
+| Entry | `bin/fotw` → `cli/fotw/__main__.py` | Shell wrapper delegates to `python -m fotw` |
+| Commands | `cli/fotw/commands/` | `list`, `install`, `new`, `validate` |
+| Services | `cli/fotw/services/` | `catalog` (scan/parse), `installer` (deploy + conflict resolution), `frontmatter_translator`, `agents` (tool configs) |
+| Models | `cli/fotw/models/` | `Workflow`, `Starter`, `Persona`, `ValidationResult`, `WorkflowType` |
+| UI | `cli/fotw/ui/` | `console` (Rich), `tables`, `diff` (paged syntax-highlighted diffs) |
+
+Tool target configs are defined as `AgentConfig` dataclasses in `cli/fotw/services/agents.py` — each maps a tool name to its config directory, starter filename, rule extension, and frontmatter format.
 
 ### Frontmatter Schemas
 
@@ -89,11 +123,11 @@ model: sonnet
 
 ### Starter Tiers
 
-| Tier | Content |
-|------|---------|
-| `minimal` | Git safety, output style (~20 lines) |
-| `standard` | + Discover → Plan → Implement workflow (~30 lines) |
-| `full` | + Persona system, multi-repo safety (~40 lines) |
+| Tier | Content | Bundled Rules |
+|------|---------|---------------|
+| `minimal` | Git safety, output style (~20 lines) | `git-safety`, `output-style` |
+| `standard` | + Discover → Plan → Implement workflow (~30 lines) | + `discover-plan-implement`, `ai-session` |
+| `full` | + Persona system, multi-repo safety (~40 lines) | + `multi-repo-safety`, `persona-integration` + all personas |
 
 ### Dynamic Context Injection
 
@@ -107,14 +141,9 @@ Current branch:
 
 The command executes at skill invocation, injecting results into the prompt.
 
-### Installation Translation
+### Install Conflict Resolution
 
-Rules stored in Cursor format (`.mdc`) are automatically translated per target tool:
-- **Claude Code:** `globs` → `paths` (as array), `alwaysApply: true` → `paths: ["**/*"]`
-- **Copilot:** `globs` → `applyTo`, `alwaysApply: true` → `applyTo: "**"`
-- **Generic** (codex, windsurf, gemini, roo, goose, universal): description only
-
-Supported `--for` targets: claude-code, cursor, copilot, codex, windsurf, gemini, roo, goose, universal, both.
+When installing over existing files, the installer prompts: `[o]verwrite / [s]kip / [d]iff / [b]ackup / [O]verwrite-all / [S]kip-all / [q]uit`. The `InstallContext` carries a `sticky_action` field that propagates `OVERWRITE_ALL` or `SKIP_ALL` across multi-file sessions. Identical files are silently skipped.
 
 ## Maintenance Rules
 
@@ -137,11 +166,3 @@ Standard severity levels used across all workflow files: **CRITICAL**, **HIGH**,
 
 Project-level conventions that are **not** persona and should be preserved:
 - Phase names: The Palantír, The Council of Elrond, The Journey
-
-## Key Directories
-
-- `bin/` — CLI wrapper scripts (delegate to Python CLI)
-- `workflows/` — Skills, rules, agents
-- `starters/` — CLAUDE.md/AGENTS.md templates
-- `starters/personas/` — 12 themed persona definitions
-- `starters/snippets/` — Modular template components

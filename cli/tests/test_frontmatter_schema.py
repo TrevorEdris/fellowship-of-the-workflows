@@ -1,0 +1,229 @@
+"""Tests enforcing strict frontmatter schemas for all workflow types.
+
+Every frontmatter key must belong to the allowed set for its type.
+Required fields must be present. Values must be valid.
+"""
+
+import frontmatter
+import pytest
+
+from fotw.services.catalog import WORKFLOWS_DIR
+
+# --- Allowed frontmatter keys per workflow type ---
+
+RULE_ALLOWED_KEYS = {"description", "globs", "alwaysApply"}
+
+SKILL_ALLOWED_KEYS = {
+    "name",
+    "description",
+    "context",
+    "agent",
+    "allowed-tools",
+    "model",
+    "argument-hint",
+    "disable-model-invocation",
+    "user-invocable",
+}
+
+AGENT_ALLOWED_KEYS = {"name", "description", "tools", "model", "color"}
+
+VALID_MODEL_VALUES = {"opus", "sonnet", "haiku", "default"}
+
+
+def _parse(path):
+    """Parse frontmatter from a file, return metadata dict."""
+    post = frontmatter.load(str(path))
+    return dict(post.metadata)
+
+
+# --- Rules ---
+
+
+def test_rules_no_extra_frontmatter_keys():
+    """Every rule frontmatter key must be in the allowed set."""
+    rules_dir = WORKFLOWS_DIR / "rules"
+    if not rules_dir.is_dir():
+        pytest.skip("No rules directory")
+
+    violations = []
+    for path in sorted(rules_dir.iterdir()):
+        if path.suffix not in (".mdc", ".md") or path.name == ".gitkeep":
+            continue
+        meta = _parse(path)
+        extra = set(meta.keys()) - RULE_ALLOWED_KEYS
+        if extra:
+            violations.append(f"{path.name}: unexpected keys {extra}")
+
+    assert not violations, f"Rules with extra frontmatter keys:\n" + "\n".join(violations)
+
+
+def test_rules_required_frontmatter():
+    """Every rule must have a description."""
+    rules_dir = WORKFLOWS_DIR / "rules"
+    if not rules_dir.is_dir():
+        pytest.skip("No rules directory")
+
+    missing = []
+    for path in sorted(rules_dir.iterdir()):
+        if path.suffix not in (".mdc", ".md") or path.name == ".gitkeep":
+            continue
+        meta = _parse(path)
+        if not meta.get("description"):
+            missing.append(path.name)
+
+    assert not missing, f"Rules missing 'description': {missing}"
+
+
+# --- Skills ---
+
+
+def test_skills_no_extra_frontmatter_keys():
+    """Every skill frontmatter key must be in the allowed set."""
+    skills_dir = WORKFLOWS_DIR / "skills"
+    if not skills_dir.is_dir():
+        pytest.skip("No skills directory")
+
+    violations = []
+    for skill_dir in sorted(skills_dir.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.is_file():
+            continue
+        meta = _parse(skill_file)
+        extra = set(meta.keys()) - SKILL_ALLOWED_KEYS
+        if extra:
+            violations.append(f"{skill_dir.name}: unexpected keys {extra}")
+
+    assert not violations, f"Skills with extra frontmatter keys:\n" + "\n".join(violations)
+
+
+def test_skills_required_frontmatter():
+    """Every skill must have name and description."""
+    skills_dir = WORKFLOWS_DIR / "skills"
+    if not skills_dir.is_dir():
+        pytest.skip("No skills directory")
+
+    violations = []
+    for skill_dir in sorted(skills_dir.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.is_file():
+            continue
+        meta = _parse(skill_file)
+        missing = []
+        if not meta.get("name"):
+            missing.append("name")
+        if not meta.get("description"):
+            missing.append("description")
+        if missing:
+            violations.append(f"{skill_dir.name}: missing {missing}")
+
+    assert not violations, f"Skills with missing required fields:\n" + "\n".join(violations)
+
+
+def test_skill_name_matches_directory():
+    """Skill frontmatter 'name' must match the directory name."""
+    skills_dir = WORKFLOWS_DIR / "skills"
+    if not skills_dir.is_dir():
+        pytest.skip("No skills directory")
+
+    mismatches = []
+    for skill_dir in sorted(skills_dir.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.is_file():
+            continue
+        meta = _parse(skill_file)
+        name = meta.get("name", "")
+        if name and name != skill_dir.name:
+            mismatches.append(f"{skill_dir.name}: frontmatter name='{name}'")
+
+    assert not mismatches, f"Skill name/directory mismatches:\n" + "\n".join(mismatches)
+
+
+# --- Agents ---
+
+
+def test_agents_no_extra_frontmatter_keys():
+    """Every agent frontmatter key must be in the allowed set."""
+    agents_dir = WORKFLOWS_DIR / "agents"
+    if not agents_dir.is_dir():
+        pytest.skip("No agents directory")
+
+    violations = []
+    for path in sorted(agents_dir.iterdir()):
+        if path.suffix != ".md" or path.name == ".gitkeep":
+            continue
+        meta = _parse(path)
+        extra = set(meta.keys()) - AGENT_ALLOWED_KEYS
+        if extra:
+            violations.append(f"{path.name}: unexpected keys {extra}")
+
+    assert not violations, f"Agents with extra frontmatter keys:\n" + "\n".join(violations)
+
+
+def test_agents_required_frontmatter():
+    """Every agent must have name and description."""
+    agents_dir = WORKFLOWS_DIR / "agents"
+    if not agents_dir.is_dir():
+        pytest.skip("No agents directory")
+
+    violations = []
+    for path in sorted(agents_dir.iterdir()):
+        if path.suffix != ".md" or path.name == ".gitkeep":
+            continue
+        meta = _parse(path)
+        missing = []
+        if not meta.get("name"):
+            missing.append("name")
+        if not meta.get("description"):
+            missing.append("description")
+        if missing:
+            violations.append(f"{path.stem}: missing {missing}")
+
+    assert not violations, f"Agents with missing required fields:\n" + "\n".join(violations)
+
+
+# --- Model field validation (shared across skills and agents) ---
+
+
+def test_skill_model_valid_values():
+    """Skill 'model' field, if present, must be opus/sonnet/haiku."""
+    skills_dir = WORKFLOWS_DIR / "skills"
+    if not skills_dir.is_dir():
+        pytest.skip("No skills directory")
+
+    invalid = []
+    for skill_dir in sorted(skills_dir.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.is_file():
+            continue
+        meta = _parse(skill_file)
+        model = meta.get("model")
+        if model and model not in VALID_MODEL_VALUES:
+            invalid.append(f"{skill_dir.name}: model='{model}'")
+
+    assert not invalid, f"Skills with invalid model values:\n" + "\n".join(invalid)
+
+
+def test_agent_model_valid_values():
+    """Agent 'model' field, if present, must be opus/sonnet/haiku."""
+    agents_dir = WORKFLOWS_DIR / "agents"
+    if not agents_dir.is_dir():
+        pytest.skip("No agents directory")
+
+    invalid = []
+    for path in sorted(agents_dir.iterdir()):
+        if path.suffix != ".md" or path.name == ".gitkeep":
+            continue
+        meta = _parse(path)
+        model = meta.get("model")
+        if model and model not in VALID_MODEL_VALUES:
+            invalid.append(f"{path.stem}: model='{model}'")
+
+    assert not invalid, f"Agents with invalid model values:\n" + "\n".join(invalid)
