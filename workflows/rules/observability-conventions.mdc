@@ -1,0 +1,67 @@
+---
+description: "Enforces observability naming conventions, cardinality limits, and structured logging standards on instrumentation code and metric definitions."
+globs: "**/*metrics*.{ts,go,py,rs},**/*tracing*.{ts,go,py,rs},**/*telemetry*.{ts,go,py,rs},**/*instrumentation*.{ts,go,py,rs},**/otel*.yaml,**/collector*.yaml,**/*datadog*.{tf,hcl}"
+alwaysApply: false
+---
+
+## Observability Conventions
+
+### Metric Naming
+
+**Prometheus (snake_case):**
+- Format: `{namespace}_{subsystem}_{name}_{unit}` — e.g., `http_server_requests_total`, `db_query_duration_seconds`
+- Counters must end with `_total`
+- Use base units only: `_seconds` (not `_ms`), `_bytes` (not `_kb`), `_ratio` (not `_percent`)
+- No type abbreviations in name: not `http_requests_counter_total`
+
+**Datadog (dot.notation):**
+- Format: `{service}.{subsystem}.{name}` — e.g., `order.service.requests`, `order.db.query.duration`
+- Tags replace label dimensions — keep tag keys lowercase with underscores
+
+### Cardinality Limits
+
+- [CRITICAL] Labels/tags with unbounded values: user IDs, request IDs, raw URLs, session tokens, IP addresses
+- [CRITICAL] Datadog custom metric exceeding 350 unique tag combinations
+- [HIGH] Any label with more than 50 distinct values without documented justification
+- Safe label values: HTTP method, status code class (2xx/4xx/5xx), route template, environment, region
+
+**Cardinality math:** `unique_series = product(distinct_values_per_label)`. Budget before adding labels.
+
+### Structured Logging
+
+Required JSON fields on every log line:
+```
+timestamp   — ISO 8601 UTC
+level       — error | warn | info | debug
+message     — human-readable string
+service     — service name
+```
+
+Trace correlation fields:
+- **OTel:** `trace_id` (32 hex chars), `span_id` (16 hex chars), `trace_flags`
+- **Datadog:** `dd.trace_id` (decimal integer), `dd.span_id` (decimal integer), `dd.service`, `dd.env`, `dd.version`
+
+Do not mix OTel hex format with Datadog decimal format in the same log pipeline.
+
+### Span Naming
+
+- Use route template, not the actual path: `GET /users/{id}` not `GET /users/12345`
+- gRPC: `{ServiceName}/{MethodName}` — e.g., `OrderService/CreateOrder`
+- Database: `{db.operation.name} {db.name}` — e.g., `SELECT orders`
+- Background jobs: `{job.type} {resource}` — e.g., `process Invoice`
+- No user-controlled data in span names (cardinality + security)
+
+### Health Endpoints
+
+- Every service must expose `/livez` (liveness) and `/readyz` (readiness)
+- `/livez`: returns 200 if process is alive — no dependency checks
+- `/readyz`: returns 200 if ready for traffic, 503 if any required dependency is unavailable
+- Both endpoints must be excluded from distributed tracing and APM
+- Response body must be JSON with `status` field: `{"status": "ok"}` or `{"status": "degraded", "checks": {}}`
+
+### Alerting Standards
+
+- Alert on symptoms (error rate, latency, availability) — never on causes (CPU, memory, disk unless > 95%)
+- Every monitor/alert must include a `runbook` URL
+- Use multi-window burn rate: fast burn (1h window, 14x rate → page), slow burn (6h window, 5x rate → ticket)
+- `notify_no_data: true` only for metrics guaranteed to always emit during normal operation

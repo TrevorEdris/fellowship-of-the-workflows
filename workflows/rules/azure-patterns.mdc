@@ -1,0 +1,41 @@
+---
+description: "Azure SDK and IaC patterns: prefer Managed Identity over connection strings, use DefaultAzureCredential correctly, apply RBAC at narrowest scope, and choose Bicep vs Terraform per context."
+globs: "**/*.bicep,**/*.tf,**/go.mod,**/requirements.txt,**/pyproject.toml,**/package.json"
+alwaysApply: false
+---
+
+## Azure Patterns
+
+### Authentication
+
+- Use `DefaultAzureCredential` for local development; pin to `ManagedIdentityCredential` or `WorkloadIdentityCredential` in production.
+- Never use storage account keys or connection strings in application code — use Managed Identity and SDK clients.
+- Never use `--disable-user-confirmation` with the Azure MCP Server in production — elicitation protects against unreviewed secret access.
+
+### RBAC
+
+- Assign roles at resource or resource-group scope, not subscription scope, unless cross-resource access is explicitly required.
+- Use built-in roles (`Storage Blob Data Contributor`, `Key Vault Secrets User`) over custom roles.
+- Use RBAC (`enableRbacAuthorization: true`) for Key Vault, not access policies.
+
+### IaC
+
+- Bicep for Azure-only organizations; Terraform for multi-cloud or existing Terraform estate.
+- Never author ARM JSON directly — use Bicep and compile: `az bicep build`.
+- Run `az deployment group what-if` before `az deployment group create` in CI.
+- Store Terraform state in Azure Storage, never locally or in version control.
+
+### SDK Error Handling
+
+- Go: check `*azcore.ResponseError` — do not treat Azure SDK errors as opaque.
+- Python: catch `azure.core.exceptions.HttpResponseError`, check `.status_code`.
+- TypeScript: catch `RestError` from `@azure/core-rest-pipeline`, check `.statusCode`.
+- .NET: catch `RequestFailedException`, check `.Status` and `.ErrorCode`.
+
+### Anti-Patterns to Flag
+
+- `autorest`-based Go packages (prefix `github.com/Azure/azure-sdk-for-go/services/`) — use `sdk/` tree instead.
+- `@azure/ms-rest-js` or `@azure/ms-rest-azure-js` in Node.js — deprecated; use `@azure/` v2 clients.
+- `azure-mgmt-*` Python clients without `azure-identity` — they require explicit credential wiring.
+- Connection strings in `appsettings.json`, `.env`, or Kubernetes Secrets — use Key Vault references.
+- `az login --allow-no-subscriptions` in CI scripts — use OIDC federated credentials instead.

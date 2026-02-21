@@ -1,0 +1,191 @@
+---
+description: "Enforces PagerDuty integration conventions: dedup_key naming, severity mapping, no hardcoded credentials, escalation policy structure limits."
+globs: "**/*pagerduty*.{tf,hcl},**/main.tf,**/alertmanager*.yaml,**/alertmanager*.yml"
+alwaysApply: false
+---
+
+## PagerDuty Integration Conventions
+
+Apply these rules when working with PagerDuty Terraform resources or AlertManager configurations that route to PagerDuty.
+
+---
+
+### Credential Security
+
+**[MUST NOT]** Hardcode `routing_key`, `api_token`, or any PagerDuty credential as a literal string in HCL, YAML, or source code.
+
+```hcl
+# WRONG — literal credential in HCL
+resource "pagerduty_service_integration" "example" {
+  routing_key = "R0123456789abcdef"  # Never hardcode
+}
+
+# CORRECT — use variable referencing a secrets manager
+variable "pagerduty_token" {
+  type      = string
+  sensitive = true
+}
+
+provider "pagerduty" {
+  token = var.pagerduty_token
+}
+```
+
+The `integration_key` output from `pagerduty_service_integration` should be marked `sensitive = true` and stored in Vault, AWS Secrets Manager, or a Kubernetes Secret — not referenced as a plain Terraform output consumed by another module without sensitivity.
+
+---
+
+### dedup_key Naming
+
+**[MUST]** Follow the pattern `{service}:{alert_rule}:{env}` for all Events API v2 `dedup_key` values.
+
+```yaml
+# CORRECT — stable, scoped dedup_key
+dedup_key: "payments-service:high-error-rate:prod"
+
+# WRONG — includes dynamic values that break deduplication
+dedup_key: "payments-2025-01-15T14:30:00Z-abc123"
+dedup_key: "alert-{{ uuid }}"
+```
+
+The same `dedup_key` must be used for trigger, acknowledge, and resolve events for the same alert occurrence. Dynamic or timestamp-based keys prevent deduplication and cause duplicate incidents on flapping alerts.
+
+---
+
+### Severity Mapping
+
+**[MUST NOT]** Route `info`-severity events to PagerDuty.
+
+**[MUST NOT]** Use cause-based signals (CPU, memory, disk) as `critical` severity triggers.
+
+```yaml
+# CORRECT AlertManager severity mapping
+receivers:
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - routing_key: "{{ .ExternalURL }}"  # Use templating, not literals
+        severity: '{{ if eq .CommonLabels.severity "page" }}critical{{ else if eq .CommonLabels.severity "ticket" }}warning{{ else }}info{{ end }}'
+
+# WRONG — info events reach PD
+- match:
+    severity: info
+  receiver: pagerduty-critical  # info must never route to PD
+```
+
+```hcl
+# WRONG — paging on CPU (cause-based)
+resource "datadog_monitor" "cpu_alert" {
+  message = "@pagerduty-my-service"
+  query   = "avg(last_5m):avg:system.cpu.user{*} > 90"  # This is a cause, not a symptom
+}
+
+# CORRECT — page on error rate (symptom-based)
+resource "datadog_monitor" "error_rate" {
+  message = "@pagerduty-my-service"
+  query   = "sum(last_5m):sum:trace.web.request.errors{service:my-service}.as_count() / sum:trace.web.request.hits{service:my-service}.as_count() > 0.05"
+}
+```
+
+---
+
+### Escalation Policy Structure
+
+**[MUST NOT]** Create more than 3 escalation levels in a single `pagerduty_escalation_policy` resource.
+
+**[SHOULD]** Use these timeout values unless the team has explicitly agreed to different values:
+- L1 `escalation_delay_in_minutes`: 5
+- L2 `escalation_delay_in_minutes`: 15
+- L3 `escalation_delay_in_minutes`: 30
+
+```hcl
+# WRONG — too many levels
+resource "pagerduty_escalation_policy" "over_engineered" {
+  rule { escalation_delay_in_minutes = 5  ... }   # L1
+  rule { escalation_delay_in_minutes = 10 ... }   # L2
+  rule { escalation_delay_in_minutes = 15 ... }   # L3
+  rule { escalation_delay_in_minutes = 20 ... }   # L4 — remove this
+  rule { escalation_delay_in_minutes = 30 ... }   # L5 — remove this
+}
+
+# CORRECT
+resource "pagerduty_escalation_policy" "team_payments" {
+  rule { escalation_delay_in_minutes = 5  ... }   # L1: on-call engineer
+  rule { escalation_delay_in_minutes = 15 ... }   # L2: team lead
+  rule { escalation_delay_in_minutes = 30 ... }   # L3: manager
+}
+```
+
+---
+
+### Auto-Resolve Timeout by Criticality
+
+**[MUST]** Set `auto_resolve_timeout` according to criticality tier. Never use `null` (disabled) for non-critical services.
+
+| Criticality | `auto_resolve_timeout` |
+|-------------|----------------------|
+| Critical (P1 services) | `null` (no auto-resolve) |
+| High (P2) | `14400` (4 hours) |
+| Medium (P3) | `7200` (2 hours) |
+| Low (P4) | `3600` (1 hour) |
+
+```hcl
+# WRONG — non-critical service with no auto-resolve
+resource "pagerduty_service" "low_priority_service" {
+  auto_resolve_timeout = null  # Must have a timeout for non-critical services
+}
+```
+
+---
+
+### Alert Grouping
+
+**[SHOULD]** Configure `alert_grouping_parameters` on all PD services. The default (no grouping) creates one incident per alert, which causes alert storms during cascading failures.
+
+```hcl
+# SHOULD include on all services
+alert_grouping_parameters {
+  type = "time"
+  config {
+    timeout = 300  # 5-minute window; increase to 600 for high-traffic services
+  }
+}
+```
+
+---
+
+### Integration Key as Sensitive Output
+
+**[MUST]** Mark `integration_key` as sensitive in all Terraform outputs.
+
+```hcl
+# CORRECT
+output "integration_key" {
+  value     = pagerduty_service_integration.this.integration_key
+  sensitive = true  # Required — this is a write-only credential
+}
+
+# WRONG — exposes credential in plan output and state
+output "integration_key" {
+  value = pagerduty_service_integration.this.integration_key
+  # Missing sensitive = true
+}
+```
+
+---
+
+### Provider Version Pinning
+
+**[MUST]** Pin the PagerDuty provider to a minor version constraint.
+
+```hcl
+# CORRECT
+pagerduty = {
+  source  = "PagerDuty/pagerduty"
+  version = "~> 3.0"
+}
+
+# WRONG — unpinned, risks breaking changes
+pagerduty = {
+  source = "PagerDuty/pagerduty"
+}
+```

@@ -1,0 +1,121 @@
+# Workload Identity Federation — GitHub Actions → GCP
+#
+# Apply this configuration to set up keyless CI/CD authentication.
+# Run these commands with a GCP project owner or IAM admin.
+#
+# USAGE:
+#   1. Set the variables below
+#   2. Run gcp-wif-setup.sh (or execute each block manually)
+#
+# VARIABLES TO SET:
+#   PROJECT_ID         = your GCP project ID
+#   PROJECT_NUMBER     = your GCP project number
+#   GITHUB_ORG         = your GitHub organization or username
+#   GITHUB_REPO        = your repository name (without org prefix)
+#   SA_NAME            = service account name for deployments
+#   POOL_ID            = workload identity pool ID (e.g., "github-pool")
+#   PROVIDER_ID        = provider ID (e.g., "github-provider")
+
+# ─── Step 1: Create the Workload Identity Pool ───────────────────────────────
+
+# gcloud iam workload-identity-pools create "${POOL_ID}" \
+#   --project="${PROJECT_ID}" \
+#   --location="global" \
+#   --display-name="GitHub Actions" \
+#   --description="WIF pool for GitHub Actions CI/CD"
+
+# ─── Step 2: Create the OIDC Provider ────────────────────────────────────────
+
+# gcloud iam workload-identity-pools providers create-oidc "${PROVIDER_ID}" \
+#   --project="${PROJECT_ID}" \
+#   --location="global" \
+#   --workload-identity-pool="${POOL_ID}" \
+#   --display-name="GitHub Actions Provider" \
+#   --issuer-uri="https://token.actions.githubusercontent.com" \
+#   --attribute-mapping="\
+#     google.subject=assertion.sub,\
+#     attribute.repository=assertion.repository,\
+#     attribute.repository_owner=assertion.repository_owner,\
+#     attribute.actor=assertion.actor,\
+#     attribute.ref=assertion.ref,\
+#     attribute.workflow=assertion.workflow" \
+#   --attribute-condition="assertion.repository_owner=='${GITHUB_ORG}'"
+
+# ─── Step 3: Create Deploy Service Account ───────────────────────────────────
+
+# gcloud iam service-accounts create "${SA_NAME}" \
+#   --project="${PROJECT_ID}" \
+#   --display-name="CI/CD Deploy SA" \
+#   --description="Used by GitHub Actions via WIF — no key files"
+
+# ─── Step 4: Bind SA to Pool (repo-scoped — most secure) ─────────────────────
+
+# POOL_RESOURCE=$(gcloud iam workload-identity-pools describe "${POOL_ID}" \
+#   --project="${PROJECT_ID}" \
+#   --location="global" \
+#   --format="value(name)")
+#
+# gcloud iam service-accounts add-iam-policy-binding \
+#   "${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+#   --project="${PROJECT_ID}" \
+#   --role="roles/iam.workloadIdentityUser" \
+#   --member="principalSet://iam.googleapis.com/${POOL_RESOURCE}/attribute.repository/${GITHUB_ORG}/${GITHUB_REPO}"
+
+# ─── Step 5: Grant Deploy Roles to SA ────────────────────────────────────────
+
+# Minimum roles for Cloud Run deployment:
+# gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+#   --member="serviceAccount:${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+#   --role="roles/run.developer"
+#
+# gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+#   --member="serviceAccount:${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+#   --role="roles/artifactregistry.reader"
+#
+# gcloud iam service-accounts add-iam-policy-binding \
+#   "APP_SA@${PROJECT_ID}.iam.gserviceaccount.com" \
+#   --member="serviceAccount:${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+#   --role="roles/iam.serviceAccountUser"
+
+# ─── Step 6: GitHub Actions Workflow ─────────────────────────────────────────
+#
+# Add this to your workflow file (.github/workflows/deploy.yml):
+
+# name: Deploy to Cloud Run
+# on:
+#   push:
+#     branches: [main]
+#
+# permissions:
+#   id-token: write
+#   contents: read
+#
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#
+#       - name: Authenticate to GCP
+#         uses: google-github-actions/auth@v2
+#         with:
+#           workload_identity_provider: projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}
+#           service_account: ${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+#
+#       - name: Deploy
+#         run: |
+#           gcloud run deploy my-service \
+#             --image=REGION-docker.pkg.dev/${PROJECT_ID}/containers/my-image:${{ github.sha }} \
+#             --region=us-central1
+
+# ─── Verification ─────────────────────────────────────────────────────────────
+
+# After setup, verify the pool and provider exist:
+# gcloud iam workload-identity-pools describe "${POOL_ID}" \
+#   --project="${PROJECT_ID}" \
+#   --location="global"
+#
+# gcloud iam workload-identity-pools providers describe "${PROVIDER_ID}" \
+#   --workload-identity-pool="${POOL_ID}" \
+#   --project="${PROJECT_ID}" \
+#   --location="global"

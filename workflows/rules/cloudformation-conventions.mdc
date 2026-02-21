@@ -1,0 +1,95 @@
+---
+description: "CloudFormation and SAM template authoring conventions: intrinsic function usage, parameter security, stateful resource protection, cross-stack coupling, and change set discipline."
+globs: "**/*.cfn.yaml,**/*.cfn.json,**/template.yaml,**/template.json,**/*.sam.yaml,**/samconfig.toml"
+alwaysApply: false
+---
+
+## CloudFormation / SAM Conventions
+
+### Core Principles
+
+- **Protect stateful resources** — Set `DeletionPolicy: Retain` on RDS, DynamoDB, S3, ElastiCache, and ElasticSearch in production; never rely on the default `Delete`
+- **No hardcoded values** — Use `${AWS::AccountId}`, `${AWS::Region}`, `${AWS::StackName}` pseudo-parameters; never inline account IDs or region strings
+- **Change sets before apply** — Always generate and review a change set before executing on production stacks; never `aws cloudformation deploy` directly without reviewing planned changes
+- **Secure sensitive parameters** — Always set `NoEcho: true` on passwords, API keys, and connection strings
+
+### Intrinsic Function Usage
+
+| Function | Use | Avoid |
+|----------|-----|-------|
+| `!Sub` | String interpolation: `!Sub "${AWS::StackName}-${Env}-bucket"` | `!Join` for simple concatenation |
+| `!Ref` | Parameter values, resource logical IDs | Using on a resource that returns ARN when you need the name |
+| `!GetAtt` | Resource attributes (check docs for exact attribute name) | Assuming attribute names — they are inconsistent across resource types |
+| `!If` | Conditional resource properties | Deep nesting (max 1-2 levels); complex logic belongs in Lambda |
+| `Fn::ImportValue` | Cross-stack exports | Tight coupling between stacks; prefer SSM Parameter Store for loose coupling |
+
+### Parameter Security
+
+```yaml
+Parameters:
+  DatabasePassword:
+    Type: String
+    NoEcho: true          # Required for all secrets
+    Description: "RDS master password — store in Secrets Manager"
+
+  Env:
+    Type: String
+    AllowedValues: [dev, staging, prod]  # Constrain to valid values
+```
+
+### Stateful Resource Protection
+
+```yaml
+Resources:
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Retain       # Prevent accidental data loss
+    UpdateReplacePolicy: Retain  # Also required for replace operations
+    Properties:
+      StorageEncrypted: true
+      DeletionProtection: true
+```
+
+### Cross-Stack References
+
+Prefer SSM Parameter Store over `Fn::ImportValue`:
+```yaml
+# Export (producer stack)
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+# Then write to SSM via custom resource or CDK — avoids circular dependency risk
+
+# Avoid: Fn::ImportValue creates deployment ordering dependencies
+VpcId: !ImportValue "NetworkStack:VpcId"
+```
+
+### Anti-Patterns
+
+- Circular `Fn::ImportValue` dependencies between stacks — creates deployment deadlocks
+- `DeletionPolicy: Delete` on databases, file systems, or storage in production
+- `NoEcho: false` (the default) on sensitive parameters — always set `NoEcho: true`
+- Hardcoded AMI IDs — use SSM Parameter Store: `!Sub "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}"`
+- Template size exceeding 1MB — split into nested stacks with `AWS::CloudFormation::Stack`
+- `Ref` on a resource when the actual return value is an ARN (or vice versa) — always check the CFN docs
+
+### SAM-Specific
+
+- `sam validate` before `sam build`; `sam build` before `sam deploy`
+- Set `Timeout` on all Lambda functions (default 3s is often too short)
+- Set `MemorySize` explicitly — do not rely on the 128MB default in production
+- Never commit `samconfig.toml` with account IDs or deployment bucket names
+- Use `Globals` section to share common settings across functions
+
+### Tooling
+
+| Tool | Purpose | Command |
+|------|---------|---------|
+| `cfn-lint` | Template validation and best practices | `cfn-lint template.yaml` |
+| `cfn-guard` | Policy-as-code rules | `cfn-guard validate -r rules/ -d template.yaml` |
+| `sam validate` | SAM template validation | `sam validate --template template.yaml` |
+| `rain` | Better diff and deploy UX | `rain diff` / `rain deploy` |
+
+### Deep Reference
+
+For comprehensive patterns, construct library, and migration guidance, use the `/aws-iac` skill.
