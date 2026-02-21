@@ -1,0 +1,113 @@
+# Cloud Run Service — Declarative YAML
+#
+# Deploy with: gcloud run services replace cloud-run-service.yaml --region=REGION
+# Or apply via: gcloud beta run services apply --file=cloud-run-service.yaml
+#
+# VARIABLES TO REPLACE:
+#   SERVICE_NAME       = your Cloud Run service name
+#   REGION             = GCP region (e.g., us-central1)
+#   PROJECT_ID         = your GCP project ID
+#   IMAGE_URL          = full container image URL with digest
+#   APP_SA             = service account email for the Cloud Run service
+#   CLOUD_SQL_INSTANCE = PROJECT:REGION:INSTANCE (if using Cloud SQL)
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: SERVICE_NAME
+  namespace: PROJECT_ID
+  labels:
+    app: SERVICE_NAME
+    env: production
+  annotations:
+    run.googleapis.com/ingress: internal-and-cloud-load-balancing
+    # Use 'internal' for private-only services
+    # Use 'all' for public-facing services (requires explicit allow-unauthenticated)
+spec:
+  template:
+    metadata:
+      labels:
+        run.googleapis.com/startupProbeType: Default
+      annotations:
+        # Cloud SQL connection (remove if not using Cloud SQL)
+        run.googleapis.com/cloudsql-instances: CLOUD_SQL_INSTANCE
+
+        # Scaling
+        autoscaling.knative.dev/minScale: "1"    # 0 = scale to zero; 1 = always warm
+        autoscaling.knative.dev/maxScale: "100"
+
+        # CPU allocation: 'cpu-throttled' (default) or 'cpu-always-allocated'
+        run.googleapis.com/cpu-throttling: "true"
+
+        # Startup CPU boost: allocates extra CPU for faster cold starts
+        run.googleapis.com/startup-cpu-boost: "true"
+
+    spec:
+      # Use a dedicated service account — never use the default
+      serviceAccountName: APP_SA
+
+      # Request timeout (max 3600 for standard; 3600 for HTTP/2)
+      timeoutSeconds: 300
+
+      # Concurrency: requests handled per container instance
+      containerConcurrency: 80
+
+      containers:
+        - image: IMAGE_URL
+
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+
+          env:
+            # Non-sensitive config as env vars
+            - name: PROJECT_ID
+              value: PROJECT_ID
+            - name: ENV
+              value: production
+            - name: LOG_LEVEL
+              value: info
+
+            # Sensitive config from Secret Manager
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-password
+                  key: latest
+
+            # Cloud SQL socket path (if using --add-cloudsql-instances)
+            - name: DB_HOST
+              value: /cloudsql/CLOUD_SQL_INSTANCE
+
+          # Startup probe: allow time for slower startup languages (JVM, Python)
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12  # 60 seconds total startup window
+
+          # Liveness probe: restart if unhealthy
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+            periodSeconds: 15
+            failureThreshold: 3
+
+          ports:
+            - containerPort: 8080
+              name: http1  # Use 'h2c' for HTTP/2 gRPC services
+
+  traffic:
+    # 100% to latest revision by default
+    - percent: 100
+      latestRevision: true
+
+    # For canary releases, comment out above and use:
+    # - percent: 95
+    #   revisionName: SERVICE_NAME-00010-xxx  # stable revision
+    # - percent: 5
+    #   latestRevision: true                   # canary revision
