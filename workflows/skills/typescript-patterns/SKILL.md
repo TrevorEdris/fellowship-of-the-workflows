@@ -1,6 +1,6 @@
 ---
 name: typescript-patterns
-description: Comprehensive TypeScript patterns and best practices. Use when writing, reviewing, or refactoring TypeScript code. Covers idiomatic patterns, type system, error handling, async, testing, and project structure.
+description: TypeScript patterns and idioms. Use when writing, reviewing, or refactoring TypeScript code. Covers type system, error handling, async, testing, and project structure.
 ---
 
 # TypeScript Patterns

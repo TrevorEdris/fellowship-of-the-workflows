@@ -1,12 +1,12 @@
 ---
 name: terraform
-description: Write, review, refactor, and audit Terraform configurations with production-ready patterns. Covers module structure, state management, providers, resource patterns, testing, CI/CD integration, and security.
+description: Write, review, refactor, and audit Terraform configurations. Covers module structure, state management, providers, resource patterns, testing, CI/CD integration, and security.
 allowed-tools: Bash, Glob, Grep, Read, Write, WebFetch
 ---
 
 # Terraform
 
-Production-ready Terraform guidance. Each reference file is self-contained and can be loaded independently.
+Each reference file is self-contained and can be loaded independently.
 
 ---
 

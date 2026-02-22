@@ -5,8 +5,6 @@ description: Scaffold E2E and integration tests using Playwright. Covers Page Ob
 
 # E2E / Integration Testing
 
-Scaffold production-ready Playwright test suites with Page Object Model, test data factories, CI/CD integration, and flakiness management.
-
 ---
 
 ## Quick Start

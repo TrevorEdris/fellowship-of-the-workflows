@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: Conduct comprehensive design review on front-end code changes using Playwright for live browser testing. Covers visual hierarchy, accessibility (WCAG AA+), responsive design, and interaction patterns. Use when reviewing UI/UX changes before merge.
+description: Design review for front-end code changes using Playwright for live browser testing. Covers visual hierarchy, accessibility (WCAG AA+), responsive design, and interaction patterns. Use when reviewing UI/UX changes before merge.
 context: fork
 agent: design-review
 allowed-tools: Bash(git:*), Bash(gh:*), Grep, Glob, LS, Read, WebFetch, TodoWrite, mcp__playwright__browser_close, mcp__playwright__browser_resize, mcp__playwright__browser_console_messages, mcp__playwright__browser_handle_dialog, mcp__playwright__browser_evaluate, mcp__playwright__browser_file_upload, mcp__playwright__browser_install, mcp__playwright__browser_press_key, mcp__playwright__browser_type, mcp__playwright__browser_navigate, mcp__playwright__browser_navigate_back, mcp__playwright__browser_network_requests, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_drag, mcp__playwright__browser_hover, mcp__playwright__browser_select_option, mcp__playwright__browser_tabs, mcp__playwright__browser_wait_for
@@ -8,7 +8,7 @@ allowed-tools: Bash(git:*), Bash(gh:*), Grep, Glob, LS, Read, WebFetch, TodoWrit
 
 # Design Review
 
-Conduct a comprehensive design review of the pending front-end changes.
+Review the pending front-end changes for design quality.
 
 ## Context
 
@@ -43,7 +43,7 @@ DIFF CONTENT:
 
 ## Objective
 
-Use the design-review agent to comprehensively review the UI/UX changes above. Execute the 7-phase review process with live browser testing. Your final reply must contain the markdown report with screenshots.
+Use the design-review agent to review the UI/UX changes above. Execute the 7-phase review process with live browser testing. Your final reply must contain the markdown report with screenshots.
 
 ## References
 

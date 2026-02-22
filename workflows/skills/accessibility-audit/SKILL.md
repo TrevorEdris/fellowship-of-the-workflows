@@ -1,6 +1,6 @@
 ---
 name: accessibility-audit
-description: Comprehensive WCAG 2.1/2.2 accessibility audit covering all POUR principles, keyboard navigation, screen reader strategy, color contrast, ARIA patterns, and semantic HTML. Use when reviewing UI changes for accessibility compliance or conducting pre-release accessibility checks.
+description: WCAG 2.1/2.2 accessibility audit covering all POUR principles, keyboard navigation, screen reader strategy, color contrast, ARIA patterns, and semantic HTML. Use when reviewing UI changes for accessibility compliance or conducting pre-release accessibility checks.
 context: fork
 agent: accessibility-audit
 allowed-tools: Bash(git:*), Bash(gh:*), Grep, Glob, LS, Read, WebFetch, TodoWrite, mcp__playwright__browser_close, mcp__playwright__browser_resize, mcp__playwright__browser_console_messages, mcp__playwright__browser_handle_dialog, mcp__playwright__browser_evaluate, mcp__playwright__browser_file_upload, mcp__playwright__browser_install, mcp__playwright__browser_press_key, mcp__playwright__browser_type, mcp__playwright__browser_navigate, mcp__playwright__browser_navigate_back, mcp__playwright__browser_network_requests, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_drag, mcp__playwright__browser_hover, mcp__playwright__browser_select_option, mcp__playwright__browser_tabs, mcp__playwright__browser_wait_for
@@ -8,7 +8,7 @@ allowed-tools: Bash(git:*), Bash(gh:*), Grep, Glob, LS, Read, WebFetch, TodoWrit
 
 # Accessibility Audit
 
-Conduct a comprehensive WCAG 2.1/2.2 accessibility audit of the pending UI changes.
+Audit the pending UI changes against WCAG 2.1/2.2.
 
 ## Context
 

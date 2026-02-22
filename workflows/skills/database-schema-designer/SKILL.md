@@ -1,11 +1,9 @@
 ---
 name: database-schema-designer
-description: Design robust, scalable database schemas for SQL and NoSQL databases. Provides normalization guidelines, indexing strategies, migration patterns, constraint design, and performance optimization. Ensures data integrity, query performance, and maintainable data models.
+description: Design SQL and NoSQL database schemas. Covers normalization, indexing, migration patterns, constraints, and performance tuning.
 ---
 
 # Database Schema Designer
-
-Design production-ready database schemas with best practices built-in.
 
 ---
 
