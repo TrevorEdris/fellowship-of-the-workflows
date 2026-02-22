@@ -24,6 +24,7 @@ Maps each available FotW agent to its capabilities, domain, and routing guidance
 | `tdd-enforcer` | Testing | TDD enforcement, RED-GREEN-REFACTOR cycle gating, test-first compliance | sonnet | Bash, Glob, Grep, Read |
 | `systematic-debugger` | Debugging | Root cause analysis, hypothesis-driven debugging, read-only investigation | opus | Bash, Glob, Grep, Read |
 | `documentation-sync` | Documentation | Post-implementation doc sync, staleness audit, changelog generation | sonnet | Bash, Glob, Grep, Read, Write |
+| `desloppify` | Code/content quality | AI slop detection and removal from code comments, documentation, and prose | sonnet | Bash, Glob, Grep, LS, Read, Write, Edit |
 | `refactoring-specialist` | Code quality | Code smell detection, safe refactoring execution, characterization tests | sonnet | Bash, Glob, Grep, Read, Write, Edit |
 | `performance-optimization` | Performance | N+1 detection, caching analysis, bundle size, algorithmic complexity | opus | Bash, Glob, Grep, LS, Read, Task |
 | `e2e-test-reviewer` | Testing | E2E/integration test quality review, AAA compliance, isolation patterns | sonnet | Bash, Glob, Grep, Read |
@@ -163,6 +164,17 @@ Best invoked with a specific symptom (error message, stack trace, reproduction s
 Analyzes git diffs and code changes to generate or update README sections, changelogs, and API documentation, using `<!-- AUTO-GENERATED:START -->` markers to protect hand-written content. Classifies docs by staleness (FRESH / SLIGHTLY_STALE / STALE / VERY_STALE) and follows Keep a Changelog format with conventional commit classification rules. Use over `mermaid-diagram-specialist` for prose/reference documentation; use after implementation is complete rather than during, since it generates from actual code state.
 
 Best invoked after a batch of changes are committed, with the git diff range or list of changed files provided so it can map source changes to their documentation owners.
+
+### `desloppify`
+
+Identifies and removes AI-generated noise from code and text across three domains:
+- **Code comments:** narrator, step, obvious, over-documented, placeholder, apologetic, redundant type docs (9 patterns)
+- **Code patterns:** defensive impossible-case handling, unnecessary try-catch, redundant type assertions, premature abstraction, speculative generality (8 patterns)
+- **Prose:** filler phrases, AI vocabulary, promotional adjectives, structural tells, surface-level treatment
+
+Operates in four modes: `code`, `docs`, `prose`, and `review` (report-only). Uses four-severity triage (CRITICAL/HIGH/MEDIUM/LOW) and presents proposed changes for user approval before applying. Use over `pragmatic-code-review` when the concern is AI-generated noise specifically; use over `writing-clearly-and-concisely` when detecting and removing existing slop rather than learning writing principles; use alongside `refactoring-specialist` when AI noise coexists with structural smells.
+
+Best invoked after AI-assisted code generation or editing, with specific files or a git diff range to scope the scan; auto-detect mode uses `git status` to identify recently changed files.
 
 ### `refactoring-specialist`
 
