@@ -48,7 +48,7 @@ If Atlassian MCP is connected, fetch linked ticket details and validate implemen
 
 ## Objective
 
-Use the pragmatic-code-review agent to comprehensively review the complete diff above. Your final reply must contain the markdown report.
+Use the pragmatic-code-review agent to review the complete diff above. Your final reply must contain the markdown report.
 
 ## Scripts
 

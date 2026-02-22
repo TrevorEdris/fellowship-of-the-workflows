@@ -10,7 +10,7 @@ argument-hint: "[broker-selection|kafka|outbox|schema|consumer-design]"
 
 # Event-Driven Architecture
 
-Deep-dive skill for designing and implementing event-driven systems.
+Design and implement event-driven systems.
 
 ## When to Use
 

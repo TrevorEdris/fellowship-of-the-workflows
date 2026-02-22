@@ -43,7 +43,7 @@ DIFF CONTENT:
 
 ## Objective
 
-Use the design-review agent to comprehensively review the UI/UX changes above. Execute the 7-phase review process with live browser testing. Your final reply must contain the markdown report with screenshots.
+Use the design-review agent to review the UI/UX changes above. Execute the 7-phase review process with live browser testing. Your final reply must contain the markdown report with screenshots.
 
 ## References
 
