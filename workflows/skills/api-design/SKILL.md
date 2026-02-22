@@ -1,11 +1,9 @@
 ---
 name: api-design
-description: Design production-ready REST and GraphQL APIs with best practices built-in. Provides endpoint naming conventions, versioning strategy, OpenAPI 3.1 spec generation, request/response schema design, pagination, error handling, and authentication patterns.
+description: Design REST and GraphQL APIs. Covers endpoint naming, versioning, OpenAPI 3.1 specs, pagination, error handling, and auth patterns.
 ---
 
 # API Design
-
-Design production-ready APIs with best practices built-in.
 
 ---
 

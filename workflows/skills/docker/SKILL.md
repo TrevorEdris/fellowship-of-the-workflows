@@ -9,8 +9,6 @@ argument-hint: "[dockerfile|compose|harden|scan]"
 
 # Docker
 
-Author and optimize Dockerfiles, Docker Compose stacks, and container security for production-ready containerized services.
-
 ---
 
 ## When to Use

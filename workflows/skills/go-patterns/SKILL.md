@@ -1,6 +1,6 @@
 ---
 name: go-patterns
-description: Comprehensive Go patterns and best practices. Use when writing, reviewing, or refactoring Go code. Covers idiomatic patterns, error handling, concurrency, testing, and project structure.
+description: Go patterns and idioms. Use when writing, reviewing, or refactoring Go code. Covers error handling, concurrency, testing, and project structure.
 ---
 
 # Go Patterns

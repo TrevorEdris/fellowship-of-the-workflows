@@ -8,7 +8,7 @@ allowed-tools: Bash(git:*), Bash(gh:*), Grep, Glob, LS, Read, WebFetch, TodoWrit
 
 # Code Review
 
-Conduct a comprehensive code review of the pending changes using the Pragmatic Quality framework.
+Review the pending changes using the Pragmatic Quality framework.
 
 ## Context
 

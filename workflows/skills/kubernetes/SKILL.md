@@ -1,6 +1,6 @@
 ---
 name: kubernetes
-description: "Author Kubernetes manifests, Helm charts, and Kustomize overlays with production-grade resource limits, probes, security contexts, and RBAC. Modes: manifest, helm, kustomize, audit."
+description: "Author Kubernetes manifests, Helm charts, and Kustomize overlays with resource limits, probes, security contexts, and RBAC. Modes: manifest, helm, kustomize, audit."
 context: fork
 allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
@@ -8,8 +8,6 @@ argument-hint: "[manifest|helm|kustomize|audit]"
 ---
 
 # Kubernetes
-
-Author and audit Kubernetes resource definitions, Helm charts, and Kustomize overlays for production-grade deployments.
 
 ---
 
@@ -62,7 +60,7 @@ CURRENT NAMESPACE/CONTEXT:
 
 ## Mode: manifest
 
-Generate production-ready Kubernetes manifests for a service.
+Generate Kubernetes manifests for a service.
 
 **Steps:**
 1. Identify service type: stateless web service, stateful service, batch job, or DaemonSet

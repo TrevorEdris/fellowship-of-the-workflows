@@ -1,6 +1,6 @@
 ---
 name: rust-patterns
-description: Comprehensive Rust patterns and best practices. Use when writing, reviewing, or refactoring Rust code. Covers idiomatic patterns, error handling, type system, concurrency, testing, and project structure.
+description: Rust patterns and idioms. Use when writing, reviewing, or refactoring Rust code. Covers error handling, type system, concurrency, testing, and project structure.
 ---
 
 # Rust Patterns

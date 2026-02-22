@@ -1,6 +1,6 @@
 ---
 name: python-patterns
-description: Comprehensive Python patterns and best practices. Use when writing, reviewing, or refactoring Python code. Covers idiomatic patterns, error handling, async, type system, testing, and project structure.
+description: Python patterns and idioms. Use when writing, reviewing, or refactoring Python code. Covers error handling, async, type system, testing, and project structure.
 ---
 
 # Python Patterns
