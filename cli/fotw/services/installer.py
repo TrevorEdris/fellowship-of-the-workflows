@@ -6,9 +6,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from fotw.models.workflow import Hook
 from fotw.services.agents import AgentConfig, expand_tools, get_agent_config
 from fotw.services.catalog import REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
 from fotw.services.frontmatter_translator import translate_content, translate_to_target
+from fotw.services.settings_merger import merge_hooks, read_settings, write_settings
 from fotw.ui.console import console, err_console
 from fotw.ui.diff import files_are_identical, show_diff, show_dir_diff
 
@@ -540,6 +542,116 @@ def install_starter(tier: str, ctx: InstallContext) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Hooks install
+# ---------------------------------------------------------------------------
+
+def install_single_hook(
+    hook: Hook, ctx: InstallContext, include_tests: bool = False
+) -> bool:
+    """Install a single hook script. Returns True on success."""
+    target_dir = Path.home() / ".claude" / "hooks"
+    target = target_dir / f"{hook.name}.js"
+
+    new_content = hook.path.read_text()
+
+    if not ctx.quiet:
+        console.print(f"  [yellow]\u2192[/yellow] {hook.name}.js ({hook.event}:{hook.matcher or '*'})", highlight=False)
+
+    if ctx.dry_run:
+        if not ctx.quiet:
+            console.print(f"    [yellow][DRY RUN] Would copy to {target}[/yellow]")
+        return True
+
+    if not _resolve_conflict(ctx, target, new_content):
+        if not ctx.quiet:
+            console.print(f"    Skipped {hook.name}")
+        return True  # Skip is not a failure
+
+    target_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(hook.path, target)
+    if not ctx.quiet:
+        console.print(f"    [green]\u2713[/green] Copied {hook.name}.js")
+
+    # Optionally copy tests
+    if include_tests and hook.has_tests:
+        tests_source = hook.path.parent / "tests"
+        tests_target = target_dir / "tests"
+        test_file = f"{hook.name}.test.js"
+        for sub in tests_source.iterdir():
+            if sub.is_dir():
+                test_path = sub / test_file
+                if test_path.is_file():
+                    dest_dir = tests_target / sub.name
+                    dest_dir.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(test_path, dest_dir / test_file)
+                    if not ctx.quiet:
+                        console.print(f"    [green]\u2713[/green] Copied test: {sub.name}/{test_file}")
+
+    return True
+
+
+def install_hooks(ctx: InstallContext, include_tests: bool = False) -> bool:
+    """Install all hooks (global + claude-code only)."""
+    from fotw.services.catalog import scan_hooks
+
+    if ctx.tool != "claude-code":
+        err_console.print("[red]Error: Hooks are only supported for claude-code[/red]")
+        return False
+
+    if not ctx.is_global:
+        err_console.print("[red]Error: Hooks must be installed globally (--global)[/red]")
+        return False
+
+    hooks = scan_hooks()
+    if not hooks:
+        if not ctx.quiet:
+            console.print("[yellow]No hooks found[/yellow]")
+        return True
+
+    if not ctx.quiet:
+        console.print()
+        console.print("Installing hooks...")
+        console.print(f"Tool:   claude-code")
+        console.print(f"Scope:  Global (~/.claude/hooks/)")
+        console.print()
+
+    # Install script files
+    for hook in hooks:
+        install_single_hook(hook, ctx, include_tests)
+
+    # Merge into settings.json
+    settings_path = Path.home() / ".claude" / "settings.json"
+
+    if ctx.dry_run:
+        if not ctx.quiet:
+            console.print()
+            console.print(f"[yellow][DRY RUN] Would merge hooks config into {settings_path}[/yellow]")
+        return True
+
+    # Backup existing settings
+    if settings_path.is_file():
+        backup = settings_path.with_suffix(".json.bak")
+        shutil.copy2(settings_path, backup)
+        if not ctx.quiet:
+            console.print()
+            console.print(f"[cyan]Backed up settings to {backup.name}[/cyan]")
+
+    existing = read_settings(settings_path)
+    merged = merge_hooks(existing, hooks)
+    write_settings(merged, settings_path)
+
+    if not ctx.quiet:
+        console.print(f"[green]\u2713[/green] Merged {len(hooks)} hooks into {settings_path}")
+
+    # Summary
+    if not ctx.quiet:
+        console.print()
+        console.print(f"[green]Installed {len(hooks)} hooks[/green]")
+
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Install all
 # ---------------------------------------------------------------------------
 
@@ -598,6 +710,27 @@ def install_all(ctx: InstallContext) -> bool:
         ctx.failed.append("personas")
         if not ctx.quiet:
             console.print(f"  [red]\u2717[/red] Failed")
+
+    # Hooks (claude-code + global only)
+    if ctx.tool == "claude-code" and ctx.is_global:
+        if not ctx.quiet:
+            console.print("[yellow]\u2192[/yellow] Installing hooks...")
+        hook_ctx = InstallContext(
+            tool=ctx.tool,
+            target_repo=ctx.target_repo,
+            is_global=True,
+            dry_run=ctx.dry_run,
+            force=ctx.force,
+            quiet=True,
+        )
+        if install_hooks(hook_ctx):
+            ctx.succeeded.append("hooks")
+            if not ctx.quiet:
+                console.print(f"  [green]\u2713[/green] Done")
+        else:
+            ctx.failed.append("hooks")
+            if not ctx.quiet:
+                console.print(f"  [red]\u2717[/red] Failed")
 
     # Summary
     console.print()

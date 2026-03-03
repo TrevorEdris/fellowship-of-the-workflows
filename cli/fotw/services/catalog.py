@@ -1,11 +1,14 @@
 """Scan and parse the workflow catalog from disk."""
 
+import json
 import os
+import re
 from pathlib import Path
 
 import frontmatter
 
 from fotw.models.workflow import (
+    Hook,
     Persona,
     Starter,
     ValidationResult,
@@ -189,6 +192,94 @@ def scan_personas() -> list[Persona]:
     return results
 
 
+KNOWN_HOOK_EVENTS = {"PreToolUse", "PostToolUse", "PreCompact", "PostCompact",
+                      "UserPromptSubmit", "Stop", "SubagentStop"}
+
+_HOOK_META_RE = re.compile(r'@fotw-hook\s*(\{[^}]+\})')
+
+
+def _parse_hook_meta(path: Path) -> dict | None:
+    """Extract @fotw-hook JSON metadata from a .js file."""
+    try:
+        content = path.read_text()
+    except Exception:
+        return None
+    m = _HOOK_META_RE.search(content)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(1))
+    except json.JSONDecodeError:
+        return None
+
+
+def scan_hooks() -> list[Hook]:
+    """Scan workflows/hooks/ for hook scripts with @fotw-hook metadata."""
+    hooks_dir = WORKFLOWS_DIR / "hooks"
+    if not hooks_dir.is_dir():
+        return []
+
+    tests_dir = hooks_dir / "tests"
+    results = []
+    for path in sorted(hooks_dir.iterdir()):
+        if path.suffix != ".js":
+            continue
+        meta = _parse_hook_meta(path)
+        if not meta:
+            continue
+        # Check for tests
+        has_tests = False
+        if tests_dir.is_dir():
+            test_file = f"{path.stem}.test.js"
+            for sub in tests_dir.iterdir():
+                if sub.is_dir() and (sub / test_file).is_file():
+                    has_tests = True
+                    break
+        results.append(
+            Hook(
+                name=path.stem,
+                description=meta.get("description", ""),
+                event=meta.get("event", ""),
+                matcher=meta.get("matcher", ""),
+                path=path,
+                has_tests=has_tests,
+            )
+        )
+    return results
+
+
+def validate_hook(path: Path) -> ValidationResult:
+    """Validate a single hook script."""
+    name = f"hooks/{path.stem}"
+    errors = []
+    warnings = []
+
+    try:
+        content = path.read_text()
+    except Exception as e:
+        errors.append(f"Cannot read file: {e}")
+        return ValidationResult(workflow_id=name, ok=False, errors=errors, warnings=warnings)
+
+    if not content.startswith("#!/usr/bin/env node"):
+        warnings.append("Missing shebang (#!/usr/bin/env node)")
+
+    meta = _parse_hook_meta(path)
+    if not meta:
+        errors.append("Missing or invalid @fotw-hook metadata")
+        return ValidationResult(workflow_id=name, ok=False, errors=errors, warnings=warnings)
+
+    event = meta.get("event", "")
+    if not event:
+        errors.append("@fotw-hook missing 'event' field")
+    elif event not in KNOWN_HOOK_EVENTS:
+        warnings.append(f"Unknown hook event: {event}")
+
+    if not meta.get("description"):
+        warnings.append("Missing 'description' in @fotw-hook metadata")
+
+    return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
+
+
 def scan_all() -> list[Workflow]:
     """Scan all workflow types."""
     return scan_rules() + scan_skills() + scan_agents()
@@ -282,5 +373,13 @@ def validate_all(target_path: str | None = None) -> list[ValidationResult]:
             if path.name == ".gitkeep" or path.suffix != ".md":
                 continue
             results.append(validate_agent(path))
+
+    # Validate hooks
+    hooks_dir = WORKFLOWS_DIR / "hooks"
+    if hooks_dir.is_dir():
+        for path in sorted(hooks_dir.iterdir()):
+            if path.suffix != ".js":
+                continue
+            results.append(validate_hook(path))
 
     return results

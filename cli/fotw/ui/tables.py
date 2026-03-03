@@ -2,7 +2,7 @@
 
 from rich.table import Table
 
-from fotw.models.workflow import Persona, Starter, Workflow, WorkflowType
+from fotw.models.workflow import Hook, Persona, Starter, Workflow, WorkflowType
 from fotw.ui.console import console
 
 
@@ -16,6 +16,7 @@ def print_workflows(
     workflows: list[Workflow],
     starters: list[Starter],
     personas: list[Persona],
+    hooks: list[Hook] | None = None,
     type_filter: str | None = None,
 ) -> None:
     """Print workflows in Rich tables."""
@@ -94,4 +95,19 @@ def print_workflows(
             for wf in agents:
                 table.add_row(wf.workflow_id, _truncate(wf.description))
             console.print(table)
+            console.print()
+
+    # Hooks
+    if not type_filter or type_filter == "hook":
+        if hooks:
+            table = Table(title="hooks", title_style="bold", show_header=True, box=None, padding=(0, 2))
+            table.add_column("ID", style="green", min_width=30)
+            table.add_column("Event", style="cyan")
+            table.add_column("Matcher")
+            table.add_column("Description")
+            for h in hooks:
+                table.add_row(h.workflow_id, h.event, h.matcher or "*", _truncate(h.description))
+            console.print(table)
+            console.print()
+            console.print("  [cyan]Install hooks:[/cyan] ./bin/fotw install hooks --global --for claude-code")
             console.print()

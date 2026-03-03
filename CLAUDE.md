@@ -30,6 +30,11 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 ./bin/fotw install rules/ai-session --global --for cursor
 ./bin/fotw install --all ~/project --for claude-code --force  # Install everything
 
+# Install hooks (Claude Code only, global only)
+./bin/fotw install hooks --global --for claude-code           # All hooks
+./bin/fotw install hooks/branch-guard --global --for claude-code  # Single hook
+./bin/fotw install hooks --global --for claude-code --include-tests  # With test files
+
 # Validate before committing
 ./bin/fotw validate          # Check all workflows
 ./bin/fotw validate --verbose
@@ -73,6 +78,7 @@ Supported `--for` targets: claude-code, cursor, copilot, codex, windsurf, gemini
 | **Skills** | `workflows/skills/<name>/SKILL.md` | Executable packages with references, scripts, assets |
 | **Rules** | `workflows/rules/*.mdc` | Conditional context files (Cursor format, auto-translated) |
 | **Agents** | `workflows/agents/*.md` | Subagent definitions with tool restrictions |
+| **Hooks** | `workflows/hooks/*.js` | Claude Code hook scripts (global, claude-code only) |
 
 ### CLI Architecture
 
@@ -82,8 +88,8 @@ Python package at `cli/fotw/` built with **Typer** (CLI) + **Rich** (terminal UI
 |-------|------|---------|
 | Entry | `bin/fotw` → `cli/fotw/__main__.py` | Shell wrapper delegates to `python -m fotw` |
 | Commands | `cli/fotw/commands/` | `list`, `install`, `new`, `validate` |
-| Services | `cli/fotw/services/` | `catalog` (scan/parse), `installer` (deploy + conflict resolution), `frontmatter_translator`, `agents` (tool configs) |
-| Models | `cli/fotw/models/` | `Workflow`, `Starter`, `Persona`, `ValidationResult`, `WorkflowType` |
+| Services | `cli/fotw/services/` | `catalog` (scan/parse), `installer` (deploy + conflict resolution), `frontmatter_translator`, `agents` (tool configs), `settings_merger` (hooks JSON merge) |
+| Models | `cli/fotw/models/` | `Workflow`, `Starter`, `Persona`, `Hook`, `ValidationResult`, `WorkflowType` |
 | UI | `cli/fotw/ui/` | `console` (Rich), `tables`, `diff` (paged syntax-highlighted diffs) |
 
 Tool target configs are defined as `AgentConfig` dataclasses in `cli/fotw/services/agents.py` — each maps a tool name to its config directory, starter filename, rule extension, and frontmatter format.
@@ -120,6 +126,16 @@ tools: Bash, Glob, Grep, Read, Write
 model: sonnet
 ---
 ```
+
+**Hooks** (inline JSDoc metadata, not YAML):
+```javascript
+/**
+ * @fotw-hook {"event":"PreToolUse","matcher":"Bash","description":"What this hook does"}
+ */
+```
+- `event` — Claude Code hook event: `PreToolUse`, `PostToolUse`, `PreCompact`, `UserPromptSubmit`, etc.
+- `matcher` — Tool name filter (e.g., `"Bash"`, `"Edit|Write|Bash"`). Empty string = all tools.
+- `description` — Short description for `fotw list`.
 
 ### Starter Tiers
 
