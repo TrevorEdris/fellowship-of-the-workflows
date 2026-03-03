@@ -6,11 +6,11 @@ from typing import Optional
 import typer
 
 from fotw.models.workflow import _PLURAL_MAP
-from fotw.services.catalog import scan_all, scan_personas, scan_starters
+from fotw.services.catalog import scan_all, scan_hooks, scan_personas, scan_starters
 from fotw.ui.console import console, err_console
 from fotw.ui.tables import print_workflows
 
-VALID_TYPES = ("rule", "skill", "agent", "starter", "persona")
+VALID_TYPES = ("rule", "skill", "agent", "starter", "persona", "hook")
 
 
 def _normalize_type(value: str) -> str:
@@ -20,11 +20,11 @@ def _normalize_type(value: str) -> str:
 
 def list_cmd(
     type_: Optional[str] = typer.Option(
-        None, "--type", "-T", help="Filter by type (rule, skill, agent, starter, persona)"
+        None, "--type", "-T", help="Filter by type (rule, skill, agent, starter, persona, hook)"
     ),
     as_json: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
-    """List available workflows and starters."""
+    """List available workflows, starters, and hooks."""
     type_filter = None
     if type_ is not None:
         type_filter = _normalize_type(type_)
@@ -36,6 +36,7 @@ def list_cmd(
     workflows = scan_all()
     starters = scan_starters()
     personas = scan_personas()
+    hooks = scan_hooks()
 
     if as_json:
         data = []
@@ -71,6 +72,18 @@ def list_cmd(
                         "description": p.tagline,
                     }
                 )
+        if not type_filter or type_filter == "hook":
+            for h in hooks:
+                data.append(
+                    {
+                        "id": h.workflow_id,
+                        "type": "hook",
+                        "name": h.name,
+                        "event": h.event,
+                        "matcher": h.matcher,
+                        "description": h.description,
+                    }
+                )
         console.print_json(json.dumps(data))
         return
 
@@ -79,6 +92,7 @@ def list_cmd(
         show_workflows = type_filter in ("rule", "skill", "agent")
         show_starters = type_filter == "starter"
         show_personas = type_filter == "persona"
+        show_hooks = type_filter == "hook"
 
         if show_workflows:
             workflows = [wf for wf in workflows if wf.wtype.value == type_filter]
@@ -88,5 +102,7 @@ def list_cmd(
             starters = []
         if not show_personas:
             personas = []
+        if not show_hooks:
+            hooks = []
 
-    print_workflows(workflows, starters, personas, type_filter)
+    print_workflows(workflows, starters, personas, hooks, type_filter)

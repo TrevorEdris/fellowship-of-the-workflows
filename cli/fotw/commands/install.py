@@ -10,7 +10,9 @@ from fotw.services.installer import (
     InstallContext,
     InstallQuit,
     install_all,
+    install_hooks,
     install_personas,
+    install_single_hook,
     install_single_workflow,
     install_starter,
 )
@@ -24,6 +26,7 @@ def _normalize_workflow_id(wf_id: str) -> str:
         "skill/": "skills/",
         "agent/": "agents/",
         "starter/": "starters/",
+        "hook/": "hooks/",
     }
     for singular, plural in mapping.items():
         if wf_id.startswith(singular):
@@ -56,12 +59,15 @@ def install_cmd(
     to_claude_dir: bool = typer.Option(
         False, "--to-claude-dir", help="Install CLAUDE.md to .claude/ directory"
     ),
+    include_tests: bool = typer.Option(
+        False, "--include-tests", help="Also install hook test files"
+    ),
 ) -> None:
     """Install workflows, starters, or personas to a target project."""
     try:
         _install_cmd_inner(
             workflow_id, target_repo, for_tool, all_workflows,
-            force, global_install, dry_run, to_claude_dir,
+            force, global_install, dry_run, to_claude_dir, include_tests,
         )
     except InstallQuit:
         console.print("\nQuit.")
@@ -77,6 +83,7 @@ def _install_cmd_inner(
     global_install: bool,
     dry_run: bool,
     to_claude_dir: bool,
+    include_tests: bool = False,
 ) -> None:
     # When --all is used, the first positional arg is the target repo, not workflow_id.
     # Same for paths that look like directories (start with /, ~, .).
@@ -148,6 +155,51 @@ def _install_cmd_inner(
             console.print("[green]Installation complete![/green]")
         else:
             raise typer.Exit(1)
+        return
+
+    # --- Hooks ---
+    if workflow_id and (workflow_id == "hooks" or workflow_id.startswith("hooks/")):
+        if not global_install:
+            err_console.print("[red]Error: Hooks must be installed globally (--global)[/red]")
+            raise typer.Exit(1)
+        if for_tool != "claude-code":
+            err_console.print("[red]Error: Hooks are only supported for claude-code[/red]")
+            raise typer.Exit(1)
+
+        ctx = InstallContext(
+            tool="claude-code", target_repo=Path.home(),
+            is_global=True, dry_run=dry_run, force=force,
+        )
+
+        if workflow_id == "hooks":
+            if install_hooks(ctx, include_tests):
+                console.print()
+                console.print("[green]Hooks installed![/green]")
+            else:
+                raise typer.Exit(1)
+        else:
+            # Single hook: hooks/<name>
+            hook_name = workflow_id.split("/", 1)[1]
+            from fotw.services.catalog import scan_hooks
+            hooks = scan_hooks()
+            hook = next((h for h in hooks if h.name == hook_name), None)
+            if not hook:
+                err_console.print(f"[red]Error: Hook not found: {hook_name}[/red]")
+                raise typer.Exit(1)
+            if install_single_hook(hook, ctx, include_tests):
+                # Also merge this single hook into settings
+                from fotw.services.settings_merger import merge_hooks as _merge, read_settings, write_settings
+                if not dry_run:
+                    settings_path = Path.home() / ".claude" / "settings.json"
+                    existing = read_settings(settings_path)
+                    merged = _merge(existing, [hook])
+                    write_settings(merged, settings_path)
+                    if not ctx.quiet:
+                        console.print(f"[green]\u2713[/green] Merged hook config into settings.json")
+                console.print()
+                console.print("[green]Hook installed![/green]")
+            else:
+                raise typer.Exit(1)
         return
 
     # --- From here on, --for must be a valid agent target ---

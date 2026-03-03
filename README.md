@@ -97,8 +97,34 @@ See [starters/README.md](starters/README.md) for details and modular snippets.
 | **Rules** | Conditional context files | `workflows/rules/*.mdc` (Cursor format, translated on install) |
 | **Skills** | Executable packages ([Agent Skills](https://agentskills.io) standard) | `workflows/skills/<name>/SKILL.md` |
 | **Agents** | Subagent definitions | `workflows/agents/*.md` |
+| **Hooks** | Claude Code hook scripts | `workflows/hooks/*.js` (Claude Code only) |
 
 Rules are stored in Cursor format and automatically translated to each tool's native format on install (e.g., `globs` → `paths` for Claude, `globs` → `applyTo` for Copilot).
+
+### Hooks (Claude Code only)
+
+Hooks are Node.js scripts that intercept Claude Code events at runtime — blocking dangerous commands, protecting secrets, guarding branches, etc. No other AI tool supports hooks.
+
+```bash
+# List available hooks
+./bin/fotw list --type hook
+
+# Install all hooks globally
+./bin/fotw install hooks --global --for claude-code
+
+# Install a single hook
+./bin/fotw install hooks/branch-guard --global --for claude-code
+
+# Include test files alongside hooks
+./bin/fotw install hooks --global --for claude-code --include-tests
+
+# Preview without installing
+./bin/fotw install hooks --global --for claude-code --dry-run
+```
+
+Hooks require `--global` and `--for claude-code`. The installer copies scripts to `~/.claude/hooks/` and merges hook configuration into `~/.claude/settings.json` (with backup).
+
+Each hook script contains a `@fotw-hook` metadata tag in its JSDoc header that declares its event, matcher, and description.
 
 ### Claude Code Enhancements
 

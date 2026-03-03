@@ -12,6 +12,7 @@ class WorkflowType(str, Enum):
     AGENT = "agent"
     STARTER = "starter"
     PERSONA = "persona"
+    HOOK = "hook"
 
     @classmethod
     def from_str(cls, value: str) -> "WorkflowType":
@@ -26,6 +27,7 @@ _PLURAL_MAP: dict[str, str] = {
     "agents": "agent",
     "starters": "starter",
     "personas": "persona",
+    "hooks": "hook",
 }
 
 
@@ -59,6 +61,37 @@ class Persona:
     name: str
     tagline: str = ""
     path: Path = field(default_factory=lambda: Path("."))
+
+
+@dataclass
+class Hook:
+    """A Claude Code hook script."""
+
+    name: str
+    description: str
+    event: str
+    matcher: str
+    path: Path = field(default_factory=lambda: Path("."))
+    has_tests: bool = False
+
+    @property
+    def workflow_id(self) -> str:
+        return f"hooks/{self.name}"
+
+    @property
+    def settings_entry(self) -> dict:
+        """Build a settings.json hook entry fragment."""
+        entry: dict = {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": f"node ~/.claude/hooks/{self.name}.js",
+                }
+            ],
+        }
+        if self.matcher:
+            entry["matcher"] = self.matcher
+        return entry
 
 
 @dataclass
