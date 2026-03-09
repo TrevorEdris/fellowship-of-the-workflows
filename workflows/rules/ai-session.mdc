@@ -25,3 +25,8 @@ Within this directory, create the following documents
 **PLAN.md**
 
 - Refer to `discover-plan-implement.mdc` for exact details on the contents
+
+**INDEX.md** (at `~/src/.ai/sessions/INDEX.md`, maintained by `/session-index`)
+
+- Run `/session-index generate` periodically to update the cross-session index
+- Use `/session-index link` to record blocking relationships between sessions
