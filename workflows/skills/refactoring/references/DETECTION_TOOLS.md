@@ -46,7 +46,7 @@ npx eslint . --rule '{"max-lines-per-function": ["warn", {"max": 40}]}'
 - A (1-5): Low — acceptable
 - B (6-10): Medium — monitor
 - C (11-15): High — refactor soon
-- D/E/F (16+): Very high — [Orc Infestation] level
+- D/E/F (16+): Very high — refactor immediately
 
 ---
 
@@ -210,4 +210,4 @@ If a tool is not installed:
 1. Note the missing tool in the Reconnaissance output
 2. Fall back to grep-based detection for the same smell category
 3. Do not skip the detection step — manual grep catches most high-severity smells
-4. Recommend installing the tool as a Hobbit Task in the Refactoring Plan
+4. Recommend installing the tool as a Quick Fix in the Refactoring Plan

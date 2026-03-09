@@ -41,28 +41,9 @@ PERSONA_TERMS = {
 }
 
 # Project conventions that look persona-like but are intentional.
-ALLOWED_PATTERNS = {
-    # Phase names (project conventions, not persona)
-    "the palantír",
-    "the palantir",
-    "palantír",
-    "palantir",
-    "the council of elrond",
-    "council of elrond",
-    "the journey",
-    # Refactoring skill triage level names (established project convention)
-    "ent moot",
-    "orc infestation",
-    "hobbit task",
-    # Quotes used in project docs / starters
-    "fool of a took",
-    "fly, you fools",
-    "keep it secret, keep it safe",
-    "all we have to decide",
-    "a wizard is never late",
-    # persona-integration rule uses "persona: gandalf" as a config example
-    "persona: gandalf",
-}
+# This set should be empty or near-empty. If you need to add entries here,
+# consider whether the persona language belongs in the workflow file at all.
+ALLOWED_PATTERNS: set[str] = set()
 
 # Skills whose purpose is managing personas — they legitimately reference persona names.
 PERSONA_MANAGEMENT_SKILLS = {"switch-persona", "create-persona"}

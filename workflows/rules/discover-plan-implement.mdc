@@ -6,7 +6,7 @@ alwaysApply: true
 
 ## Workflow Phases
 
-### 1) The Palantír (Discover)
+### 1) Discover
 
 **Goal:** Understand the problem space without modifying code.
 
@@ -14,6 +14,9 @@ alwaysApply: true
 - Do NOT edit repository files during this phase
 - Read and analyze relevant code, SDKs, APIs, and documentation
 - Capture all findings in `DISCOVERY.md`
+- Work through the discovery prompts in `references/discovery-prompts.md`
+- Skip questions already answered by the Jira ticket or user context
+- Record answers in DISCOVERY.md under matching headings
 
 **Outputs:**
 - Technical analysis of current state
@@ -21,7 +24,7 @@ alwaysApply: true
 - Clarifying questions for stakeholders
 - Data model and API coverage analysis
 
-### 2) The Council of Elrond (Plan)
+### 2) Plan
 
 **Goal:** Produce a concrete, reviewable implementation plan before writing any code.
 
@@ -31,6 +34,15 @@ alwaysApply: true
   - **Ordered implementation steps** - atomic, verifiable steps
   - **Risks and assumptions** - what could go wrong, what we're assuming
   - **Verification steps** - how to confirm the implementation is correct
+  - **Traceability** - map each key discovery finding to a plan step
+
+Include a traceability table in the plan:
+
+| Discovery Finding | Plan Step | Notes |
+|-------------------|-----------|-------|
+| [finding from DISCOVERY.md] | Step N | |
+
+If a discovery finding has no corresponding plan step, add one or state why it is out of scope.
 
 #### Plan Quality Principles
 
@@ -48,7 +60,14 @@ The plan must demonstrate these qualities:
 - Be prepared to iterate on the plan based on feedback
 - If requirements change, update the plan and confirm again
 
-### 3) The Journey (Implement)
+#### Plan Validation
+
+Before presenting the plan for approval, validate it:
+- Run `/plan-validator` on the PLAN.md file
+- Fix any NEEDS WORK findings before presenting
+- Include the validation score when presenting the plan to the user
+
+### 3) Implement
 
 **Goal:** Execute the plan with minimal, aligned diffs.
 
