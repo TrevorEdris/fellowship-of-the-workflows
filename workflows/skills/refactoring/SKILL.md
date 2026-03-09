@@ -50,15 +50,15 @@ RECENT CHANGES:
 
 ## Process
 
-### Phase 1: Reconnaissance (The Palantir)
+### Phase 1: Reconnaissance
 
 - Identify the scope — use user-specified files/dirs, or derive from changed files in git
 - Run language-appropriate detection tools (see `references/DETECTION_TOOLS.md`)
 - Catalog all detected smells with `file:line` references
-- Classify each finding by triage level: [Ent Moot Required], [Orc Infestation], [Hobbit Task]
+- Classify each finding by triage level: [Design Discussion], [Active Smell], [Quick Fix]
 - Output: triaged findings list
 
-### Phase 2: Refactoring Plan (The Council)
+### Phase 2: Refactoring Plan
 
 - Map each smell to a primary refactoring technique (see `references/REFACTORING_TECHNIQUES.md`)
 - Order by dependency — some refactorings enable others (e.g., extract method before move method)
@@ -66,7 +66,7 @@ RECENT CHANGES:
 - Identify risks: missing tests, shared interfaces, callers outside the current scope
 - **Present plan to user. Wait for explicit approval before executing any changes.**
 
-### Phase 3: Execution (The Journey)
+### Phase 3: Execution
 
 For each approved refactoring item:
 
@@ -78,7 +78,7 @@ For each approved refactoring item:
 
 **One smell per commit.** Do not bundle multiple refactorings into one commit.
 
-### Phase 4: Verification (The Scouring)
+### Phase 4: Verification
 
 - Run the full test suite end-to-end
 - Compare before/after metrics where tooling is available: cyclomatic complexity, file/line counts

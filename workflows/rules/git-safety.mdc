@@ -19,4 +19,4 @@ Before making any code changes:
 2. If on `main` or `master`: **STOP** and ask for explicit consent
 3. Suggest creating a feature branch if appropriate
 
-*"Fly, you fools!"* — What I'll say if you try to force push to main.
+Never force push to main without explicit approval.

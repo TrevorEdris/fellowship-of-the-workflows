@@ -1,6 +1,6 @@
 # Discovery Prompts
 
-Work through these questions during the Palantir phase. Skip any already answered by the Jira ticket or user context. Record answers in DISCOVERY.md under matching headings.
+Work through these questions during the Discover phase. Skip any already answered by the Jira ticket or user context. Record answers in DISCOVERY.md under matching headings.
 
 ---
 

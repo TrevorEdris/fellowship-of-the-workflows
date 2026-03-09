@@ -83,9 +83,9 @@ Full technique reference: `references/REFACTORING_TECHNIQUES.md`
 
 ## Triage Matrix
 
-- **[Ent Moot Required]** — Structural issue requiring design discussion before refactoring (e.g., god object decomposition, circular dependency breaking, interface segregation affecting multiple callers). Do not proceed without user alignment.
-- **[Orc Infestation]** — Clear code smell that should be addressed in this pass (e.g., duplicate logic, long methods, dead code, feature envy). Actionable with standard techniques.
-- **[Hobbit Task]** — Minor cleanup that can be done opportunistically (e.g., rename for clarity, remove unused import, extract a well-named variable). Low effort, low risk.
+- **[Design Discussion]** — Structural issue requiring design discussion before refactoring (e.g., god object decomposition, circular dependency breaking, interface segregation affecting multiple callers). Do not proceed without user alignment.
+- **[Active Smell]** — Clear code smell that should be addressed in this pass (e.g., duplicate logic, long methods, dead code, feature envy). Actionable with standard techniques.
+- **[Quick Fix]** — Minor cleanup that can be done opportunistically (e.g., rename for clarity, remove unused import, extract a well-named variable). Low effort, low risk.
 
 ## Report Structure
 
@@ -97,13 +97,13 @@ Full technique reference: `references/REFACTORING_TECHNIQUES.md`
 
 ### Findings
 
-#### Ent Moot Required
+#### Design Discussion
 - [File:Line] — [Smell] — [Impact description] — [Proposed technique]
 
-#### Orc Infestations
+#### Active Smells
 - [File:Line] — [Smell] — [Proposed technique] — [Effort: S/M/L]
 
-#### Hobbit Tasks
+#### Quick Fixes
 - [File:Line] — [Quick fix description]
 
 ### Refactoring Plan

@@ -15,7 +15,7 @@ Validates PLAN.md files for structural completeness, specificity, and actionabil
 
 ## When to Use
 
-- After drafting a PLAN.md during the Council of Elrond phase
+- After drafting a PLAN.md during the Plan phase
 - Before presenting a plan for user approval
 - To review an existing plan's quality
 

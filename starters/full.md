@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-> *"A wizard is never late, nor is he early. He implements precisely when the plan is approved."*
-
 ## Project Overview
 
 <!-- Describe your project in 1-2 sentences -->
@@ -34,5 +32,3 @@
 # npm run build      # Production build
 ```
 
----
-*"All we have to decide is what to do with the code that is given us."*

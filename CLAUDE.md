@@ -180,5 +180,4 @@ Workflow files (skills, agents, rules) must be **persona-agnostic**. No characte
 
 Standard severity levels used across all workflow files: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**.
 
-Project-level conventions that are **not** persona and should be preserved:
-- Phase names: The Palantír, The Council of Elrond, The Journey
+Phase names in workflow files use plain labels: **Discover**, **Plan**, **Implement**. Persona-flavored phase names (The Palantír, The Council of Elrond, The Journey) belong only in persona definitions under `starters/personas/`.

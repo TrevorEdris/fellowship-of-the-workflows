@@ -6,7 +6,7 @@ alwaysApply: true
 
 ## Workflow Phases
 
-### 1) The Palantír (Discover)
+### 1) Discover
 
 **Goal:** Understand the problem space without modifying code.
 
@@ -24,7 +24,7 @@ alwaysApply: true
 - Clarifying questions for stakeholders
 - Data model and API coverage analysis
 
-### 2) The Council of Elrond (Plan)
+### 2) Plan
 
 **Goal:** Produce a concrete, reviewable implementation plan before writing any code.
 
@@ -67,7 +67,7 @@ Before presenting the plan for approval, validate it:
 - Fix any NEEDS WORK findings before presenting
 - Include the validation score when presenting the plan to the user
 
-### 3) The Journey (Implement)
+### 3) Implement
 
 **Goal:** Execute the plan with minimal, aligned diffs.
 

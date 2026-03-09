@@ -11,4 +11,4 @@ alwaysApply: false
 - Cross-repo changes: keep commits aligned, verify each repo independently
 - If repos not specified, ask before planning/editing
 
-*"Keep it secret, keep it safe."* — Especially `.env` files and credentials.
+Never commit `.env` files, credentials, or secrets.

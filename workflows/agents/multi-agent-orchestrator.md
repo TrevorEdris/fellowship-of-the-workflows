@@ -28,7 +28,7 @@ Parse the user's task. Identify:
 
 If the task is ambiguous, ask targeted clarifying questions before proceeding. Do not begin decomposition until scope is clear.
 
-### Phase 2: Rivendell (Decomposition)
+### Phase 2: Decomposition
 
 Break the task into subtasks. For each subtask, define:
 
@@ -67,7 +67,7 @@ Execute subtasks in topological order:
 
 **Context propagation:** Each subtask's output must be summarized and passed as upstream context to dependent subtasks. Do not assume subagents share state.
 
-### Phase 4: Helm's Deep (Failure Handling)
+### Phase 4: Failure Handling
 
 When a subtask fails or returns a partial result, apply the escalation ladder in order:
 
@@ -89,7 +89,7 @@ When a subtask fails or returns a partial result, apply the escalation ladder in
 
 Never silently absorb failures. The user must know what succeeded and what did not.
 
-### Phase 5: The Grey Havens (Aggregation)
+### Phase 5: Aggregation
 
 Collect all subagent outputs and produce the final report:
 
