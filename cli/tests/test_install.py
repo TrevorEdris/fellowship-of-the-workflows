@@ -17,7 +17,7 @@ from fotw.services.installer import (
     install_starter,
 )
 from fotw.services.catalog import WORKFLOWS_DIR
-from fotw.ui.diff import files_are_identical, show_diff, show_dir_diff
+from fotw.ui.diff import dirs_are_identical, files_are_identical, show_diff, show_dir_diff
 
 
 @pytest.fixture
@@ -223,6 +223,77 @@ def test_files_are_identical():
     assert files_are_identical("hello\n", "hello\n")
     assert files_are_identical("hello\n", "hello")  # Trailing whitespace ignored
     assert not files_are_identical("hello\n", "world\n")
+
+
+def test_dirs_are_identical(tmp_path: Path):
+    """Identical directories return True."""
+    dir_a = tmp_path / "a"
+    dir_a.mkdir()
+    (dir_a / "file.md").write_text("content\n")
+    (dir_a / "sub").mkdir()
+    (dir_a / "sub" / "nested.md").write_text("nested\n")
+
+    dir_b = tmp_path / "b"
+    dir_b.mkdir()
+    (dir_b / "file.md").write_text("content\n")
+    (dir_b / "sub").mkdir()
+    (dir_b / "sub" / "nested.md").write_text("nested\n")
+
+    assert dirs_are_identical(dir_a, dir_b)
+
+
+def test_dirs_are_identical_trailing_whitespace(tmp_path: Path):
+    """Trailing whitespace differences are ignored (mirrors files_are_identical)."""
+    dir_a = tmp_path / "a"
+    dir_a.mkdir()
+    (dir_a / "file.md").write_text("content\n")
+
+    dir_b = tmp_path / "b"
+    dir_b.mkdir()
+    (dir_b / "file.md").write_text("content")
+
+    assert dirs_are_identical(dir_a, dir_b)
+
+
+def test_dirs_are_identical_different_file_sets(tmp_path: Path):
+    """Directories with different file sets return False."""
+    dir_a = tmp_path / "a"
+    dir_a.mkdir()
+    (dir_a / "file.md").write_text("content\n")
+
+    dir_b = tmp_path / "b"
+    dir_b.mkdir()
+    (dir_b / "file.md").write_text("content\n")
+    (dir_b / "extra.md").write_text("extra\n")
+
+    assert not dirs_are_identical(dir_a, dir_b)
+
+
+def test_dirs_are_identical_different_content(tmp_path: Path):
+    """Same file names but different content returns False."""
+    dir_a = tmp_path / "a"
+    dir_a.mkdir()
+    (dir_a / "file.md").write_text("old\n")
+
+    dir_b = tmp_path / "b"
+    dir_b.mkdir()
+    (dir_b / "file.md").write_text("new\n")
+
+    assert not dirs_are_identical(dir_a, dir_b)
+
+
+def test_install_identical_skill_skips(tmp_target: Path):
+    """Installing an identical skill directory skips without prompting."""
+    # First install
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_single_workflow("skills/code-review", ctx)
+    target_dir = tmp_target / ".claude" / "skills" / "code-review"
+    assert target_dir.is_dir()
+
+    # Second install without force — should skip silently (identical)
+    ctx2 = InstallContext(tool="claude-code", target_repo=tmp_target, force=False, quiet=True)
+    assert install_single_workflow("skills/code-review", ctx2)
+    # No prompt should have been triggered (would hang in test if it did)
 
 
 # --- Agent configs ---
