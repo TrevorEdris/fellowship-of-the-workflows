@@ -5,6 +5,7 @@ context: fork
 allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[manifest|helm|kustomize|audit]"
+tags: [infrastructure]
 ---
 
 # Kubernetes

@@ -3,6 +3,7 @@ name: reverse-engineer
 description: "Extract PRDs, design docs, and architecture diagrams from existing codebases. Reverse-engineer undocumented projects into structured documentation. Triggered by: reverse engineer, extract PRD, generate requirements, document existing code, what does this codebase do, create PRD from code, extract requirements, onboarding documentation."
 user-invocable: true
 argument-hint: "[discover|prd|design-doc|full|verify] [path]"
+tags: [documentation]
 ---
 
 # Reverse Engineer

@@ -4,6 +4,7 @@ description: Grafana Cloud IRM specialist. Configures Grafana IRM (formerly OnCa
 context: fork
 agent: grafana-irm-specialist
 allowed-tools: Bash, Glob, Grep, Read, WebFetch
+tags: [observability, incident-response]
 ---
 
 # Grafana IRM

@@ -105,6 +105,7 @@ context: fork                     # Optional: isolated execution
 agent: agent-name                 # Optional: link subagent
 allowed-tools: Read, Grep         # Optional: restrict tools
 model: sonnet                     # Claude-only: opus, sonnet, haiku
+tags: [infrastructure, aws]       # Optional: controlled vocabulary for categorization
 ---
 ```
 

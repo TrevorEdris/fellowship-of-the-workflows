@@ -4,6 +4,7 @@ description: "Instrument, audit, and configure observability for services using 
 context: fork
 allowed-tools: Bash, Read, Glob, Grep, Task
 model: sonnet
+tags: [observability]
 ---
 
 # Observability

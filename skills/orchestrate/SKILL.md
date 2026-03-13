@@ -4,6 +4,7 @@ description: "Coordinate multiple subagents to complete a large task. Decomposes
 context: fork
 agent: multi-agent-orchestrator
 allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, Write, Task
+tags: [meta]
 ---
 
 # Orchestrate

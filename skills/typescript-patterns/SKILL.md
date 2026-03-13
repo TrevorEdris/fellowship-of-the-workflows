@@ -1,6 +1,7 @@
 ---
 name: typescript-patterns
 description: TypeScript patterns and idioms. Use when writing, reviewing, or refactoring TypeScript code. Covers type system, error handling, async, testing, and project structure.
+tags: [typescript]
 ---
 
 # TypeScript Patterns

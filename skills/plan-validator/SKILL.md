@@ -5,6 +5,7 @@ user-invocable: true
 argument-hint: "[path-to-plan.md]"
 allowed-tools: Bash, Read, Glob
 model: sonnet
+tags: [meta]
 ---
 
 # Plan Validator

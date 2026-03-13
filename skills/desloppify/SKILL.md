@@ -5,6 +5,7 @@ context: fork
 agent: desloppify
 allowed-tools: Bash(git:*), Grep, Glob, LS, Read, Write, Edit
 argument-hint: "[code|docs|prose|review]"
+tags: [documentation]
 ---
 
 # Desloppify

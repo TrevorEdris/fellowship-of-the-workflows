@@ -2,6 +2,7 @@
 name: terragrunt
 description: Design and implement DRY Terragrunt configurations using inheritance, dependency management, and run-all orchestration for multi-module, multi-account infrastructure.
 allowed-tools: Bash, Glob, Grep, Read, Write, WebFetch
+tags: [infrastructure]
 ---
 
 # Terragrunt

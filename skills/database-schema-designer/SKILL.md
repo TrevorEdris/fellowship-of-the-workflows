@@ -1,6 +1,7 @@
 ---
 name: database-schema-designer
 description: Design SQL and NoSQL database schemas. Covers normalization, indexing, migration patterns, constraints, and performance tuning.
+tags: [architecture]
 ---
 
 # Database Schema Designer

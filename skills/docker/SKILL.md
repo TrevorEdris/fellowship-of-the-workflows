@@ -5,6 +5,7 @@ context: fork
 allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[dockerfile|compose|harden|scan]"
+tags: [infrastructure]
 ---
 
 # Docker

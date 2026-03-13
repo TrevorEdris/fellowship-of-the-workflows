@@ -6,6 +6,7 @@ agent: gcp-iam-auditor
 allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[audit|service-accounts|bindings|wif|secrets|kms|vpc-sc]"
+tags: [gcp, security]
 ---
 
 # GCP IAM

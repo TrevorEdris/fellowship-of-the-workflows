@@ -5,6 +5,7 @@ context: fork
 allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[select|cloud-sql|firestore|gcs|spanner|bigtable|memorystore|alloydb|mcp]"
+tags: [gcp, architecture]
 ---
 
 # GCP Data

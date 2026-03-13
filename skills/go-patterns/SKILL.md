@@ -1,6 +1,7 @@
 ---
 name: go-patterns
 description: Go patterns and idioms. Use when writing, reviewing, or refactoring Go code. Covers error handling, concurrency, testing, and project structure.
+tags: [go]
 ---
 
 # Go Patterns

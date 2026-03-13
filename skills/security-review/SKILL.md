@@ -4,6 +4,7 @@ description: Perform security-focused code review to identify HIGH-CONFIDENCE vu
 context: fork
 agent: security-review
 allowed-tools: Bash(git:*), Bash(gh:*), Read, Glob, Grep, LS, Task
+tags: [security, review]
 ---
 
 # Security Review

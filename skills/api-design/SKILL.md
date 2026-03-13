@@ -1,6 +1,7 @@
 ---
 name: api-design
 description: Design REST and GraphQL APIs. Covers endpoint naming, versioning, OpenAPI 3.1 specs, pagination, error handling, and auth patterns.
+tags: [architecture]
 ---
 
 # API Design

@@ -4,6 +4,7 @@ description: "Sync documentation with code changes. Detects stale docs, generate
 context: fork
 agent: documentation-sync
 allowed-tools: Bash(git:*), Bash(python:*), Grep, Glob, LS, Read, Write
+tags: [documentation]
 ---
 
 # Update Docs

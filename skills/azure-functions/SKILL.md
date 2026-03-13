@@ -4,6 +4,7 @@ description: "Azure Functions development guidance: trigger and binding patterns
 user-invocable: true
 argument-hint: "[triggers|durable|local|deploy|mcp]"
 model: sonnet
+tags: [azure, architecture]
 ---
 
 # Azure Functions

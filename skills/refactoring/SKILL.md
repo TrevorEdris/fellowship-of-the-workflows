@@ -4,6 +4,7 @@ description: Systematic code refactoring with smell detection, safe transformati
 context: fork
 agent: refactoring-specialist
 allowed-tools: Bash(git:*), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(cargo:*), Bash(go:*), Bash(python:*), Bash(pytest:*), Bash(make:*), Bash(task:*), Grep, Glob, LS, Read, Write, Edit
+tags: [review]
 ---
 
 # Refactoring

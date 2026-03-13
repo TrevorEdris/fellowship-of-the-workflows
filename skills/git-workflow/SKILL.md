@@ -3,6 +3,7 @@ name: git-workflow
 description: "Interactive git workflow assistant. Generates conventional commits, PR descriptions, enforces branch naming, guides merge conflict resolution, manages worktrees, and handles branch completion. Triggered by: commit, PR, branch, merge conflict, worktree, finish branch, conventional commit, squash, rebase."
 user-invocable: true
 argument-hint: "[commit|pr|branch|conflict|worktree|finish]"
+tags: [git]
 ---
 
 # Git Workflow Assistant

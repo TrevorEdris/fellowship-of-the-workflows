@@ -4,6 +4,7 @@ description: Better Stack specialist. Configures Better Stack's unified monitori
 context: fork
 agent: better-stack-specialist
 allowed-tools: Bash, Glob, Grep, Read, WebFetch
+tags: [observability, incident-response]
 ---
 
 # Better Stack

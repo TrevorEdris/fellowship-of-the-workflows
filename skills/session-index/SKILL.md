@@ -5,6 +5,7 @@ user-invocable: true
 argument-hint: "[generate|link <from> <relationship> <to>]"
 allowed-tools: Bash, Read, Write, Glob, Grep
 model: sonnet
+tags: [meta]
 ---
 
 # Session Index

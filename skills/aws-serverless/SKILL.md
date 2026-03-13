@@ -3,6 +3,7 @@ name: aws-serverless
 description: "AWS serverless architecture patterns: Lambda functions, Step Functions orchestration, EventBridge event-driven design, SQS/SNS messaging, and SAM/CDK templates. Triggered by: Lambda, serverless, Step Functions, EventBridge, SQS, SNS, SAM, cold start, event-driven, async invoke, DLQ, fan-out."
 user-invocable: true
 argument-hint: "[lambda|stepfunctions|eventbridge|messaging|templates]"
+tags: [aws, architecture]
 ---
 
 # AWS Serverless

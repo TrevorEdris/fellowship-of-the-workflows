@@ -1,6 +1,7 @@
 ---
 name: python-patterns
 description: Python patterns and idioms. Use when writing, reviewing, or refactoring Python code. Covers error handling, async, type system, testing, and project structure.
+tags: [python]
 ---
 
 # Python Patterns

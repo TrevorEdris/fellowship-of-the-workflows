@@ -3,6 +3,7 @@ name: cicd-pipeline
 description: "Generate, optimize, and manage CI/CD pipelines for GitHub Actions and GitLab CI. Creates working pipeline configs tailored to your project's tech stack with built-in caching, secret handling, matrix testing, and deployment strategies. Triggered by: CI/CD, pipeline, GitHub Actions, GitLab CI, deploy, deployment, workflow, build cache, matrix test, pipeline optimization, environment management, secret handling."
 user-invocable: true
 argument-hint: "[generate|optimize|deploy|secrets|matrix|audit]"
+tags: [ci-cd]
 ---
 
 # CI/CD Pipeline

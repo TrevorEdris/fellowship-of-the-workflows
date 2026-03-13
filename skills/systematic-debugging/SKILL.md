@@ -4,6 +4,7 @@ description: "Structured root-cause analysis for bugs, test failures, and unexpe
 context: fork
 agent: systematic-debugger
 allowed-tools: Bash, Grep, Glob, Read, Write, Edit
+tags: [testing]
 ---
 
 # Systematic Debugging

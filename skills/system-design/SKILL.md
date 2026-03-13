@@ -6,6 +6,7 @@ agent: system-design-reviewer
 allowed-tools: Read, Grep, Glob
 model: sonnet
 argument-hint: "[mode: resilience|scalability|data|messaging|migration|review]"
+tags: [architecture]
 ---
 
 # System Design

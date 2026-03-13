@@ -2,6 +2,7 @@
 name: terraform
 description: Write, review, refactor, and audit Terraform configurations. Covers module structure, state management, providers, resource patterns, testing, CI/CD integration, and security.
 allowed-tools: Bash, Glob, Grep, Read, Write, WebFetch
+tags: [infrastructure]
 ---
 
 # Terraform

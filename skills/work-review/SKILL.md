@@ -1,6 +1,7 @@
 ---
 name: work-review
 description: Review work accomplished over a time period by correlating Jira tickets with git commits. Use for self-reviews, peer reviews, sprint retrospectives, or performance discussions.
+tags: [review]
 ---
 
 # Work Review

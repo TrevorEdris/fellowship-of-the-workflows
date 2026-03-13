@@ -4,6 +4,7 @@ description: Perform thorough code review on a PR using the Pragmatic Quality fr
 context: fork
 agent: pragmatic-code-review
 allowed-tools: Bash(git:*), Bash(gh:*), Grep, Glob, LS, Read, WebFetch, TodoWrite
+tags: [review]
 ---
 
 # Code Review

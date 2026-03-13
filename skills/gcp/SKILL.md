@@ -5,6 +5,7 @@ context: fork
 allowed-tools: Bash, Read, Glob, Grep
 model: sonnet
 argument-hint: "[auth|setup|iac|mcp|sdk]"
+tags: [gcp]
 ---
 
 # GCP

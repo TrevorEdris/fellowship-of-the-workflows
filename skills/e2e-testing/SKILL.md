@@ -1,6 +1,7 @@
 ---
 name: e2e-testing
 description: Scaffold E2E and integration tests using Playwright. Covers Page Object Model setup, test data management, configuration generation, coverage tracking, and CI/CD integration. Use when creating new test suites, adding E2E coverage to features, or setting up Playwright from scratch.
+tags: [testing]
 ---
 
 # E2E / Integration Testing

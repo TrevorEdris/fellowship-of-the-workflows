@@ -6,6 +6,7 @@ allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[generate|review|whatif|security|migrate]"
 user-invocable: true
+tags: [azure, infrastructure]
 ---
 
 # Azure IaC

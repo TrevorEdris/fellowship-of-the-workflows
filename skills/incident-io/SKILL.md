@@ -4,6 +4,7 @@ description: incident.io specialist. Configures incident.io for Slack-native inc
 context: fork
 agent: incident-io-specialist
 allowed-tools: Bash, Glob, Grep, Read, WebFetch
+tags: [incident-response]
 ---
 
 # incident.io

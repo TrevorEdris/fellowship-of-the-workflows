@@ -6,6 +6,7 @@ agent: system-design-reviewer
 allowed-tools: Read, Grep, Glob
 model: sonnet
 argument-hint: "[broker-selection|kafka|outbox|schema|consumer-design]"
+tags: [architecture]
 ---
 
 # Event-Driven Architecture

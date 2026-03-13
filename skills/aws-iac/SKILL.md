@@ -7,6 +7,7 @@ allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[generate|review|diff|security|migrate]"
 user-invocable: true
+tags: [aws, infrastructure]
 ---
 
 # AWS IaC

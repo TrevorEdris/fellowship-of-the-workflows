@@ -79,7 +79,11 @@ def files_are_identical(existing_content: str, new_content: str) -> bool:
 
 
 def dirs_are_identical(existing_dir: Path, source_dir: Path) -> bool:
-    """Check if two directories have identical file contents recursively."""
+    """Check if two directories have identical file contents recursively.
+
+    Uses files_are_identical for text files (trailing-whitespace tolerant)
+    and falls back to byte comparison for binary files.
+    """
     existing_files = {
         f.relative_to(existing_dir): f
         for f in sorted(existing_dir.rglob("*")) if f.is_file()
@@ -92,10 +96,14 @@ def dirs_are_identical(existing_dir: Path, source_dir: Path) -> bool:
     if set(existing_files) != set(source_files):
         return False
 
-    return all(
-        files_are_identical(
-            existing_files[key].read_text(),
-            source_files[key].read_text(),
-        )
-        for key in existing_files
-    )
+    for key in existing_files:
+        try:
+            a_text = existing_files[key].read_text()
+            b_text = source_files[key].read_text()
+            if not files_are_identical(a_text, b_text):
+                return False
+        except (UnicodeDecodeError, ValueError):
+            # Binary file — compare raw bytes
+            if existing_files[key].read_bytes() != source_files[key].read_bytes():
+                return False
+    return True

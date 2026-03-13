@@ -7,6 +7,7 @@ allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[generate|preview|migrate|policy|test]"
 user-invocable: true
+tags: [infrastructure]
 ---
 
 # Pulumi

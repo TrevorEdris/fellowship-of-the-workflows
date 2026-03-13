@@ -4,6 +4,7 @@ description: Analyze code for performance bottlenecks including N+1 queries, alg
 context: fork
 agent: performance-optimization
 allowed-tools: Bash(git:*), Bash(gh:*), Read, Glob, Grep, LS, Task
+tags: [review]
 ---
 
 # Performance Optimization

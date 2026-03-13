@@ -88,12 +88,16 @@ def scan_skills() -> list[Workflow]:
         if not skill_file.is_file():
             continue
         meta = _parse_frontmatter(skill_file)
+        tags = meta.get("tags", [])
+        if isinstance(tags, str):
+            tags = [t.strip() for t in tags.split(",")]
         results.append(
             Workflow(
                 wtype=WorkflowType.SKILL,
                 name=skill_dir.name,
                 description=meta.get("description", ""),
                 path=skill_dir,
+                tags=tags,
             )
         )
     return results

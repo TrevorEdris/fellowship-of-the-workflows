@@ -3,6 +3,7 @@ name: aws-iam
 description: "AWS security patterns: IAM policy design, least-privilege principles, Secrets Manager vs Parameter Store, KMS envelope encryption, IRSA/OIDC for Kubernetes, and compliance checklists. Triggered by: IAM, least privilege, Secrets Manager, Parameter Store, KMS, IRSA, OIDC, permission boundary, SCP, CloudTrail, compliance, secret rotation."
 user-invocable: true
 argument-hint: "[policy|secrets|kms|irsa|audit]"
+tags: [aws, security]
 ---
 
 # AWS IAM

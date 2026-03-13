@@ -3,6 +3,7 @@ name: switch-persona
 description: "Switch AI assistant personas interactively. Lists available personas, lets user select one, choose intensity level, and auto-updates the persona.yaml config."
 user-invocable: true
 argument-hint: "[persona-name] [intensity]"
+tags: [meta]
 ---
 
 # Switch Persona

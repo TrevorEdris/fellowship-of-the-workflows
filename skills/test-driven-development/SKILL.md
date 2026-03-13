@@ -3,6 +3,7 @@ name: test-driven-development
 description: Enforce RED-GREEN-REFACTOR cycle for any implementation task. Write failing test first, implement minimally, refactor. Use when implementing features, fixing bugs, or refactoring code.
 agent: tdd-enforcer
 allowed-tools: Bash(npm:*), Bash(npx:*), Bash(pytest:*), Bash(go:*), Bash(cargo:*), Bash(make:*), Bash(task:*), Grep, Glob, Read
+tags: [testing]
 ---
 
 # Test-Driven Development

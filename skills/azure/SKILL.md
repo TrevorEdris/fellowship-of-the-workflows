@@ -4,6 +4,7 @@ description: "Azure platform guidance covering authentication (Managed Identity,
 user-invocable: true
 argument-hint: "[auth|cli|iac|mcp|storage|cosmos|keyvault|aks]"
 model: sonnet
+tags: [azure]
 ---
 
 # Azure

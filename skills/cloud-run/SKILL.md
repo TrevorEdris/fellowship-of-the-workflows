@@ -6,6 +6,7 @@ agent: cloud-run-specialist
 allowed-tools: Bash, Read, Glob, Grep, Write
 model: sonnet
 argument-hint: "[deploy|jobs|functions|pubsub|eventarc|tasks|scheduler|decide]"
+tags: [gcp, infrastructure]
 ---
 
 # Cloud Run

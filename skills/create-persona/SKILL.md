@@ -3,6 +3,7 @@ name: create-persona
 description: "Create a new AI assistant persona interactively. Supports famous characters (auto-generated) and custom personas."
 user-invocable: true
 argument-hint: "[persona-name] [context]"
+tags: [meta]
 ---
 
 # Create Persona

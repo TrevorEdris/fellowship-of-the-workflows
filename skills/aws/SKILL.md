@@ -3,6 +3,7 @@ name: aws
 description: "AWS credential setup, SDK patterns (Go/Python/TypeScript/Rust), IaC decision tree, CLI workflows, S3, VPC basics, and MCP server configuration. Triggered by: AWS, cloud, boto3, aws-sdk, CDK, CloudFormation, SAM, Terraform for AWS, S3, VPC, ECS, RDS, DynamoDB, IAM role, SSO, aws configure."
 user-invocable: true
 argument-hint: "[setup|sdk|iac|s3|network|mcp]"
+tags: [aws]
 ---
 
 # AWS

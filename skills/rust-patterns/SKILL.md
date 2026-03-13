@@ -1,6 +1,7 @@
 ---
 name: rust-patterns
 description: Rust patterns and idioms. Use when writing, reviewing, or refactoring Rust code. Covers error handling, type system, concurrency, testing, and project structure.
+tags: [rust]
 ---
 
 # Rust Patterns

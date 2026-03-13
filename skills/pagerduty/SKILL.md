@@ -5,6 +5,7 @@ context: fork
 agent: pagerduty-config
 allowed-tools: Bash, Read, Glob, Grep, Task
 model: sonnet
+tags: [incident-response]
 ---
 
 # PagerDuty
