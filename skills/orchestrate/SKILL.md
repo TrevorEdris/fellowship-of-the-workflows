@@ -14,7 +14,7 @@ Coordinate multiple specialized agents to complete a complex, multi-faceted task
 
 AVAILABLE AGENTS:
 ```
-!`ls workflows/agents/ 2>/dev/null | sed 's/\.md$//' || echo "No agents found"`
+!`ls agents/ 2>/dev/null | sed 's/\.md$//' || echo "No agents found"`
 ```
 
 GIT STATUS:

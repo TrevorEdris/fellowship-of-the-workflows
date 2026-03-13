@@ -40,7 +40,7 @@ If no path argument is provided:
 
 ### Step 2: Run Validation
 
-Run from the skill directory (`workflows/skills/plan-validator/`):
+Run from the skill directory (`skills/plan-validator/`):
 
 ```bash
 python scripts/validate_plan.py <path> --verbose

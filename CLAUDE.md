@@ -75,10 +75,10 @@ Supported `--for` targets: claude-code, cursor, copilot, codex, windsurf, gemini
 
 | Type | Storage | Description |
 |------|---------|-------------|
-| **Skills** | `workflows/skills/<name>/SKILL.md` | Executable packages with references, scripts, assets |
-| **Rules** | `workflows/rules/*.mdc` | Conditional context files (Cursor format, auto-translated) |
-| **Agents** | `workflows/agents/*.md` | Subagent definitions with tool restrictions |
-| **Hooks** | `workflows/hooks/*.js` | Claude Code hook scripts (global, claude-code only) |
+| **Skills** | `skills/<name>/SKILL.md` | Executable packages with references, scripts, assets |
+| **Rules** | `rules/*.mdc` | Conditional context files (Cursor format, auto-translated) |
+| **Agents** | `agents/*.md` | Subagent definitions with tool restrictions |
+| **Hooks** | `hooks/*.js` | Claude Code hook scripts (global, claude-code only) |
 
 ### CLI Architecture
 
@@ -165,9 +165,9 @@ When installing over existing files, the installer prompts: `[o]verwrite / [s]ki
 
 ### Agent Catalog
 
-The orchestration skill maintains an agent catalog at `workflows/skills/orchestrate/references/agent-catalog.md`. This catalog maps each agent to its domain, capabilities, model, and tools — enabling the orchestrator to route subtasks to the best-fit agent.
+The orchestration skill maintains an agent catalog at `skills/orchestrate/references/agent-catalog.md`. This catalog maps each agent to its domain, capabilities, model, and tools — enabling the orchestrator to route subtasks to the best-fit agent.
 
-**When adding or modifying any agent** (`workflows/agents/*.md`):
+**When adding or modifying any agent** (`agents/*.md`):
 1. Add/update a row in the Routing Guide table
 2. Add/update the Agent Capability Details section
 3. Run `./bin/fotw validate` to confirm the new agent is indexed

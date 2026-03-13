@@ -38,7 +38,7 @@ Scans all session directories and produces or updates INDEX.md at the session ro
 
 ### Steps
 
-1. Run from the skill directory (`workflows/skills/session-index/`):
+1. Run from the skill directory (`skills/session-index/`):
    ```bash
    python scripts/update_session_index.py --sessions-root ~/src/.ai/sessions/
    ```

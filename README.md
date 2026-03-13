@@ -94,10 +94,10 @@ See [starters/README.md](starters/README.md) for details and modular snippets.
 
 | Type | Description | Storage format |
 |------|-------------|----------------|
-| **Rules** | Conditional context files | `workflows/rules/*.mdc` (Cursor format, translated on install) |
-| **Skills** | Executable packages ([Agent Skills](https://agentskills.io) standard) | `workflows/skills/<name>/SKILL.md` |
-| **Agents** | Subagent definitions | `workflows/agents/*.md` |
-| **Hooks** | Claude Code hook scripts | `workflows/hooks/*.js` (Claude Code only) |
+| **Rules** | Conditional context files | `rules/*.mdc` (Cursor format, translated on install) |
+| **Skills** | Executable packages ([Agent Skills](https://agentskills.io) standard) | `skills/<name>/SKILL.md` |
+| **Agents** | Subagent definitions | `agents/*.md` |
+| **Hooks** | Claude Code hook scripts | `hooks/*.js` (Claude Code only) |
 
 Rules are stored in Cursor format and automatically translated to each tool's native format on install (e.g., `globs` → `paths` for Claude, `globs` → `applyTo` for Copilot).
 

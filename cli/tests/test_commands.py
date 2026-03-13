@@ -73,22 +73,25 @@ def test_validate_quiet():
 
 @pytest.fixture
 def isolated_workflows(tmp_path: Path, monkeypatch):
-    """Set up an isolated workflows directory for new command tests."""
+    """Set up an isolated repo root for new command tests.
+
+    After the plugin-first flatten, WORKFLOWS_DIR == REPO_ROOT.
+    Workflow dirs (rules/, skills/, agents/) live at repo root.
+    """
     fake_root = tmp_path / "repo"
-    workflows = fake_root / "workflows"
-    (workflows / "rules").mkdir(parents=True)
-    (workflows / "skills").mkdir(parents=True)
-    (workflows / "agents").mkdir(parents=True)
+    (fake_root / "rules").mkdir(parents=True)
+    (fake_root / "skills").mkdir(parents=True)
+    (fake_root / "agents").mkdir(parents=True)
     monkeypatch.setenv("FOTW_REPO_ROOT", str(fake_root))
     # Force catalog module to re-resolve paths
     import fotw.services.catalog as catalog
     monkeypatch.setattr(catalog, "REPO_ROOT", fake_root)
-    monkeypatch.setattr(catalog, "WORKFLOWS_DIR", workflows)
+    monkeypatch.setattr(catalog, "WORKFLOWS_DIR", fake_root)
     monkeypatch.setattr(catalog, "STARTERS_DIR", fake_root / "starters")
     # Also patch the imported reference in the new command module
     import fotw.commands.new as new_mod
-    monkeypatch.setattr(new_mod, "WORKFLOWS_DIR", workflows)
-    return workflows
+    monkeypatch.setattr(new_mod, "WORKFLOWS_DIR", fake_root)
+    return fake_root
 
 
 def test_new_rule(isolated_workflows: Path):

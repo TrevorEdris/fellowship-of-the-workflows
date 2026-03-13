@@ -38,7 +38,7 @@ def _catalog_agent_names():
 
 
 def _agent_file_names():
-    """Return set of agent names from workflows/agents/*.md."""
+    """Return set of agent names from agents/*.md."""
     agents_dir = WORKFLOWS_DIR / "agents"
     if not agents_dir.is_dir():
         return set()
@@ -79,7 +79,7 @@ def test_no_stale_catalog_entries():
 
 
 def test_skill_agent_references_exist():
-    """If a skill's frontmatter has 'agent: foo', workflows/agents/foo.md must exist."""
+    """If a skill's frontmatter has 'agent: foo', agents/foo.md must exist."""
     skills_dir = WORKFLOWS_DIR / "skills"
     if not skills_dir.is_dir():
         pytest.skip("No skills directory")
@@ -105,7 +105,7 @@ def test_skill_agent_references_exist():
 
 
 def test_starter_tier_rules_exist():
-    """Every rule referenced in TIER_RULES must exist in workflows/rules/."""
+    """Every rule referenced in TIER_RULES must exist in rules/."""
     rules_dir = WORKFLOWS_DIR / "rules"
     missing = []
 
