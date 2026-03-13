@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "fellowship-of-the-workflows",
+  "description": "Reusable AI agent workflows — skills, agents, hooks, and rules for Claude Code and 8 other tools",
+  "owner": {
+    "name": "TrevorEdris"
+  },
+  "plugins": [
+    {
+      "name": "fotw",
+      "source": "./",
+      "description": "Fellowship of the Workflows — 55 skills, 34 agents, and 5 hooks for AI coding tools",
+      "version": "1.0.0"
+    }
+  ]
+}

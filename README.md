@@ -28,22 +28,26 @@ There are two ways to use this repo:
 
 ### Option A: Claude Code Plugin (fastest)
 
+![Load as a Claude Code plugin](demos/gifs/demo-plugin.gif)
+
 ```bash
-# Load for a single session
+# One-time: register the marketplace (inside Claude Code)
+/plugin marketplace add TrevorEdris/fellowship-of-the-workflows
+
+# Install the plugin
+/plugin install fotw@fellowship-of-the-workflows
+
+# Or load directly for a single session (requires local clone)
 claude --plugin-dir /path/to/fellowship-of-the-workflows
-
-# Or install persistently (user scope — available in all projects)
-claude plugin install /path/to/fellowship-of-the-workflows
-
-# Or add to your project's .claude/settings.json (shared with team)
-claude plugin install /path/to/fellowship-of-the-workflows --scope project
 ```
 
 All 55 skills, 34 agents, and 5 hooks are auto-discovered. Use `/code-review`, `/terraform`, `/security-review`, etc. immediately.
 
-> **Note:** Rules and starters still need `fotw install` — they must live in your project directory. See [Option B](#option-b-install-mode-any-tool).
+> **Note:** Rules and starters still need `fotw setup` or `fotw install` — they must live in your project directory. Use `fotw setup ~/my-project --for claude-code` to install all rules with lock file tracking. See [Option B](#option-b-install-mode-any-tool).
 
 ### Option B: Install Mode (any tool)
+
+![Browse and install workflows](demos/gifs/demo-browse.gif)
 
 ```bash
 # 1. Clone and set up the CLI
@@ -75,6 +79,8 @@ cd fellowship-of-the-workflows
 | `./bin/bootstrap` | Set up the CLI environment (Python 3.10+ required) |
 | `./bin/fotw list` | List available workflows |
 | `./bin/fotw install` | Deploy a workflow or starter to a project |
+| `./bin/fotw setup` | Install all rules to a project with lock file tracking |
+| `./bin/fotw update` | Re-sync installed rules after upstream changes |
 | `./bin/fotw new` | Create a new workflow from template |
 | `./bin/fotw validate` | Validate workflow files |
 
@@ -115,6 +121,8 @@ Without `--force`, the installer prompts before overwriting: `[o]verwrite / [s]k
 | Universal | `universal` | `.ai/` | `.md` |
 
 Use `--for both` to install for both Claude Code and Cursor simultaneously.
+
+![Same rule for Claude Code, Cursor, and Copilot](demos/gifs/demo-multi-tool.gif)
 
 ## Starter Templates
 

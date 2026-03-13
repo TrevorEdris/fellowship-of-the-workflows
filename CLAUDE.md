@@ -35,6 +35,16 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 ./bin/fotw install hooks/branch-guard --global --for claude-code  # Single hook
 ./bin/fotw install hooks --global --for claude-code --include-tests  # With test files
 
+# Setup — install all rules with lock file tracking
+./bin/fotw setup ~/my-project --for claude-code               # Install all rules
+./bin/fotw setup ~/my-project --for cursor --force            # Overwrite existing
+./bin/fotw setup ~/my-project --for claude-code --dry-run     # Preview only
+
+# Update — re-sync installed rules after git pull
+./bin/fotw update ~/my-project                                # Update changed rules
+./bin/fotw update ~/my-project --force                        # Re-install all
+./bin/fotw update ~/my-project --dry-run                      # Preview only
+
 # Validate before committing
 ./bin/fotw validate          # Check all workflows
 ./bin/fotw validate --verbose
@@ -87,9 +97,9 @@ Python package at `cli/fotw/` built with **Typer** (CLI) + **Rich** (terminal UI
 | Layer | Path | Purpose |
 |-------|------|---------|
 | Entry | `bin/fotw` → `cli/fotw/__main__.py` | Shell wrapper delegates to `python -m fotw` |
-| Commands | `cli/fotw/commands/` | `list`, `install`, `new`, `validate` |
+| Commands | `cli/fotw/commands/` | `list`, `install`, `new`, `setup`, `update`, `validate` |
 | Services | `cli/fotw/services/` | `catalog` (scan/parse), `installer` (deploy + conflict resolution), `frontmatter_translator`, `agents` (tool configs), `settings_merger` (hooks JSON merge) |
-| Models | `cli/fotw/models/` | `Workflow`, `Starter`, `Persona`, `Hook`, `ValidationResult`, `WorkflowType` |
+| Models | `cli/fotw/models/` | `Workflow`, `Starter`, `Persona`, `Hook`, `ValidationResult`, `WorkflowType`, `LockEntry` |
 | UI | `cli/fotw/ui/` | `console` (Rich), `tables`, `diff` (paged syntax-highlighted diffs) |
 
 Tool target configs are defined as `AgentConfig` dataclasses in `cli/fotw/services/agents.py` — each maps a tool name to its config directory, starter filename, rule extension, and frontmatter format.
