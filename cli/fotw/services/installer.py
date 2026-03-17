@@ -12,7 +12,7 @@ from fotw.services.catalog import REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
 from fotw.services.frontmatter_translator import translate_content, translate_to_target
 from fotw.services.settings_merger import merge_hooks, read_settings, write_settings
 from fotw.ui.console import console, err_console
-from fotw.ui.diff import files_are_identical, show_diff, show_dir_diff
+from fotw.ui.diff import dirs_are_identical, files_are_identical, show_diff, show_dir_diff
 
 # ---------------------------------------------------------------------------
 # Conflict resolution
@@ -141,6 +141,12 @@ def _resolve_dir_conflict(ctx: InstallContext, target_dir: Path, source_dir: Pat
 
     if not target_dir.exists():
         return True
+
+    # Identical directory — skip silently
+    if dirs_are_identical(target_dir, source_dir):
+        if not ctx.quiet:
+            console.print(f"  [dim]identical: {target_dir.name}/ (skipped)[/dim]")
+        return False
 
     if ctx.sticky_action == ConflictAction.OVERWRITE_ALL:
         return True

@@ -7,6 +7,7 @@ Required fields must be present. Values must be valid.
 import frontmatter
 import pytest
 
+from fotw.models.workflow import VALID_TAGS
 from fotw.services.catalog import WORKFLOWS_DIR
 
 # --- Allowed frontmatter keys per workflow type ---
@@ -23,6 +24,7 @@ SKILL_ALLOWED_KEYS = {
     "argument-hint",
     "disable-model-invocation",
     "user-invocable",
+    "tags",
 }
 
 AGENT_ALLOWED_KEYS = {"name", "description", "tools", "model", "color"}
@@ -121,6 +123,51 @@ def test_skills_required_frontmatter():
             violations.append(f"{skill_dir.name}: missing {missing}")
 
     assert not violations, f"Skills with missing required fields:\n" + "\n".join(violations)
+
+
+def test_skill_tags_valid_values():
+    """Skill 'tags' values, if present, must be from the controlled vocabulary."""
+    skills_dir = WORKFLOWS_DIR / "skills"
+    if not skills_dir.is_dir():
+        pytest.skip("No skills directory")
+
+    invalid = []
+    for skill_dir in sorted(skills_dir.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.is_file():
+            continue
+        meta = _parse(skill_file)
+        tags = meta.get("tags", [])
+        if not tags:
+            continue
+        bad = [t for t in tags if t not in VALID_TAGS]
+        if bad:
+            invalid.append(f"{skill_dir.name}: invalid tags {bad}")
+
+    assert not invalid, f"Skills with invalid tag values:\n" + "\n".join(invalid)
+
+
+def test_skill_tags_is_list():
+    """Skill 'tags' field, if present, must be a list."""
+    skills_dir = WORKFLOWS_DIR / "skills"
+    if not skills_dir.is_dir():
+        pytest.skip("No skills directory")
+
+    violations = []
+    for skill_dir in sorted(skills_dir.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.is_file():
+            continue
+        meta = _parse(skill_file)
+        tags = meta.get("tags")
+        if tags is not None and not isinstance(tags, list):
+            violations.append(f"{skill_dir.name}: tags is {type(tags).__name__}, expected list")
+
+    assert not violations, f"Skills with non-list tags:\n" + "\n".join(violations)
 
 
 def test_skill_name_matches_directory():

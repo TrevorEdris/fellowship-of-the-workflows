@@ -6,6 +6,28 @@ from pathlib import Path
 from typing import Optional
 
 
+VALID_TAGS: frozenset[str] = frozenset({
+    "aws",
+    "azure",
+    "gcp",
+    "go",
+    "python",
+    "typescript",
+    "rust",
+    "infrastructure",
+    "review",
+    "documentation",
+    "architecture",
+    "meta",
+    "incident-response",
+    "security",
+    "testing",
+    "observability",
+    "ci-cd",
+    "git",
+})
+
+
 class WorkflowType(str, Enum):
     RULE = "rule"
     SKILL = "skill"
@@ -39,6 +61,7 @@ class Workflow:
     name: str
     description: str = ""
     path: Path = field(default_factory=lambda: Path("."))
+    tags: list[str] = field(default_factory=list)
 
     @property
     def workflow_id(self) -> str:

@@ -76,3 +76,34 @@ def show_dir_diff(existing_dir: Path, source_dir: Path, dirname: str) -> None:
 def files_are_identical(existing_content: str, new_content: str) -> bool:
     """Check if two file contents are identical (ignoring trailing whitespace)."""
     return existing_content.rstrip() == new_content.rstrip()
+
+
+def dirs_are_identical(existing_dir: Path, source_dir: Path) -> bool:
+    """Check if two directories have identical file contents recursively.
+
+    Uses files_are_identical for text files (trailing-whitespace tolerant)
+    and falls back to byte comparison for binary files.
+    """
+    existing_files = {
+        f.relative_to(existing_dir): f
+        for f in sorted(existing_dir.rglob("*")) if f.is_file()
+    }
+    source_files = {
+        f.relative_to(source_dir): f
+        for f in sorted(source_dir.rglob("*")) if f.is_file()
+    }
+
+    if set(existing_files) != set(source_files):
+        return False
+
+    for key in existing_files:
+        try:
+            a_text = existing_files[key].read_text()
+            b_text = source_files[key].read_text()
+            if not files_are_identical(a_text, b_text):
+                return False
+        except (UnicodeDecodeError, ValueError):
+            # Binary file — compare raw bytes
+            if existing_files[key].read_bytes() != source_files[key].read_bytes():
+                return False
+    return True

@@ -27,15 +27,17 @@ def _repo_root() -> Path:
         return Path(env_root).resolve()
 
     here = Path(__file__).resolve()
-    # Walk up until we find bin/ directory (repo root marker)
+    # Walk up until we find bin/ + .claude-plugin/ (repo root marker)
     for parent in here.parents:
-        if (parent / "bin").is_dir() and (parent / "workflows").is_dir():
+        if (parent / "bin").is_dir() and (parent / ".claude-plugin").is_dir():
             return parent
     raise RuntimeError("Cannot locate repository root")
 
 
 REPO_ROOT = _repo_root()
-WORKFLOWS_DIR = REPO_ROOT / "workflows"
+# After the plugin-first flatten, workflows live at repo root.
+# WORKFLOWS_DIR is kept as a backward-compatible alias used by tests and other modules.
+WORKFLOWS_DIR = REPO_ROOT
 STARTERS_DIR = REPO_ROOT / "starters"
 
 
@@ -49,7 +51,7 @@ def _parse_frontmatter(path: Path) -> dict:
 
 
 def scan_rules() -> list[Workflow]:
-    """Scan workflows/rules/ for rule files."""
+    """Scan rules/ for rule files."""
     rules_dir = WORKFLOWS_DIR / "rules"
     if not rules_dir.is_dir():
         return []
@@ -73,7 +75,7 @@ def scan_rules() -> list[Workflow]:
 
 
 def scan_skills() -> list[Workflow]:
-    """Scan workflows/skills/ for skill directories."""
+    """Scan skills/ for skill directories."""
     skills_dir = WORKFLOWS_DIR / "skills"
     if not skills_dir.is_dir():
         return []
@@ -86,19 +88,23 @@ def scan_skills() -> list[Workflow]:
         if not skill_file.is_file():
             continue
         meta = _parse_frontmatter(skill_file)
+        tags = meta.get("tags", [])
+        if isinstance(tags, str):
+            tags = [t.strip() for t in tags.split(",")]
         results.append(
             Workflow(
                 wtype=WorkflowType.SKILL,
                 name=skill_dir.name,
                 description=meta.get("description", ""),
                 path=skill_dir,
+                tags=tags,
             )
         )
     return results
 
 
 def scan_agents() -> list[Workflow]:
-    """Scan workflows/agents/ for agent files."""
+    """Scan agents/ for agent files."""
     agents_dir = WORKFLOWS_DIR / "agents"
     if not agents_dir.is_dir():
         return []
@@ -214,7 +220,7 @@ def _parse_hook_meta(path: Path) -> dict | None:
 
 
 def scan_hooks() -> list[Hook]:
-    """Scan workflows/hooks/ for hook scripts with @fotw-hook metadata."""
+    """Scan hooks/ for hook scripts with @fotw-hook metadata."""
     hooks_dir = WORKFLOWS_DIR / "hooks"
     if not hooks_dir.is_dir():
         return []

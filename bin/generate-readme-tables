@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Generate the "Skill Tags" and "Skills by Category" sections for README.md
+# Usage: ./bin/generate-readme-tables [--update]
+#   Without --update: prints generated sections to stdout
+#   With --update: replaces the sections in README.md in-place
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+VENV_PYTHON="$REPO_ROOT/cli/.venv/bin/python"
+
+if [[ ! -f "$VENV_PYTHON" ]]; then
+    echo "Error: fotw CLI not installed. Run ./bin/bootstrap first." >&2
+    exit 1
+fi
+
+exec "$VENV_PYTHON" -c "
+import sys
+sys.path.insert(0, '${REPO_ROOT}/cli')
+from fotw.services.readme_tables import main
+main()
+" "$@"

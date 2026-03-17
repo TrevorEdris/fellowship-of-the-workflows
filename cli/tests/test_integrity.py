@@ -4,9 +4,11 @@ Covers:
 - Agent catalog consistency (every agent file ↔ catalog entry)
 - Skill-agent cross-references (agent: field points to real agent)
 - Starter tier rules exist
+- Hooks.json integrity (referenced scripts exist)
 - File hygiene (newlines, empty files)
 """
 
+import json
 import re
 
 import frontmatter
@@ -38,7 +40,7 @@ def _catalog_agent_names():
 
 
 def _agent_file_names():
-    """Return set of agent names from workflows/agents/*.md."""
+    """Return set of agent names from agents/*.md."""
     agents_dir = WORKFLOWS_DIR / "agents"
     if not agents_dir.is_dir():
         return set()
@@ -79,7 +81,7 @@ def test_no_stale_catalog_entries():
 
 
 def test_skill_agent_references_exist():
-    """If a skill's frontmatter has 'agent: foo', workflows/agents/foo.md must exist."""
+    """If a skill's frontmatter has 'agent: foo', agents/foo.md must exist."""
     skills_dir = WORKFLOWS_DIR / "skills"
     if not skills_dir.is_dir():
         pytest.skip("No skills directory")
@@ -105,7 +107,7 @@ def test_skill_agent_references_exist():
 
 
 def test_starter_tier_rules_exist():
-    """Every rule referenced in TIER_RULES must exist in workflows/rules/."""
+    """Every rule referenced in TIER_RULES must exist in rules/."""
     rules_dir = WORKFLOWS_DIR / "rules"
     missing = []
 
@@ -117,6 +119,49 @@ def test_starter_tier_rules_exist():
                 missing.append(f"{tier} tier: '{rule_name}' not found")
 
     assert not missing, f"Missing tier rules:\n" + "\n".join(missing)
+
+
+# --- Hooks.json integrity ---
+
+
+def test_hooks_json_references_exist():
+    """Every script referenced in hooks.json must exist on disk."""
+    hooks_json = WORKFLOWS_DIR / "hooks" / "hooks.json"
+    if not hooks_json.is_file():
+        pytest.skip("No hooks/hooks.json")
+
+    data = json.loads(hooks_json.read_text())
+    hooks_dir = WORKFLOWS_DIR / "hooks"
+    missing = []
+
+    for _event, entries in data.get("hooks", {}).items():
+        for entry in entries:
+            for hook in entry.get("hooks", []):
+                cmd = hook.get("command", "")
+                # Extract filename from ${CLAUDE_PLUGIN_ROOT}/hooks/<name>.js
+                if "/hooks/" in cmd:
+                    filename = cmd.split("/hooks/")[-1]
+                    if not (hooks_dir / filename).is_file():
+                        missing.append(f"{cmd} -> {filename} not found")
+
+    assert not missing, (
+        f"hooks.json references missing scripts:\n"
+        + "\n".join(f"  - {m}" for m in missing)
+    )
+
+
+def test_hooks_json_valid_structure():
+    """hooks.json must be valid JSON with expected structure."""
+    hooks_json = WORKFLOWS_DIR / "hooks" / "hooks.json"
+    if not hooks_json.is_file():
+        pytest.skip("No hooks/hooks.json")
+
+    data = json.loads(hooks_json.read_text())
+    assert "hooks" in data, "hooks.json must have a top-level 'hooks' key"
+
+    from fotw.services.catalog import KNOWN_HOOK_EVENTS
+    for event in data["hooks"]:
+        assert event in KNOWN_HOOK_EVENTS, f"Unknown event in hooks.json: {event}"
 
 
 def test_starter_files_exist():

@@ -35,6 +35,16 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 ./bin/fotw install hooks/branch-guard --global --for claude-code  # Single hook
 ./bin/fotw install hooks --global --for claude-code --include-tests  # With test files
 
+# Setup — install all rules with lock file tracking
+./bin/fotw setup ~/my-project --for claude-code               # Install all rules
+./bin/fotw setup ~/my-project --for cursor --force            # Overwrite existing
+./bin/fotw setup ~/my-project --for claude-code --dry-run     # Preview only
+
+# Update — re-sync installed rules after git pull
+./bin/fotw update ~/my-project                                # Update changed rules
+./bin/fotw update ~/my-project --force                        # Re-install all
+./bin/fotw update ~/my-project --dry-run                      # Preview only
+
 # Validate before committing
 ./bin/fotw validate          # Check all workflows
 ./bin/fotw validate --verbose
@@ -75,10 +85,10 @@ Supported `--for` targets: claude-code, cursor, copilot, codex, windsurf, gemini
 
 | Type | Storage | Description |
 |------|---------|-------------|
-| **Skills** | `workflows/skills/<name>/SKILL.md` | Executable packages with references, scripts, assets |
-| **Rules** | `workflows/rules/*.mdc` | Conditional context files (Cursor format, auto-translated) |
-| **Agents** | `workflows/agents/*.md` | Subagent definitions with tool restrictions |
-| **Hooks** | `workflows/hooks/*.js` | Claude Code hook scripts (global, claude-code only) |
+| **Skills** | `skills/<name>/SKILL.md` | Executable packages with references, scripts, assets |
+| **Rules** | `rules/*.mdc` | Conditional context files (Cursor format, auto-translated) |
+| **Agents** | `agents/*.md` | Subagent definitions with tool restrictions |
+| **Hooks** | `hooks/*.js` | Claude Code hook scripts (global, claude-code only) |
 
 ### CLI Architecture
 
@@ -87,9 +97,9 @@ Python package at `cli/fotw/` built with **Typer** (CLI) + **Rich** (terminal UI
 | Layer | Path | Purpose |
 |-------|------|---------|
 | Entry | `bin/fotw` → `cli/fotw/__main__.py` | Shell wrapper delegates to `python -m fotw` |
-| Commands | `cli/fotw/commands/` | `list`, `install`, `new`, `validate` |
+| Commands | `cli/fotw/commands/` | `list`, `install`, `new`, `setup`, `update`, `validate` |
 | Services | `cli/fotw/services/` | `catalog` (scan/parse), `installer` (deploy + conflict resolution), `frontmatter_translator`, `agents` (tool configs), `settings_merger` (hooks JSON merge) |
-| Models | `cli/fotw/models/` | `Workflow`, `Starter`, `Persona`, `Hook`, `ValidationResult`, `WorkflowType` |
+| Models | `cli/fotw/models/` | `Workflow`, `Starter`, `Persona`, `Hook`, `ValidationResult`, `WorkflowType`, `LockEntry` |
 | UI | `cli/fotw/ui/` | `console` (Rich), `tables`, `diff` (paged syntax-highlighted diffs) |
 
 Tool target configs are defined as `AgentConfig` dataclasses in `cli/fotw/services/agents.py` — each maps a tool name to its config directory, starter filename, rule extension, and frontmatter format.
@@ -105,6 +115,7 @@ context: fork                     # Optional: isolated execution
 agent: agent-name                 # Optional: link subagent
 allowed-tools: Read, Grep         # Optional: restrict tools
 model: sonnet                     # Claude-only: opus, sonnet, haiku
+tags: [infrastructure, aws]       # Optional: controlled vocabulary for categorization
 ---
 ```
 
@@ -165,9 +176,9 @@ When installing over existing files, the installer prompts: `[o]verwrite / [s]ki
 
 ### Agent Catalog
 
-The orchestration skill maintains an agent catalog at `workflows/skills/orchestrate/references/agent-catalog.md`. This catalog maps each agent to its domain, capabilities, model, and tools — enabling the orchestrator to route subtasks to the best-fit agent.
+The orchestration skill maintains an agent catalog at `skills/orchestrate/references/agent-catalog.md`. This catalog maps each agent to its domain, capabilities, model, and tools — enabling the orchestrator to route subtasks to the best-fit agent.
 
-**When adding or modifying any agent** (`workflows/agents/*.md`):
+**When adding or modifying any agent** (`agents/*.md`):
 1. Add/update a row in the Routing Guide table
 2. Add/update the Agent Capability Details section
 3. Run `./bin/fotw validate` to confirm the new agent is indexed

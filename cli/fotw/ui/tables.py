@@ -77,11 +77,17 @@ def print_workflows(
     if not type_filter or type_filter == "skill":
         skills = type_groups.get(WorkflowType.SKILL, [])
         if skills:
-            table = Table(title="skills", title_style="bold", show_header=False, box=None, padding=(0, 2))
+            has_tags = any(wf.tags for wf in skills)
+            table = Table(title="skills", title_style="bold", show_header=has_tags, box=None, padding=(0, 2))
             table.add_column("ID", style="green", min_width=30)
+            if has_tags:
+                table.add_column("Tags", style="cyan", min_width=20)
             table.add_column("Description")
             for wf in skills:
-                table.add_row(wf.workflow_id, _truncate(wf.description))
+                if has_tags:
+                    table.add_row(wf.workflow_id, ", ".join(wf.tags), _truncate(wf.description))
+                else:
+                    table.add_row(wf.workflow_id, _truncate(wf.description))
             console.print(table)
             console.print()
 
