@@ -7,8 +7,8 @@ A centralized repository for sharing AI agent workflows across your team. Works 
 | Type | Count | Description |
 |------|-------|-------------|
 | **Skills** | 44 core + 11 community | Executable packages — code review, Terraform, AWS, security audits, and more |
-| **Rules** | 26 | Conditional context files — git safety, output style, model guidance, coding patterns |
-| **Agents** | 34 | Subagent definitions — specialist agents for focused tasks |
+| **Rules** | 20 core + 8 community | Conditional context files — git safety, output style, model guidance, coding patterns |
+| **Agents** | 20 core + 15 community | Subagent definitions — specialist agents for focused tasks |
 | **Hooks** | 5 | Claude Code event hooks — block dangerous commands, guard branches |
 | **Personas** | 12 | AI personality overlays — Gandalf, Sauron, and friends |
 | **Starters** | 3 | Project templates — minimal, standard, full |
@@ -284,6 +284,8 @@ This repo is structured as a [Claude Code plugin](https://code.claude.com/docs/e
 | Rules | `rules/*.mdc` | **Manual** — requires `fotw install` to copy to project |
 | Starters | `starters/*.md` | **Manual** — requires `fotw install` to copy to project |
 | Community skills | `community/*/SKILL.md` | **Manual** — excluded from auto-discovery |
+| Community rules | `community/rules/*.mdc` | **Manual** — excluded from auto-discovery |
+| Community agents | `community/agents/*.md` | **Manual** — excluded from auto-discovery |
 
 The `.claude-plugin/plugin.json` manifest declares the plugin metadata. Hook scripts use `${CLAUDE_PLUGIN_ROOT}` to resolve paths relative to the plugin directory.
 

@@ -1,8 +1,8 @@
-# Skill Catalog
+# Workflow Catalog
 
-Full listing of all skills available in Fellowship of the Workflows. Skills in the **community/** tier are vendor-specific and not auto-discovered in plugin mode.
+Full listing of all workflows available in Fellowship of the Workflows. Items in the **community/** tier are vendor-specific and not auto-discovered in plugin mode.
 
-Filter via CLI: `./bin/fotw list --type skill`, `./bin/fotw list --tag aws`, `./bin/fotw list --tier community`
+Filter via CLI: `./bin/fotw list`, `./bin/fotw list --tag aws`, `./bin/fotw list --tier community`
 
 ---
 
@@ -86,14 +86,6 @@ Filter via CLI: `./bin/fotw list --type skill`, `./bin/fotw list --tag aws`, `./
 |-------|------|-------------|
 | `observability` | `observability` | Instrument, audit, and configure observability for services (OTel, Prometheus, Grafana) |
 
-### Security
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `aws-iam` | `aws`, `security` | AWS IAM policy design, least-privilege, audit |
-| `gcp-iam` | `gcp`, `security` | GCP IAM: roles, service accounts, Workload Identity |
-| `security-review` | `security`, `review` | Code security audit with HIGH-CONFIDENCE findings only |
-
 ### Testing
 
 | Skill | Tags | Description |
@@ -115,22 +107,110 @@ Filter via CLI: `./bin/fotw list --type skill`, `./bin/fotw list --tag aws`, `./
 
 ---
 
-## Community Skills
+## Core Rules
 
-Vendor-specific skills. Not auto-discovered in plugin mode. Install explicitly with `fotw install community/<name>`.
+Conditional context files auto-translated to all 9 tool formats on install.
 
-See [community/README.md](../community/README.md) for the tier philosophy.
+| Rule | Description |
+|------|-------------|
+| `ai-session` | Session documentation structure and directory conventions |
+| `cloudformation-conventions` | CloudFormation resource naming, deletion policies, change sets |
+| `context-efficiency` | Phase-scoped context loading for token efficiency |
+| `discover-plan-implement` | 5-phase QRSPI workflow: Question, Research, Structure, Plan, Implement |
+| `event-driven-conventions` | Event-driven architecture patterns and messaging idioms |
+| `git-safety` | Git safety rules: branch protection, commit hygiene, push guards |
+| `go-patterns` | Go error handling, interfaces, concurrency patterns |
+| `incident-management-conventions` | Incident severity levels, escalation, postmortem conventions |
+| `model-selection` | Task complexity → model guidance (haiku/sonnet/opus) |
+| `multi-repo-safety` | Multi-repo boundary rules and cross-repo change discipline |
+| `no-brute-force-debugging` | Root-cause-first debugging discipline; three-fix limit |
+| `observability-conventions` | Observability naming, cardinality, RED method conventions |
+| `output-style` | Response formatting: concise, bullets, no filler phrases |
+| `persona-integration` | Persona system: voice/style at runtime via persona.yaml |
+| `tdd-enforcement` | Iron Law: no production code without a failing test first |
 
-| Skill | Tier | Tags | Description |
-|-------|------|------|-------------|
-| `azure` | community | `azure` | Azure platform: authentication, SDKs, services |
-| `azure-functions` | community | `azure`, `architecture` | Azure Functions: triggers, bindings, deployment |
-| `azure-iac` | community | `azure`, `infrastructure` | Azure IaC with Bicep and Terraform |
-| `better-stack` | community | `observability`, `incident-response` | Better Stack uptime monitors, on-call, status pages |
-| `cloud-run` | community | `gcp`, `infrastructure` | Cloud Run services, jobs, Eventarc triggers |
-| `gcp-data` | community | `gcp`, `architecture` | GCP data stores: Cloud SQL, Firestore, BigQuery, Spanner |
-| `grafana-irm` | community | `observability`, `incident-response` | Grafana Cloud IRM on-call and alerting |
-| `incident-io` | community | `incident-response` | incident.io Slack-native incident response |
-| `pulumi` | community | `infrastructure` | Pulumi multi-cloud infrastructure programs |
-| `rust-patterns` | community | `rust` | Rust patterns and idioms |
-| `velocity-forecast` | community | `meta` | Sprint velocity forecasting and capacity planning |
+---
+
+## Core Agents
+
+Specialist subagents auto-discovered in plugin mode.
+
+| Agent | Domain |
+|-------|--------|
+| `accessibility-audit` | WCAG 2.1/2.2 POUR audit with Playwright browser testing |
+| `ascii-ui-mockup-generator` | Text-based UI wireframes and terminal UI mockups |
+| `chaos-engineer` | Adversarial failure mode and resilience review |
+| `codebase-pattern-finder` | Pattern detection and consistency checking at scale |
+| `design-review` | Visual design review with Playwright live testing |
+| `desloppify` | AI slop detection and removal from code and docs |
+| `documentation-sync` | Post-implementation doc sync and staleness audit |
+| `e2e-test-reviewer` | E2E/integration test quality review |
+| `general-purpose` | Fallback catch-all for broad or multi-domain tasks |
+| `mermaid-diagram-specialist` | Architecture, sequence, flowchart, ERD diagrams |
+| `multi-agent-orchestrator` | Multi-agent task decomposition and delegation |
+| `performance-optimization` | N+1, caching, bundle size, algorithmic complexity |
+| `pragmatic-code-review` | PR review using Pragmatic Quality framework |
+| `refactoring-specialist` | Code smell detection and safe refactoring execution |
+| `scope-analyzer` | Read-only codebase reverse engineering |
+| `security-review` | HIGH-CONFIDENCE vulnerability analysis |
+| `system-design-reviewer` | Distributed systems architecture review |
+| `systematic-debugger` | Root cause analysis, read-only investigation |
+| `tdd-enforcer` | RED-GREEN-REFACTOR cycle gating |
+| `ui-ux-designer` | Design system specs, component design, UX flows |
+
+---
+
+## Community Workflows
+
+Vendor-specific. Not auto-discovered in plugin mode. Install explicitly.
+
+See [community/README.md](../community/README.md) for install instructions and the tier philosophy.
+
+### Community Skills
+
+| Skill | Tags | Description |
+|-------|------|-------------|
+| `azure` | `azure` | Azure platform: authentication, SDKs, services |
+| `azure-functions` | `azure`, `architecture` | Azure Functions: triggers, bindings, deployment |
+| `azure-iac` | `azure`, `infrastructure` | Azure IaC with Bicep and Terraform |
+| `better-stack` | `observability`, `incident-response` | Better Stack uptime monitors, on-call, status pages |
+| `cloud-run` | `gcp`, `infrastructure` | Cloud Run services, jobs, Eventarc triggers |
+| `gcp-data` | `gcp`, `architecture` | GCP data stores: Cloud SQL, Firestore, BigQuery, Spanner |
+| `grafana-irm` | `observability`, `incident-response` | Grafana Cloud IRM on-call and alerting |
+| `incident-io` | `incident-response` | incident.io Slack-native incident response |
+| `pulumi` | `infrastructure` | Pulumi multi-cloud infrastructure programs |
+| `rust-patterns` | `rust` | Rust patterns and idioms |
+| `velocity-forecast` | `meta` | Sprint velocity forecasting and capacity planning |
+
+### Community Rules
+
+| Rule | Description |
+|------|-------------|
+| `azure-patterns` | Azure SDK patterns, Managed Identity, common service idioms |
+| `cdk-conventions` | AWS CDK L2 constructs, stack organization, cdk-nag patterns |
+| `dockerfile-conventions` | Multi-stage build patterns, layer optimization, security hardening |
+| `kubernetes-conventions` | Resource limits, probes, security contexts, RBAC patterns |
+| `pagerduty-conventions` | PagerDuty service design and escalation policy conventions |
+| `pulumi-conventions` | Pulumi Output/Input discipline, stack naming, no-local-backend |
+| `python-patterns` | Python typing, dataclasses, async patterns, testing idioms |
+| `rust-patterns` | Rust error handling, ownership idioms, concurrency patterns |
+
+### Community Agents
+
+| Agent | Domain |
+|-------|--------|
+| `aws-architect` | AWS Well-Architected reviews and service selection |
+| `aws-iac-specialist` | CloudFormation, CDK, SAM authoring and CFN→CDK migration |
+| `aws-iam-auditor` | IAM policy analysis, privilege escalation, CIS compliance |
+| `azure-architect` | Azure service selection and WAF alignment |
+| `better-stack-specialist` | Better Stack monitors, on-call, status pages |
+| `cloud-run-specialist` | Cloud Run, Cloud Functions, Pub/Sub, Eventarc |
+| `datadog-instrumentation` | Datadog APM, DogStatsD, Terraform monitors/SLOs |
+| `gcp-iam-auditor` | GCP IAM audit and Workload Identity Federation |
+| `grafana-irm-specialist` | Grafana Cloud IRM on-call and alert routing |
+| `incident-io-specialist` | incident.io incident response and Terraform |
+| `otel-instrumentation` | OTel SDK, Collector, Prometheus, Grafana dashboards |
+| `pagerduty-config` | PagerDuty services, escalation policies, Terraform |
+| `pulumi-specialist` | Pulumi programs (TS/Python/Go/C#) and CrossGuard |
+| `terraform-specialist` | Terraform modules, state, security audit |
+| `terragrunt-specialist` | Terragrunt DRY configs, dependency DAGs, multi-account |

@@ -66,11 +66,19 @@ def print_workflows(
     if not type_filter or type_filter == "rule":
         rules = type_groups.get(WorkflowType.RULE, [])
         if rules:
-            table = Table(title="rules", title_style="bold", show_header=False, box=None, padding=(0, 2))
+            has_community_rules = any(wf.tier == "community" for wf in rules)
+            table = Table(title="rules", title_style="bold", show_header=has_community_rules, box=None, padding=(0, 2))
             table.add_column("ID", style="green", min_width=30)
+            if has_community_rules:
+                table.add_column("Tier", style="dim", min_width=10)
             table.add_column("Description")
             for wf in rules:
-                table.add_row(wf.workflow_id, _truncate(wf.description))
+                row = [wf.workflow_id]
+                if has_community_rules:
+                    tier_label = "[dim]community[/dim]" if wf.tier == "community" else "core"
+                    row.append(tier_label)
+                row.append(_truncate(wf.description))
+                table.add_row(*row)
             console.print(table)
             console.print()
 
@@ -103,11 +111,19 @@ def print_workflows(
     if not type_filter or type_filter == "agent":
         agents = type_groups.get(WorkflowType.AGENT, [])
         if agents:
-            table = Table(title="agents", title_style="bold", show_header=False, box=None, padding=(0, 2))
+            has_community_agents = any(wf.tier == "community" for wf in agents)
+            table = Table(title="agents", title_style="bold", show_header=has_community_agents, box=None, padding=(0, 2))
             table.add_column("ID", style="green", min_width=30)
+            if has_community_agents:
+                table.add_column("Tier", style="dim", min_width=10)
             table.add_column("Description")
             for wf in agents:
-                table.add_row(wf.workflow_id, _truncate(wf.description))
+                row = [wf.workflow_id]
+                if has_community_agents:
+                    tier_label = "[dim]community[/dim]" if wf.tier == "community" else "core"
+                    row.append(tier_label)
+                row.append(_truncate(wf.description))
+                table.add_row(*row)
             console.print(table)
             console.print()
 

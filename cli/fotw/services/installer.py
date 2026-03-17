@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fotw.models.workflow import Hook
 from fotw.services.agents import AgentConfig, expand_tools, get_agent_config
-from fotw.services.catalog import COMMUNITY_DIR, REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
+from fotw.services.catalog import COMMUNITY_AGENTS_DIR, COMMUNITY_DIR, COMMUNITY_RULES_DIR, REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
 from fotw.services.frontmatter_translator import translate_content, translate_to_target
 from fotw.services.settings_merger import merge_hooks, read_settings, write_settings
 from fotw.ui.console import console, err_console
@@ -227,6 +227,13 @@ def _find_source(wtype: str, name: str) -> Path | None:
         md = WORKFLOWS_DIR / "rules" / f"{name}.md"
         if md.is_file():
             return md
+        # Also check community/rules/
+        community_mdc = COMMUNITY_RULES_DIR / f"{name}.mdc"
+        if community_mdc.is_file():
+            return community_mdc
+        community_md = COMMUNITY_RULES_DIR / f"{name}.md"
+        if community_md.is_file():
+            return community_md
     elif wtype == "skills":
         skill_dir = WORKFLOWS_DIR / "skills" / name
         if skill_dir.is_dir():
@@ -243,6 +250,10 @@ def _find_source(wtype: str, name: str) -> Path | None:
         agent = WORKFLOWS_DIR / "agents" / f"{name}.md"
         if agent.is_file():
             return agent
+        # Also check community/agents/
+        community_agent = COMMUNITY_AGENTS_DIR / f"{name}.md"
+        if community_agent.is_file():
+            return community_agent
     return None
 
 

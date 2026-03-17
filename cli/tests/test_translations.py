@@ -10,19 +10,19 @@ Source rules are in Cursor format (.mdc). Translation produces:
 import frontmatter
 import pytest
 
-from fotw.services.catalog import WORKFLOWS_DIR
+from fotw.services.catalog import COMMUNITY_RULES_DIR, WORKFLOWS_DIR
 from fotw.services.frontmatter_translator import translate_content
 
 
 def _all_rules():
-    """Yield (name, path) for every rule file."""
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if not rules_dir.is_dir():
-        return
-    for path in sorted(rules_dir.iterdir()):
-        if path.suffix not in (".mdc", ".md") or path.name == ".gitkeep":
+    """Yield (name, path) for every rule file (core + community)."""
+    for rules_dir in [WORKFLOWS_DIR / "rules", COMMUNITY_RULES_DIR]:
+        if not rules_dir.is_dir():
             continue
-        yield path.stem, path
+        for path in sorted(rules_dir.iterdir()):
+            if path.suffix not in (".mdc", ".md") or path.name == ".gitkeep":
+                continue
+            yield path.stem, path
 
 
 def _parse_translated(content):

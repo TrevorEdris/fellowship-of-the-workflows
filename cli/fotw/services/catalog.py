@@ -40,6 +40,8 @@ REPO_ROOT = _repo_root()
 # WORKFLOWS_DIR is kept as a backward-compatible alias used by tests and other modules.
 WORKFLOWS_DIR = REPO_ROOT
 COMMUNITY_DIR = REPO_ROOT / "community"
+COMMUNITY_RULES_DIR = COMMUNITY_DIR / "rules"
+COMMUNITY_AGENTS_DIR = COMMUNITY_DIR / "agents"
 STARTERS_DIR = REPO_ROOT / "starters"
 ROSTERS_DIR = STARTERS_DIR / "rosters"
 
@@ -54,26 +56,26 @@ def _parse_frontmatter(path: Path) -> dict:
 
 
 def scan_rules() -> list[Workflow]:
-    """Scan rules/ for rule files."""
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if not rules_dir.is_dir():
-        return []
-
+    """Scan rules/ and community/rules/ for rule files."""
     results = []
-    for path in sorted(rules_dir.iterdir()):
-        if path.name == ".gitkeep":
+    for base_dir, tier in [(WORKFLOWS_DIR / "rules", "core"), (COMMUNITY_RULES_DIR, "community")]:
+        if not base_dir.is_dir():
             continue
-        if path.suffix not in (".mdc", ".md"):
-            continue
-        meta = _parse_frontmatter(path)
-        results.append(
-            Workflow(
-                wtype=WorkflowType.RULE,
-                name=path.stem,
-                description=meta.get("description", ""),
-                path=path,
+        for path in sorted(base_dir.iterdir()):
+            if path.name == ".gitkeep":
+                continue
+            if path.suffix not in (".mdc", ".md"):
+                continue
+            meta = _parse_frontmatter(path)
+            results.append(
+                Workflow(
+                    wtype=WorkflowType.RULE,
+                    name=path.stem,
+                    description=meta.get("description", ""),
+                    path=path,
+                    tier=tier,
+                )
             )
-        )
     return results
 
 
@@ -107,26 +109,26 @@ def scan_skills() -> list[Workflow]:
 
 
 def scan_agents() -> list[Workflow]:
-    """Scan agents/ for agent files."""
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if not agents_dir.is_dir():
-        return []
-
+    """Scan agents/ and community/agents/ for agent files."""
     results = []
-    for path in sorted(agents_dir.iterdir()):
-        if path.name == ".gitkeep":
+    for base_dir, tier in [(WORKFLOWS_DIR / "agents", "core"), (COMMUNITY_AGENTS_DIR, "community")]:
+        if not base_dir.is_dir():
             continue
-        if path.suffix != ".md":
-            continue
-        meta = _parse_frontmatter(path)
-        results.append(
-            Workflow(
-                wtype=WorkflowType.AGENT,
-                name=path.stem,
-                description=meta.get("description", ""),
-                path=path,
+        for path in sorted(base_dir.iterdir()):
+            if path.name == ".gitkeep":
+                continue
+            if path.suffix != ".md":
+                continue
+            meta = _parse_frontmatter(path)
+            results.append(
+                Workflow(
+                    wtype=WorkflowType.AGENT,
+                    name=path.stem,
+                    description=meta.get("description", ""),
+                    path=path,
+                    tier=tier,
+                )
             )
-        )
     return results
 
 
@@ -427,13 +429,17 @@ def validate_role(path: Path) -> ValidationResult:
         if not (skills_dir / skill_name).is_dir() and not (COMMUNITY_DIR / skill_name).is_dir():
             warnings.append(f"allowed-skills references non-existent skill: {skill_name}")
 
-    # Validate rules reference real rules
+    # Validate rules reference real rules (core or community)
     rules = meta.get("rules", [])
     if isinstance(rules, str):
         rules = [r.strip() for r in rules.split(",")]
     rules_dir = WORKFLOWS_DIR / "rules"
     for rule_name in rules:
-        if not (rules_dir / f"{rule_name}.mdc").is_file() and not (rules_dir / f"{rule_name}.md").is_file():
+        core_mdc = (rules_dir / f"{rule_name}.mdc").is_file()
+        core_md = (rules_dir / f"{rule_name}.md").is_file()
+        community_mdc = (COMMUNITY_RULES_DIR / f"{rule_name}.mdc").is_file()
+        community_md = (COMMUNITY_RULES_DIR / f"{rule_name}.md").is_file()
+        if not (core_mdc or core_md or community_mdc or community_md):
             warnings.append(f"rules references non-existent rule: {rule_name}")
 
     return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
@@ -456,29 +462,33 @@ def validate_all(target_path: str | None = None) -> list[ValidationResult]:
             results.append(validate_skill(path))
         return results
 
-    # Validate rules
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if rules_dir.is_dir():
-        for path in sorted(rules_dir.iterdir()):
-            if path.name == ".gitkeep" or path.suffix not in (".mdc", ".md"):
-                continue
-            results.append(validate_rule(path))
+    # Validate rules (core + community)
+    for rules_base in [WORKFLOWS_DIR / "rules", COMMUNITY_RULES_DIR]:
+        if rules_base.is_dir():
+            for path in sorted(rules_base.iterdir()):
+                if path.name == ".gitkeep" or path.suffix not in (".mdc", ".md"):
+                    continue
+                results.append(validate_rule(path))
 
     # Validate skills (core + community)
+    # For community/, skip the non-skill subdirs (rules/, agents/)
+    _COMMUNITY_NON_SKILL_DIRS = {"rules", "agents"}
     for base_dir in [WORKFLOWS_DIR / "skills", COMMUNITY_DIR]:
         if base_dir.is_dir():
             for skill_dir in sorted(base_dir.iterdir()):
                 if not skill_dir.is_dir():
                     continue
+                if base_dir == COMMUNITY_DIR and skill_dir.name in _COMMUNITY_NON_SKILL_DIRS:
+                    continue
                 results.append(validate_skill(skill_dir))
 
-    # Validate agents
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if agents_dir.is_dir():
-        for path in sorted(agents_dir.iterdir()):
-            if path.name == ".gitkeep" or path.suffix != ".md":
-                continue
-            results.append(validate_agent(path))
+    # Validate agents (core + community)
+    for agents_base in [WORKFLOWS_DIR / "agents", COMMUNITY_AGENTS_DIR]:
+        if agents_base.is_dir():
+            for path in sorted(agents_base.iterdir()):
+                if path.name == ".gitkeep" or path.suffix != ".md":
+                    continue
+                results.append(validate_agent(path))
 
     # Validate hooks
     hooks_dir = WORKFLOWS_DIR / "hooks"

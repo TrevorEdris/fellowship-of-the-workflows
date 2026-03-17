@@ -317,12 +317,42 @@ Best invoked with `gcloud config list` output to establish the active project; r
 
 ---
 
+---
+
+## Community Agents
+
+These agents live in `community/agents/` and are **not** auto-discovered in plugin mode. Install them explicitly:
+
+```bash
+./bin/fotw install agents/terraform-specialist ~/project --for claude-code
+```
+
+| Agent | Domain | Best For |
+|-------|--------|----------|
+| `terraform-specialist` | Infrastructure-as-code | Terraform module authoring, state management, security audit |
+| `terragrunt-specialist` | Infrastructure-as-code | DRY Terragrunt configs, dependency DAGs, multi-account patterns |
+| `aws-iac-specialist` | AWS IaC | CloudFormation, CDK, SAM authoring; CFN→CDK migration |
+| `aws-architect` | AWS architecture | Well-Architected reviews, service selection, IaC review |
+| `aws-iam-auditor` | AWS IAM security | IAM policy analysis, privilege escalation, CIS compliance |
+| `azure-architect` | Azure architecture | Azure service selection, WAF alignment, cost optimization |
+| `pulumi-specialist` | Infrastructure | Pulumi programs (TS/Python/Go/C#), CrossGuard, CFN/TF migration |
+| `cloud-run-specialist` | GCP serverless | Cloud Run, Cloud Functions, Pub/Sub, Eventarc, Cloud Tasks |
+| `gcp-iam-auditor` | GCP security | GCP IAM audit, over-privilege, Workload Identity Federation |
+| `datadog-instrumentation` | Observability | Datadog APM, DogStatsD metrics, Terraform monitors/SLOs |
+| `otel-instrumentation` | Observability | OTel SDK, Collector config, Prometheus, Grafana dashboards |
+| `pagerduty-config` | Alerting/On-call | PD services, escalation policies, on-call schedules, Terraform |
+| `grafana-irm-specialist` | Incident Management | Grafana Cloud IRM on-call, alert routing, Terraform resources |
+| `incident-io-specialist` | Incident Management | incident.io Slack-native incidents, automation, Terraform v5+ |
+| `better-stack-specialist` | Incident Management | Better Stack monitors, on-call, status pages, Terraform |
+
+---
+
 ## Adding New Agents
 
-When a new agent is added to `agents/`:
+When a new agent is added to `agents/` (core) or `community/agents/` (community):
 
-1. Add a row to the Routing Guide table
+1. Add a row to the Routing Guide table (or Community Agents table for community agents)
 2. Add a capability details section
-3. Verify the `ls agents/` output in the skill context reflects the new agent
+3. Verify the `ls agents/` output in the skill context reflects the new agent (for core agents)
 
 The orchestrator dynamically lists agents at invocation time, so new agents are immediately available for routing — the catalog is supplementary routing guidance, not a gate.

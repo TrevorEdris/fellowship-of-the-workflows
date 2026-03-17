@@ -66,9 +66,8 @@ def list_cmd(
     if tag and not type_filter:
         type_filter = "skill"
 
-    # --tier implies --type skill
-    if tier_filter and not type_filter:
-        type_filter = "skill"
+    # --tier with no type filter: show rules, skills, and agents (all filterable types)
+    # We do NOT force --type skill here; tier filtering applies to all three types.
 
     if context_budget:
         from rich.table import Table
@@ -121,9 +120,12 @@ def list_cmd(
     if tag:
         workflows = [wf for wf in workflows if tag in wf.tags]
 
-    # Filter by tier (skills only)
+    # Filter by tier (rules, skills, agents)
     if tier_filter:
-        workflows = [wf for wf in workflows if wf.wtype.value != "skill" or wf.tier == tier_filter]
+        workflows = [
+            wf for wf in workflows
+            if wf.wtype.value not in ("rule", "skill", "agent") or wf.tier == tier_filter
+        ]
 
     if as_json:
         data = []
@@ -139,7 +141,7 @@ def list_cmd(
                 }
                 if wf.tags:
                     entry["tags"] = wf.tags
-                if wf.wtype.value == "skill":
+                if wf.wtype.value in ("rule", "skill", "agent"):
                     entry["tier"] = wf.tier
                 data.append(entry)
         if not type_filter or type_filter == "starter":
