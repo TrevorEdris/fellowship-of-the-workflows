@@ -420,6 +420,102 @@ def install_personas(ctx: InstallContext) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Role install
+# ---------------------------------------------------------------------------
+
+def install_role(role_name: str, ctx: InstallContext) -> bool:
+    """Install a role from the roster. Installs all referenced skills and rules."""
+    from fotw.services.catalog import scan_roles
+
+    roles = scan_roles()
+    role = next((r for r in roles if r.name == role_name), None)
+    if role is None:
+        err_console.print(f"[red]Error: Role not found: {role_name}[/red]")
+        available = [r.name for r in roles]
+        if available:
+            err_console.print(f"Available roles: {', '.join(available)}")
+        return False
+
+    if not ctx.quiet:
+        console.print()
+        console.print(f"Role:     {role.name}")
+        console.print(f"Tool:     {ctx.tool}")
+        scope = "Global" if ctx.is_global else f"Project ({ctx.target_repo})"
+        console.print(f"Scope:    {scope}")
+        console.print(f"Skills:   {', '.join(role.allowed_skills)}")
+        if role.rules:
+            console.print(f"Rules:    {', '.join(role.rules)}")
+        if role.persona:
+            console.print(f"Persona:  {role.persona}")
+        console.print()
+
+    if ctx.dry_run:
+        console.print("[yellow][DRY RUN] Would install:[/yellow]")
+        for skill in role.allowed_skills:
+            console.print(f"  skill: {skill}")
+        for rule in role.rules:
+            console.print(f"  rule:  {rule}")
+        console.print(f"  config: roster.yaml")
+        return True
+
+    tools_to_install = expand_tools(ctx.tool)
+    succeeded = []
+    failed = []
+
+    for t in tools_to_install:
+        skill_ctx = InstallContext(
+            tool=t,
+            target_repo=ctx.target_repo,
+            is_global=ctx.is_global,
+            dry_run=ctx.dry_run,
+            force=ctx.force,
+            quiet=True,
+            sticky_action=ctx.sticky_action,
+        )
+
+        # Install skills
+        for skill_name in role.allowed_skills:
+            wf_id = f"skills/{skill_name}"
+            if install_single_workflow(wf_id, skill_ctx):
+                succeeded.append(wf_id)
+            else:
+                failed.append(wf_id)
+
+        # Install rules
+        for rule_name in role.rules:
+            wf_id = f"rules/{rule_name}"
+            if install_single_workflow(wf_id, skill_ctx):
+                succeeded.append(wf_id)
+            else:
+                failed.append(wf_id)
+
+        # Write roster.yaml config
+        cfg = get_agent_config(t)
+        if cfg:
+            base = ctx.target_repo / cfg.config_dir if not ctx.is_global else Path.home() / cfg.config_dir
+            roster_config = base / "roster.yaml"
+            base.mkdir(parents=True, exist_ok=True)
+            config_content = (
+                f"# Active role — installed by fotw\n"
+                f"role: {role.name}\n"
+            )
+            if role.persona:
+                config_content += f"persona: {role.persona}\n"
+            roster_config.write_text(config_content)
+            if not ctx.quiet:
+                console.print(f"[green]\u2713[/green] Created {roster_config}")
+
+    # Summary
+    if not ctx.quiet:
+        console.print()
+        console.print(f"[green]Installed role '{role.name}': {len(succeeded)} workflows[/green]")
+        if failed:
+            console.print(f"[red]Failed: {', '.join(failed)}[/red]")
+
+    return len(failed) == 0
+
+
+# ---------------------------------------------------------------------------
 # Starter install
 # ---------------------------------------------------------------------------
 

@@ -10,6 +10,7 @@ import frontmatter
 from fotw.models.workflow import (
     Hook,
     Persona,
+    Role,
     Starter,
     ValidationResult,
     Workflow,
@@ -39,6 +40,7 @@ REPO_ROOT = _repo_root()
 # WORKFLOWS_DIR is kept as a backward-compatible alias used by tests and other modules.
 WORKFLOWS_DIR = REPO_ROOT
 STARTERS_DIR = REPO_ROOT / "starters"
+ROSTERS_DIR = STARTERS_DIR / "rosters"
 
 
 def _parse_frontmatter(path: Path) -> dict:
@@ -194,6 +196,46 @@ def scan_personas() -> list[Persona]:
             pass
         results.append(
             Persona(name=path.stem, tagline=tagline, path=path)
+        )
+    return results
+
+
+def scan_roles() -> list[Role]:
+    """Scan starters/rosters/ for role definitions."""
+    if not ROSTERS_DIR.is_dir():
+        return []
+
+    results = []
+    for path in sorted(ROSTERS_DIR.iterdir()):
+        if path.suffix != ".md":
+            continue
+        if path.name == "README.md":
+            continue
+        meta = _parse_frontmatter(path)
+        tags = meta.get("tags", [])
+        if isinstance(tags, str):
+            tags = [t.strip() for t in tags.split(",")]
+        allowed_skills = meta.get("allowed-skills", [])
+        if isinstance(allowed_skills, str):
+            allowed_skills = [s.strip() for s in allowed_skills.split(",")]
+        denied_skills = meta.get("denied-skills", [])
+        if isinstance(denied_skills, str):
+            denied_skills = [s.strip() for s in denied_skills.split(",")]
+        rules = meta.get("rules", [])
+        if isinstance(rules, str):
+            rules = [r.strip() for r in rules.split(",")]
+        results.append(
+            Role(
+                name=path.stem,
+                description=meta.get("description", ""),
+                tags=tags,
+                allowed_skills=allowed_skills,
+                denied_skills=denied_skills,
+                preferred_model=meta.get("preferred-model", ""),
+                rules=rules,
+                persona=meta.get("persona", ""),
+                path=path,
+            )
         )
     return results
 
@@ -361,6 +403,41 @@ def validate_agent(path: Path) -> ValidationResult:
     return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
 
 
+def validate_role(path: Path) -> ValidationResult:
+    """Validate a single role definition."""
+    name = f"rosters/{path.stem}"
+    meta = _parse_frontmatter(path)
+    errors = []
+    warnings = []
+
+    if not meta.get("name"):
+        warnings.append("Missing 'name' in frontmatter")
+    if not meta.get("description"):
+        warnings.append("Missing 'description' in frontmatter")
+    if not meta.get("allowed-skills"):
+        errors.append("Missing 'allowed-skills' in frontmatter (a role must include at least one skill)")
+
+    # Validate allowed-skills reference real skills
+    allowed = meta.get("allowed-skills", [])
+    if isinstance(allowed, str):
+        allowed = [s.strip() for s in allowed.split(",")]
+    skills_dir = WORKFLOWS_DIR / "skills"
+    for skill_name in allowed:
+        if not (skills_dir / skill_name).is_dir():
+            warnings.append(f"allowed-skills references non-existent skill: {skill_name}")
+
+    # Validate rules reference real rules
+    rules = meta.get("rules", [])
+    if isinstance(rules, str):
+        rules = [r.strip() for r in rules.split(",")]
+    rules_dir = WORKFLOWS_DIR / "rules"
+    for rule_name in rules:
+        if not (rules_dir / f"{rule_name}.mdc").is_file() and not (rules_dir / f"{rule_name}.md").is_file():
+            warnings.append(f"rules references non-existent rule: {rule_name}")
+
+    return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
+
+
 def validate_all(target_path: str | None = None) -> list[ValidationResult]:
     """Validate all workflows (or a specific path)."""
     results = []
@@ -409,5 +486,12 @@ def validate_all(target_path: str | None = None) -> list[ValidationResult]:
             if path.suffix != ".js":
                 continue
             results.append(validate_hook(path))
+
+    # Validate roles
+    if ROSTERS_DIR.is_dir():
+        for path in sorted(ROSTERS_DIR.iterdir()):
+            if path.suffix != ".md" or path.name == "README.md":
+                continue
+            results.append(validate_role(path))
 
     return results

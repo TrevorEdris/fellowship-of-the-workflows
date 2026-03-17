@@ -27,6 +27,7 @@ def _normalize_workflow_id(wf_id: str) -> str:
         "agent/": "agents/",
         "starter/": "starters/",
         "hook/": "hooks/",
+        "roster/": "rosters/",
     }
     for singular, plural in mapping.items():
         if wf_id.startswith(singular):
@@ -153,6 +154,35 @@ def _install_cmd_inner(
         if install_starter(tier, ctx):
             console.print()
             console.print("[green]Installation complete![/green]")
+        else:
+            raise typer.Exit(1)
+        return
+
+    # --- Rosters (roles) ---
+    if workflow_id and workflow_id.startswith("rosters/"):
+        role_name = workflow_id.split("/", 1)[1]
+
+        if not target_repo and not global_install:
+            err_console.print("[red]Error: target-repo is required for roles (or use --global)[/red]")
+            raise typer.Exit(1)
+
+        if target_repo and not resolved_target.is_dir():
+            err_console.print(f"[red]Error: Target does not exist: {resolved_target}[/red]")
+            raise typer.Exit(1)
+
+        if not is_valid_tool(for_tool):
+            err_console.print(f"[red]Error: Invalid tool: {for_tool}[/red]")
+            err_console.print(f"Supported: {', '.join(list_tools())}, both")
+            raise typer.Exit(1)
+
+        from fotw.services.installer import install_role
+        ctx = InstallContext(
+            tool=for_tool, target_repo=resolved_target,
+            is_global=global_install, dry_run=dry_run, force=force,
+        )
+        if install_role(role_name, ctx):
+            console.print()
+            console.print("[green]Role installation complete![/green]")
         else:
             raise typer.Exit(1)
         return

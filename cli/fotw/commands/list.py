@@ -6,11 +6,11 @@ from typing import Optional
 import typer
 
 from fotw.models.workflow import VALID_TAGS, _PLURAL_MAP
-from fotw.services.catalog import scan_all, scan_hooks, scan_personas, scan_starters
+from fotw.services.catalog import scan_all, scan_hooks, scan_personas, scan_roles, scan_starters
 from fotw.ui.console import console, err_console
 from fotw.ui.tables import print_workflows
 
-VALID_TYPES = ("rule", "skill", "agent", "starter", "persona", "hook")
+VALID_TYPES = ("rule", "skill", "agent", "starter", "persona", "hook", "role")
 
 
 def _normalize_type(value: str) -> str:
@@ -52,6 +52,7 @@ def list_cmd(
     starters = scan_starters()
     personas = scan_personas()
     hooks = scan_hooks()
+    roles = scan_roles()
 
     # Filter by tag (skills only)
     if tag:
@@ -104,6 +105,19 @@ def list_cmd(
                         "description": h.description,
                     }
                 )
+        if not type_filter or type_filter == "role":
+            for r in roles:
+                entry = {
+                    "id": r.workflow_id,
+                    "type": "role",
+                    "name": r.name,
+                    "description": r.description,
+                }
+                if r.tags:
+                    entry["tags"] = r.tags
+                if r.allowed_skills:
+                    entry["allowed_skills"] = r.allowed_skills
+                data.append(entry)
         console.print_json(json.dumps(data))
         return
 
@@ -113,6 +127,7 @@ def list_cmd(
         show_starters = type_filter == "starter"
         show_personas = type_filter == "persona"
         show_hooks = type_filter == "hook"
+        show_roles = type_filter == "role"
 
         if show_workflows:
             workflows = [wf for wf in workflows if wf.wtype.value == type_filter]
@@ -124,5 +139,7 @@ def list_cmd(
             personas = []
         if not show_hooks:
             hooks = []
+        if not show_roles:
+            roles = []
 
-    print_workflows(workflows, starters, personas, hooks, type_filter)
+    print_workflows(workflows, starters, personas, hooks, roles, type_filter)
