@@ -6,14 +6,64 @@ A centralized repository for sharing AI agent workflows across your team. Works 
 
 | Type | Count | Description |
 |------|-------|-------------|
-| **Skills** | 55 | Executable packages — code review, Terraform, AWS, security audits, and more |
-| **Rules** | 25 | Conditional context files — git safety, output style, coding patterns |
+| **Skills** | 44 core + 11 community | Executable packages — code review, Terraform, AWS, security audits, and more |
+| **Rules** | 26 | Conditional context files — git safety, output style, model guidance, coding patterns |
 | **Agents** | 34 | Subagent definitions — specialist agents for focused tasks |
 | **Hooks** | 5 | Claude Code event hooks — block dangerous commands, guard branches |
-| **Personas** | 12 | AI personality overlays — Gandalf, Treebeard, and friends |
+| **Personas** | 12 | AI personality overlays — Gandalf, Sauron, and friends |
 | **Starters** | 3 | Project templates — minimal, standard, full |
 
 All workflows are authored once and automatically translated to each tool's native format on install.
+
+---
+
+## Philosophy
+
+**Single-source, multi-target.** Author a workflow once in a tool-agnostic format. Install it to any of 9 AI tools without maintaining 9 copies. When the workflow improves, update one file and re-sync.
+
+**Least-privilege by default.** Skills declare exactly which tools they need — no more. A read-only code review skill cannot run `git push`. A commit-generating skill cannot `git reset --hard`. The validator enforces this.
+
+**Phase-scoped context for token efficiency.** Complex skills can declare which files are relevant to each phase (discover, plan, implement). Only the files needed for the current phase are loaded into context — keeping prompts tight.
+
+**Workflow authoring as engineering.** Skills have golden tests. The plan validator is a linter for PLAN.md files. Breaking changes in rules are caught by translation tests. The same discipline applied to production code applies to the workflows that guide it.
+
+---
+
+## How It Works
+
+### The Translation Pipeline
+
+Rules are authored in Cursor `.mdc` format — a superset of Markdown with YAML frontmatter. When you run `fotw install`, the translator rewrites the frontmatter for the target tool: `globs` becomes `paths` for Claude Code, `applyTo` for Copilot, and the frontmatter is stripped entirely for tools that only support plain Markdown. The rule body is preserved exactly. One source, many targets.
+
+```mermaid
+flowchart LR
+    A["rules/*.mdc\n(source)"] --> T["fotw install\n(translator)"]
+    T --> B[".claude/rules/*.md\n(Claude Code)"]
+    T --> C[".cursor/rules/*.mdc\n(Cursor)"]
+    T --> D[".github/instructions/*.instructions.md\n(Copilot)"]
+    T --> E["...6 more targets"]
+```
+
+### Plugin Mode vs Install Mode
+
+**Plugin mode** loads the entire repo as a Claude Code plugin in one command. Skills and agents are auto-discovered and available immediately as slash commands. This is the fastest way to get started — no per-workflow installation needed. Rules and starters are not auto-discovered because they need to live inside your project's config directory; use `fotw setup` to install them.
+
+**Install mode** copies individual workflows into a target project, translating format as needed. Use this for non-Claude tools, for selecting specific workflows, or for distributing workflows to teammates who use different tools.
+
+### Skills, Agents, and Execution
+
+A skill (`/code-review`) is an instruction document that tells Claude how to perform a task. An agent (`agents/pragmatic-code-review.md`) is a specialist subprocess that performs the task in isolation. Skills and agents are complementary: a skill may invoke one or more agents to execute focused sub-tasks, then synthesize the results.
+
+```mermaid
+flowchart LR
+    U["User: /code-review"] --> S["Skill: code-review/SKILL.md\n(orchestrator)"]
+    S --> A1["Agent: pragmatic-code-review\n(code quality)"]
+    S --> A2["Agent: security-review\n(security)"]
+    A1 --> R["Synthesized review"]
+    A2 --> R
+```
+
+---
 
 ## Quick Start
 
@@ -23,7 +73,7 @@ There are two ways to use this repo:
 |---|---|---|
 | **How** | Load directly as a Claude Code plugin | Copy workflows into your project |
 | **Tools** | Claude Code only | All 9 tools |
-| **Components** | Skills, agents, hooks | Skills, agents, rules, starters, personas |
+| **Components** | Skills, agents, hooks (auto) · Rules, starters (manual) | Skills, agents, rules, starters, personas |
 | **Setup** | One command | Per-workflow install |
 
 ### Option A: Claude Code Plugin (fastest)
@@ -41,9 +91,11 @@ There are two ways to use this repo:
 claude --plugin-dir /path/to/fellowship-of-the-workflows
 ```
 
-All 55 skills, 34 agents, and 5 hooks are auto-discovered. Use `/code-review`, `/terraform`, `/security-review`, etc. immediately.
+All 44 core skills, 34 agents, and 5 hooks are auto-discovered. Use `/code-review`, `/terraform`, `/security-review`, etc. immediately.
 
-> **Note:** Rules and starters still need `fotw setup` or `fotw install` — they must live in your project directory. Use `fotw setup ~/my-project --for claude-code` to install all rules with lock file tracking. See [Option B](#option-b-install-mode-any-tool).
+> **Community skills** are not auto-discovered. Install them explicitly: `fotw install community/azure ~/project --for claude-code`
+
+> **Rules and starters** still need `fotw setup` or `fotw install` — they must live in your project directory. Use `fotw setup ~/my-project --for claude-code` to install all rules with lock file tracking. See [Option B](#option-b-install-mode-any-tool).
 
 ### Option B: Install Mode (any tool)
 
@@ -58,19 +110,23 @@ cd fellowship-of-the-workflows
 # 2. See what's available
 ./bin/fotw list                    # Everything
 ./bin/fotw list --type skill       # Just skills
+./bin/fotw list --tier core        # Core skills only
+./bin/fotw list --tier community   # Community (vendor-specific) skills
 ./bin/fotw list --tag aws          # Skills tagged "aws"
-./bin/fotw list --tag review       # Skills tagged "review"
 
 # 3. Install a starter template to your project
 ./bin/fotw install starters/standard ~/my-project --for claude-code
 
 # 4. Install individual workflows
 ./bin/fotw install skills/code-review ~/my-project --for claude-code
+./bin/fotw install community/azure ~/my-project --for claude-code
 ./bin/fotw install rules/ai-session ~/my-project --for cursor
 ./bin/fotw install rules/git-safety --global --for claude-code   # Available in all projects
 ```
 
 > **Which `--for` value do I use?** See [Supported Tools](#supported-tools) below.
+
+---
 
 ## Commands
 
@@ -90,6 +146,7 @@ Run any command with `--help` for full options.
 
 ```bash
 ./bin/fotw install skills/code-review ~/my-project --for claude-code          # To a project
+./bin/fotw install community/pulumi ~/my-project --for claude-code             # Community skill
 ./bin/fotw install rules/ai-session --global --for cursor                     # Global (all projects)
 ./bin/fotw install --all ~/my-project --for claude-code --force               # Everything at once
 ./bin/fotw install skills/code-review ~/my-project --for claude-code --dry-run  # Preview only
@@ -102,7 +159,7 @@ Run any command with `--help` for full options.
 | `--all` / `-a` | Install all workflows at once |
 | `--force` / `-f` | Overwrite without prompting |
 | `--dry-run` / `-n` | Preview what would be installed |
-| `--to-claude-dir` | Place CLAUDE.md inside `.claude/` directory |
+| `--tier core\|community\|all` | Filter skill listing by tier |
 
 Without `--force`, the installer prompts before overwriting: `[o]verwrite / [s]kip / [d]iff / [b]ackup / [O]verwrite-all / [S]kip-all / [q]uit`.
 
@@ -124,6 +181,8 @@ Use `--for both` to install for both Claude Code and Cursor simultaneously.
 
 ![Same rule for Claude Code, Cursor, and Copilot](demos/gifs/demo-multi-tool.gif)
 
+---
+
 ## Starter Templates
 
 Starters give you a ready-made project config file with bundled rules.
@@ -137,10 +196,52 @@ Starters give you a ready-made project config file with bundled rules.
 | Tier | Description | Bundled Rules |
 |------|-------------|---------------|
 | `minimal` | Git safety, output style (~20 lines) | `git-safety`, `output-style` |
-| `standard` | + Discover → Plan → Implement workflow (~30 lines) | + `discover-plan-implement`, `ai-session` |
-| `full` | + Persona system (12 characters), multi-repo safety (~40 lines) | + `multi-repo-safety`, `persona-integration` |
+| `standard` | + 5-phase QRSPI workflow (~40 lines) | + `discover-plan-implement`, `ai-session` |
+| `full` | + Persona system (12 characters), multi-repo safety (~50 lines) | + `multi-repo-safety`, `persona-integration` + all personas |
 
 See [starters/README.md](starters/README.md) for details and modular snippets.
+
+---
+
+## Skill Tiers
+
+Skills are organized into two tiers:
+
+| Tier | Location | Audience | Plugin Auto-Discovery |
+|------|----------|----------|-----------------------|
+| **Core** | `skills/` | Universal (any stack) | Yes |
+| **Community** | `community/` | Specific vendor or niche | No — explicit install only |
+
+Community skills follow the same quality bar as core skills — the distinction is audience, not quality. See [community/README.md](community/README.md) for the full list and installation instructions.
+
+### Skill Tags
+
+Use `./bin/fotw list --tag <tag>` to filter.
+
+| Tag | Description |
+|-----|-------------|
+| `architecture` | System design, API design, patterns, databases |
+| `infrastructure` | IaC, provisioning, containers, cloud resources |
+| `documentation` | Docs generation, writing, diagrams |
+| `meta` | Agent self-management, session tools, orchestration |
+| `review` | Code, design, security, or performance review |
+| `incident-response` | Alerting, on-call, incident management |
+| `aws` | Amazon Web Services |
+| `gcp` | Google Cloud Platform |
+| `azure` | Microsoft Azure |
+| `observability` | Monitoring instrumentation, dashboards, SLOs |
+| `security` | Security hardening, IAM, vulnerability analysis |
+| `testing` | TDD, E2E, test scaffolding, debugging |
+| `ci-cd` | CI/CD pipelines, deployment automation |
+| `git` | Git workflows, branching, PRs, commits |
+| `go` | Go language patterns |
+| `python` | Python language patterns |
+| `rust` | Rust language patterns |
+| `typescript` | TypeScript language patterns |
+
+**Full skill listing:** [docs/CATALOG.md](docs/CATALOG.md)
+
+---
 
 ## Workflow Types
 
@@ -151,187 +252,27 @@ See [starters/README.md](starters/README.md) for details and modular snippets.
 | **Agents** | `agents/*.md` | Subagent definitions with tool restrictions |
 | **Hooks** | `hooks/*.js` | Claude Code hook scripts (Claude Code only) |
 
-Rules are authored in Cursor `.mdc` format and automatically translated to each tool's native format on install (e.g., `globs` → `paths` for Claude, `globs` → `applyTo` for Copilot).
+Rules are authored in Cursor `.mdc` format and automatically translated to each tool's native format on install.
 
-### Skill Tags
+---
 
-Skills are categorized with tags for filtering. Use `./bin/fotw list --tag <tag>` to filter.
+## Hooks (Claude Code only)
 
-| Tag | Description | Count |
-|-----|-------------|-------|
-| `architecture` | System design, API design, patterns, databases | 8 |
-| `infrastructure` | IaC, provisioning, containers, cloud resources | 8 |
-| `documentation` | Docs generation, writing, diagrams | 7 |
-| `meta` | Agent self-management, session tools, orchestration | 7 |
-| `review` | Code, design, security, or performance review | 7 |
-| `incident-response` | Alerting, on-call, incident management | 5 |
-| `aws` | Amazon Web Services | 4 |
-| `gcp` | Google Cloud Platform | 4 |
-| `azure` | Microsoft Azure | 3 |
-| `observability` | Monitoring instrumentation, dashboards, SLOs | 3 |
-| `security` | Security hardening, IAM, vulnerability analysis | 3 |
-| `testing` | TDD, E2E, test scaffolding, debugging | 3 |
-| `ci-cd` | CI/CD pipelines, deployment automation | 1 |
-| `git` | Git workflows, branching, PRs, commits | 1 |
-| `go` | Go language patterns | 1 |
-| `python` | Python language patterns | 1 |
-| `rust` | Rust language patterns | 1 |
-| `typescript` | TypeScript language patterns | 1 |
-
-<details>
-<summary><strong>Skills by Category</strong> (click to expand)</summary>
-
-#### Infrastructure
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `aws-iac` | `aws`, `infrastructure` | Author, review, deploy, and migrate AWS infrastructu... |
-| `azure-iac` | `azure`, `infrastructure` | Author, review, and deploy Azure infrastructure usin... |
-| `cloud-run` | `gcp`, `infrastructure` | Deploy and operate Cloud Run services/jobs, Cloud Fu... |
-| `docker` | `infrastructure` | Author Dockerfiles, Docker Compose configurations, a... |
-| `kubernetes` | `infrastructure` | Author Kubernetes manifests, Helm charts, and Kustom... |
-| `pulumi` | `infrastructure` | Build and manage multi-cloud infrastructure with Pul... |
-| `terraform` | `infrastructure` | Write, review, refactor, and audit Terraform configu... |
-| `terragrunt` | `infrastructure` | Design and implement DRY Terragrunt configurations u... |
-
-#### Architecture
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `api-design` | `architecture` | Design REST and GraphQL APIs. Covers endpoint naming... |
-| `aws-serverless` | `aws`, `architecture` | AWS serverless architecture patterns: Lambda functio... |
-| `azure-functions` | `azure`, `architecture` | Azure Functions development guidance: trigger and bi... |
-| `c4-architecture` | `architecture`, `documentation` | Generate architecture documentation using C4 model M... |
-| `database-schema-designer` | `architecture` | Design SQL and NoSQL database schemas. Covers normal... |
-| `event-driven` | `architecture` | Design event-driven architectures using message brok... |
-| `gcp-data` | `gcp`, `architecture` | Design and operate GCP data stores: Cloud SQL (MySQL... |
-| `system-design` | `architecture` | Design and review distributed system architecture. C... |
-
-#### Review
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `accessibility-audit` | `review` | WCAG 2.1/2.2 accessibility audit covering all POUR p... |
-| `code-review` | `review` | Perform thorough code review on a PR using the Pragm... |
-| `design-review` | `review` | Design review for front-end code changes using Playw... |
-| `performance-optimization` | `review` | Analyze code for performance bottlenecks including N... |
-| `refactoring` | `review` | Systematic code refactoring with smell detection, sa... |
-| `security-review` | `security`, `review` | Perform security-focused code review to identify HIG... |
-| `work-review` | `review` | Review work accomplished over a time period by corre... |
-
-#### Documentation
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `agent-md-refactor` | `documentation`, `meta` | Refactor bloated AGENTS.md, CLAUDE.md, or similar ag... |
-| `c4-architecture` | `architecture`, `documentation` | Generate architecture documentation using C4 model M... |
-| `desloppify` | `documentation` | Identify and remove AI slop from code comments, docu... |
-| `mermaid-diagrams` | `documentation` | Comprehensive guide for creating software diagrams u... |
-| `reverse-engineer` | `documentation` | Extract PRDs, design docs, and architecture diagrams... |
-| `update-docs` | `documentation` | Sync documentation with code changes. Detects stale ... |
-| `writing-clearly-and-concisely` | `documentation` | Use when writing prose humans will read—documentatio... |
-
-#### Meta
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `agent-md-refactor` | `documentation`, `meta` | Refactor bloated AGENTS.md, CLAUDE.md, or similar ag... |
-| `create-persona` | `meta` | Create a new AI assistant persona interactively. Sup... |
-| `orchestrate` | `meta` | Coordinate multiple subagents to complete a large ta... |
-| `plan-validator` | `meta` | Validate implementation plans for completeness, spec... |
-| `session-handoff` | `meta` | Creates handoff documents for AI agent session trans... |
-| `session-index` | `meta` | Generate and maintain a session index with cross-ses... |
-| `switch-persona` | `meta` | Switch AI assistant personas interactively. Lists av... |
-
-#### Incident Response
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `better-stack` | `observability`, `incident-response` | Better Stack specialist. Configures Better Stack's u... |
-| `grafana-irm` | `observability`, `incident-response` | Grafana Cloud IRM specialist. Configures Grafana IRM... |
-| `incident-io` | `incident-response` | incident.io specialist. Configures incident.io for S... |
-| `incident-management` | `incident-response` | Cross-platform incident management router. Detects t... |
-| `pagerduty` | `incident-response` | Configure PagerDuty services, escalation policies, o... |
-
-#### Cloud Platforms
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `aws` | `aws` | AWS credential setup, SDK patterns (Go/Python/TypeSc... |
-| `aws-iac` | `aws`, `infrastructure` | Author, review, deploy, and migrate AWS infrastructu... |
-| `aws-iam` | `aws`, `security` | AWS security patterns: IAM policy design, least-priv... |
-| `aws-serverless` | `aws`, `architecture` | AWS serverless architecture patterns: Lambda functio... |
-| `azure` | `azure` | Azure platform guidance covering authentication (Man... |
-| `azure-functions` | `azure`, `architecture` | Azure Functions development guidance: trigger and bi... |
-| `azure-iac` | `azure`, `infrastructure` | Author, review, and deploy Azure infrastructure usin... |
-| `cloud-run` | `gcp`, `infrastructure` | Deploy and operate Cloud Run services/jobs, Cloud Fu... |
-| `gcp` | `gcp` | GCP project setup, authentication (ADC/Workload Iden... |
-| `gcp-data` | `gcp`, `architecture` | Design and operate GCP data stores: Cloud SQL (MySQL... |
-| `gcp-iam` | `gcp`, `security` | Audit and configure GCP IAM: roles/bindings, service... |
-
-#### Security
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `aws-iam` | `aws`, `security` | AWS security patterns: IAM policy design, least-priv... |
-| `gcp-iam` | `gcp`, `security` | Audit and configure GCP IAM: roles/bindings, service... |
-| `security-review` | `security`, `review` | Perform security-focused code review to identify HIG... |
-
-#### Testing
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `e2e-testing` | `testing` | Scaffold E2E and integration tests using Playwright.... |
-| `systematic-debugging` | `testing` | Structured root-cause analysis for bugs, test failur... |
-| `test-driven-development` | `testing` | Enforce RED-GREEN-REFACTOR cycle for any implementat... |
-
-#### Observability
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `better-stack` | `observability`, `incident-response` | Better Stack specialist. Configures Better Stack's u... |
-| `grafana-irm` | `observability`, `incident-response` | Grafana Cloud IRM specialist. Configures Grafana IRM... |
-| `observability` | `observability` | Instrument, audit, and configure observability for s... |
-
-#### Other
-
-| Skill | Tags | Description |
-|-------|------|-------------|
-| `cicd-pipeline` | `ci-cd` | Generate, optimize, and manage CI/CD pipelines for G... |
-| `git-workflow` | `git` | Interactive git workflow assistant. Generates conven... |
-| `go-patterns` | `go` | Go patterns and idioms. Use when writing, reviewing,... |
-| `python-patterns` | `python` | Python patterns and idioms. Use when writing, review... |
-| `rust-patterns` | `rust` | Rust patterns and idioms. Use when writing, reviewin... |
-| `typescript-patterns` | `typescript` | TypeScript patterns and idioms. Use when writing, re... |
-
-</details>
-
-### Hooks (Claude Code only)
-
-Hooks are Node.js scripts that intercept Claude Code events at runtime — blocking dangerous commands, protecting secrets, guarding branches, etc. No other AI tool supports hooks.
+Hooks are Node.js scripts that intercept Claude Code events at runtime — blocking dangerous commands, protecting secrets, guarding branches, etc.
 
 ```bash
-# List available hooks
-./bin/fotw list --type hook
-
-# Install all hooks globally
-./bin/fotw install hooks --global --for claude-code
-
-# Install a single hook
-./bin/fotw install hooks/branch-guard --global --for claude-code
-
-# Include test files alongside hooks
-./bin/fotw install hooks --global --for claude-code --include-tests
-
-# Preview without installing
-./bin/fotw install hooks --global --for claude-code --dry-run
+./bin/fotw list --type hook                                          # List available hooks
+./bin/fotw install hooks --global --for claude-code                 # Install all hooks globally
+./bin/fotw install hooks/branch-guard --global --for claude-code    # Install a single hook
+./bin/fotw install hooks --global --for claude-code --include-tests # With test files
+./bin/fotw install hooks --global --for claude-code --dry-run       # Preview only
 ```
 
 Hooks require `--global` and `--for claude-code`. The installer copies scripts to `~/.claude/hooks/` and merges hook configuration into `~/.claude/settings.json` (with backup).
 
-Each hook script contains a `@fotw-hook` metadata tag in its JSDoc header that declares its event, matcher, and description.
+---
 
-### Claude Code Plugin Architecture
+## Claude Code Plugin Architecture
 
 This repo is structured as a [Claude Code plugin](https://code.claude.com/docs/en/plugins-reference). When loaded via `claude --plugin-dir` or `claude plugin install`, Claude Code auto-discovers:
 
@@ -342,10 +283,11 @@ This repo is structured as a [Claude Code plugin](https://code.claude.com/docs/e
 | Hooks | `hooks/hooks.json` | Auto — registered as event handlers |
 | Rules | `rules/*.mdc` | **Manual** — requires `fotw install` to copy to project |
 | Starters | `starters/*.md` | **Manual** — requires `fotw install` to copy to project |
+| Community skills | `community/*/SKILL.md` | **Manual** — excluded from auto-discovery |
 
 The `.claude-plugin/plugin.json` manifest declares the plugin metadata. Hook scripts use `${CLAUDE_PLUGIN_ROOT}` to resolve paths relative to the plugin directory.
 
-Skills and agents support additional Claude Code fields (`model`, `argument-hint`, `disable-model-invocation`, `user-invocable`) that are ignored by other tools. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full schema.
+---
 
 ## Contributing
 
