@@ -26,6 +26,7 @@ def list_cmd(
         None, "--tag", "-t", help="Filter skills by tag (e.g., aws, infrastructure, review)"
     ),
     as_json: bool = typer.Option(False, "--json", help="Output as JSON"),
+    context_budget: bool = typer.Option(False, "--context-budget", help="Show estimated token budget per skill"),
 ) -> None:
     """List available workflows, starters, and hooks."""
     type_filter = None
@@ -47,6 +48,41 @@ def list_cmd(
     # --tag implies --type skill
     if tag and not type_filter:
         type_filter = "skill"
+
+    if context_budget:
+        from rich.table import Table
+
+        from fotw.services.catalog import WORKFLOWS_DIR
+        from fotw.services.context_budget import estimate_skill
+
+        skills_dir = WORKFLOWS_DIR / "skills"
+        budgets = []
+        for skill_dir in sorted(skills_dir.iterdir()):
+            if not skill_dir.is_dir() or not (skill_dir / "SKILL.md").is_file():
+                continue
+            budgets.append(estimate_skill(skill_dir))
+
+        budgets.sort(key=lambda b: b.total_tokens, reverse=True)
+
+        table = Table(title="Skill Context Budgets", show_header=True, box=None, padding=(0, 2))
+        table.add_column("Skill", style="green", min_width=30)
+        table.add_column("Files", justify="right")
+        table.add_column("Tokens (est.)", justify="right", style="cyan")
+        table.add_column("Chars", justify="right", style="dim")
+
+        for b in budgets:
+            token_style = "red" if b.total_tokens > 10000 else "yellow" if b.total_tokens > 5000 else "green"
+            table.add_row(
+                b.name,
+                str(b.file_count),
+                f"[{token_style}]{b.total_tokens:,}[/{token_style}]",
+                f"{b.total_chars:,}",
+            )
+
+        console.print(table)
+        console.print()
+        console.print("[dim]Estimate: 1 token \u2248 4 chars. Red = >10K tokens, Yellow = >5K, Green = <5K[/dim]")
+        return
 
     workflows = scan_all()
     starters = scan_starters()

@@ -63,12 +63,15 @@ def install_cmd(
     include_tests: bool = typer.Option(
         False, "--include-tests", help="Also install hook test files"
     ),
+    phase: Optional[str] = typer.Option(
+        None, "--phase", help="Install phase-scoped context only (discover/plan/implement)"
+    ),
 ) -> None:
     """Install workflows, starters, or personas to a target project."""
     try:
         _install_cmd_inner(
             workflow_id, target_repo, for_tool, all_workflows,
-            force, global_install, dry_run, to_claude_dir, include_tests,
+            force, global_install, dry_run, to_claude_dir, include_tests, phase,
         )
     except InstallQuit:
         console.print("\nQuit.")
@@ -85,6 +88,7 @@ def _install_cmd_inner(
     dry_run: bool,
     to_claude_dir: bool,
     include_tests: bool = False,
+    phase: str | None = None,
 ) -> None:
     # When --all is used, the first positional arg is the target repo, not workflow_id.
     # Same for paths that look like directories (start with /, ~, .).
@@ -282,6 +286,21 @@ def _install_cmd_inner(
             tool=t, target_repo=resolved_target,
             is_global=global_install, dry_run=dry_run, force=force,
         )
+
+        # Phase-scoped install for skills
+        if phase and workflow_id.startswith("skills/"):
+            from fotw.services.installer import install_skill_phased
+            result = install_skill_phased(workflow_id, phase, ctx)
+            if result is None:
+                # No manifest — fall through to normal install
+                pass
+            elif result:
+                console.print()
+                console.print("[green]Installation complete![/green]")
+                continue
+            else:
+                raise typer.Exit(1)
+
         if install_single_workflow(workflow_id, ctx):
             console.print()
             console.print("[green]Installation complete![/green]")
