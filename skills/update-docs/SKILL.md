@@ -3,7 +3,7 @@ name: update-docs
 description: "Sync documentation with code changes. Detects stale docs, generates/updates READMEs, changelogs, and API docs after implementation. Use after completing a feature, fixing a bug, or before a release."
 context: fork
 agent: documentation-sync
-allowed-tools: Bash(git:*), Bash(python:*), Grep, Glob, LS, Read, Write
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status), Bash(python:*), Grep, Glob, LS, Read, Write
 tags: [documentation]
 ---
 

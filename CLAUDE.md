@@ -192,3 +192,28 @@ Workflow files (skills, agents, rules) must be **persona-agnostic**. No characte
 Standard severity levels used across all workflow files: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**.
 
 Phase names in workflow files use plain labels: **Discover**, **Plan**, **Implement**. Persona-flavored phase names (The Palantír, The Council of Elrond, The Journey) belong only in persona definitions under `starters/personas/`.
+
+### Tool Scoping (Least Privilege)
+
+`allowed-tools` in SKILL.md must use the **minimum Bash commands** needed. Never use broad wildcards.
+
+**Prohibited patterns:**
+- `Bash(git:*)` — grants `git push --force`, `git reset --hard`, etc.
+- `Bash(gh:*)` — grants `gh pr merge`, `gh pr close`, `gh repo delete`, etc.
+
+**Use explicit subcommands instead:**
+
+| Need | Pattern |
+|------|---------|
+| Read-only git | `Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*)` |
+| Read-only GitHub | `Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr list:*)` |
+| Analytics | `Bash(git shortlog:*), Bash(git rev-list:*), Bash(gh api:*), Bash(gh repo view:*)` |
+| Write (explicit) | `Bash(git add:*), Bash(git commit:*), Bash(git stash:*)` |
+
+**Decision tree:**
+1. Skill only reads code/PRs? → Read-only scoping
+2. Skill modifies files? → Use `Write`/`Edit` tools, keep git read-only
+3. Skill needs to commit? → Add `Bash(git add:*), Bash(git commit:*)` explicitly
+4. Skill needs to push? → Don't scope it in allowed-tools. Let the user's permission system handle it.
+
+`fotw validate` warns on `Bash(git:*)` and `Bash(gh:*)`.

@@ -321,7 +321,29 @@ def validate_skill(skill_dir: Path) -> ValidationResult:
     if not meta.get("description"):
         warnings.append("Missing 'description' in SKILL.md frontmatter")
 
+    # Least-privilege check on allowed-tools
+    allowed_tools = meta.get("allowed-tools", "")
+    if isinstance(allowed_tools, str):
+        _check_tool_scoping(allowed_tools, warnings)
+
     return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
+
+
+# Wildcards that grant overly broad access
+_OVERLY_BROAD_PATTERNS = [
+    ("Bash(git:*)", "Use specific git subcommands: Bash(git diff:*), Bash(git log:*), etc."),
+    ("Bash(gh:*)", "Use specific gh subcommands: Bash(gh pr view:*), Bash(gh pr diff:*), etc."),
+]
+
+
+def _check_tool_scoping(allowed_tools: str, warnings: list[str]) -> None:
+    """Warn on overly broad Bash scoping patterns."""
+    for pattern, suggestion in _OVERLY_BROAD_PATTERNS:
+        if pattern in allowed_tools:
+            warnings.append(
+                f"Overly broad tool scope: '{pattern}' grants access to destructive commands. "
+                f"{suggestion}"
+            )
 
 
 def validate_agent(path: Path) -> ValidationResult:

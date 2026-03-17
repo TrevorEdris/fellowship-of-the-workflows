@@ -3,7 +3,7 @@ name: desloppify
 description: Identify and remove AI slop from code comments, documentation, and prose. Use when cleaning up AI-generated output, reviewing for AI tells, or improving signal-to-noise ratio in any text.
 context: fork
 agent: desloppify
-allowed-tools: Bash(git:*), Grep, Glob, LS, Read, Write, Edit
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status), Grep, Glob, LS, Read, Write, Edit
 argument-hint: "[code|docs|prose|review]"
 tags: [documentation]
 ---

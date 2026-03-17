@@ -3,7 +3,7 @@ name: refactoring
 description: Systematic code refactoring with smell detection, safe transformation patterns, and test-verified execution. Analyzes code structure, produces a prioritized refactoring plan, and executes changes with test verification at every step.
 context: fork
 agent: refactoring-specialist
-allowed-tools: Bash(git:*), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(cargo:*), Bash(go:*), Bash(python:*), Bash(pytest:*), Bash(make:*), Bash(task:*), Grep, Glob, LS, Read, Write, Edit
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(cargo:*), Bash(go:*), Bash(python:*), Bash(pytest:*), Bash(make:*), Bash(task:*), Grep, Glob, LS, Read, Write, Edit
 tags: [review]
 ---
 

@@ -3,7 +3,7 @@ name: orchestrate
 description: "Coordinate multiple subagents to complete a large task. Decomposes work, delegates to specialists, aggregates results, handles failures. Use for tasks spanning multiple domains or requiring parallel workstreams."
 context: fork
 agent: multi-agent-orchestrator
-allowed-tools: Bash(git:*), Bash(gh:*), Glob, Grep, Read, Write, Task
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr list:*), Glob, Grep, Read, Write, Task
 tags: [meta]
 ---
 
