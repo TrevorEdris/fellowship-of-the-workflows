@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fotw.models.workflow import Hook
 from fotw.services.agents import AgentConfig, expand_tools, get_agent_config
-from fotw.services.catalog import REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
+from fotw.services.catalog import COMMUNITY_DIR, REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
 from fotw.services.frontmatter_translator import translate_content, translate_to_target
 from fotw.services.settings_merger import merge_hooks, read_settings, write_settings
 from fotw.ui.console import console, err_console
@@ -231,6 +231,14 @@ def _find_source(wtype: str, name: str) -> Path | None:
         skill_dir = WORKFLOWS_DIR / "skills" / name
         if skill_dir.is_dir():
             return skill_dir
+        # Also check community/ for community skills
+        community_dir = COMMUNITY_DIR / name
+        if community_dir.is_dir():
+            return community_dir
+    elif wtype == "community":
+        community_dir = COMMUNITY_DIR / name
+        if community_dir.is_dir():
+            return community_dir
     elif wtype == "agents":
         agent = WORKFLOWS_DIR / "agents" / f"{name}.md"
         if agent.is_file():
@@ -268,6 +276,9 @@ def install_single_workflow(
 
     wtype, name = parts
 
+    # community/<name> installs just like skills/<name>
+    install_as = "skills" if wtype == "community" else wtype
+
     source = _find_source(wtype, name)
     if source is None:
         if not ctx.quiet:
@@ -277,23 +288,23 @@ def install_single_workflow(
     cfg = _get_agent_cfg(ctx)
 
     # Check if this workflow type is supported by the target agent
-    if wtype == "agents" and not cfg.supports_agents:
+    if install_as == "agents" and not cfg.supports_agents:
         if not ctx.quiet:
             console.print(f"  [dim]Skipped {wf_id} ({cfg.name} does not support agents)[/dim]")
         return True
 
-    if wtype == "skills" and not cfg.supports_skills:
+    if install_as == "skills" and not cfg.supports_skills:
         if not ctx.quiet:
             console.print(f"  [dim]Skipped {wf_id} ({cfg.name} does not support skills)[/dim]")
         return True
 
-    target_dir = _target_dir_for_type(ctx, wtype)
+    target_dir = _target_dir_for_type(ctx, install_as)
     is_dir = source.is_dir()
 
     if is_dir:
         target_path = target_dir / name
     else:
-        target_name = _target_filename(source, wtype, cfg)
+        target_name = _target_filename(source, install_as, cfg)
         target_path = target_dir / target_name
 
     # Info output
@@ -305,7 +316,7 @@ def install_single_workflow(
         console.print(f"Scope:    {scope}")
         console.print(f"Source:   {source}")
         console.print(f"Target:   {target_path}")
-        if _needs_translation(wtype, cfg):
+        if _needs_translation(install_as, cfg):
             console.print(f"Note:     Frontmatter will be translated for {cfg.name}")
         console.print()
 

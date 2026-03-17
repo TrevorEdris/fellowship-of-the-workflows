@@ -39,6 +39,7 @@ REPO_ROOT = _repo_root()
 # After the plugin-first flatten, workflows live at repo root.
 # WORKFLOWS_DIR is kept as a backward-compatible alias used by tests and other modules.
 WORKFLOWS_DIR = REPO_ROOT
+COMMUNITY_DIR = REPO_ROOT / "community"
 STARTERS_DIR = REPO_ROOT / "starters"
 ROSTERS_DIR = STARTERS_DIR / "rosters"
 
@@ -77,31 +78,31 @@ def scan_rules() -> list[Workflow]:
 
 
 def scan_skills() -> list[Workflow]:
-    """Scan skills/ for skill directories."""
-    skills_dir = WORKFLOWS_DIR / "skills"
-    if not skills_dir.is_dir():
-        return []
-
+    """Scan skills/ and community/ for skill directories."""
     results = []
-    for skill_dir in sorted(skills_dir.iterdir()):
-        if not skill_dir.is_dir():
+    for base_dir, tier in [(WORKFLOWS_DIR / "skills", "core"), (COMMUNITY_DIR, "community")]:
+        if not base_dir.is_dir():
             continue
-        skill_file = skill_dir / "SKILL.md"
-        if not skill_file.is_file():
-            continue
-        meta = _parse_frontmatter(skill_file)
-        tags = meta.get("tags", [])
-        if isinstance(tags, str):
-            tags = [t.strip() for t in tags.split(",")]
-        results.append(
-            Workflow(
-                wtype=WorkflowType.SKILL,
-                name=skill_dir.name,
-                description=meta.get("description", ""),
-                path=skill_dir,
-                tags=tags,
+        for skill_dir in sorted(base_dir.iterdir()):
+            if not skill_dir.is_dir():
+                continue
+            skill_file = skill_dir / "SKILL.md"
+            if not skill_file.is_file():
+                continue
+            meta = _parse_frontmatter(skill_file)
+            tags = meta.get("tags", [])
+            if isinstance(tags, str):
+                tags = [t.strip() for t in tags.split(",")]
+            results.append(
+                Workflow(
+                    wtype=WorkflowType.SKILL,
+                    name=skill_dir.name,
+                    description=meta.get("description", ""),
+                    path=skill_dir,
+                    tags=tags,
+                    tier=tier,
+                )
             )
-        )
     return results
 
 
@@ -417,13 +418,13 @@ def validate_role(path: Path) -> ValidationResult:
     if not meta.get("allowed-skills"):
         errors.append("Missing 'allowed-skills' in frontmatter (a role must include at least one skill)")
 
-    # Validate allowed-skills reference real skills
+    # Validate allowed-skills reference real skills (core or community)
     allowed = meta.get("allowed-skills", [])
     if isinstance(allowed, str):
         allowed = [s.strip() for s in allowed.split(",")]
     skills_dir = WORKFLOWS_DIR / "skills"
     for skill_name in allowed:
-        if not (skills_dir / skill_name).is_dir():
+        if not (skills_dir / skill_name).is_dir() and not (COMMUNITY_DIR / skill_name).is_dir():
             warnings.append(f"allowed-skills references non-existent skill: {skill_name}")
 
     # Validate rules reference real rules
@@ -463,13 +464,13 @@ def validate_all(target_path: str | None = None) -> list[ValidationResult]:
                 continue
             results.append(validate_rule(path))
 
-    # Validate skills
-    skills_dir = WORKFLOWS_DIR / "skills"
-    if skills_dir.is_dir():
-        for skill_dir in sorted(skills_dir.iterdir()):
-            if not skill_dir.is_dir():
-                continue
-            results.append(validate_skill(skill_dir))
+    # Validate skills (core + community)
+    for base_dir in [WORKFLOWS_DIR / "skills", COMMUNITY_DIR]:
+        if base_dir.is_dir():
+            for skill_dir in sorted(base_dir.iterdir()):
+                if not skill_dir.is_dir():
+                    continue
+                results.append(validate_skill(skill_dir))
 
     # Validate agents
     agents_dir = WORKFLOWS_DIR / "agents"

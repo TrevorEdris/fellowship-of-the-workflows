@@ -20,7 +20,7 @@ from fotw.ui.console import console, err_console
 
 
 def _normalize_workflow_id(wf_id: str) -> str:
-    """Normalize singular prefixes to plural (rule/ -> rules/)."""
+    """Normalize singular prefixes to plural (rule/ -> rules/). community/ passes through unchanged."""
     mapping = {
         "rule/": "rules/",
         "skill/": "skills/",

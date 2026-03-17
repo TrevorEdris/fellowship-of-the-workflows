@@ -79,16 +79,23 @@ def print_workflows(
         skills = type_groups.get(WorkflowType.SKILL, [])
         if skills:
             has_tags = any(wf.tags for wf in skills)
-            table = Table(title="skills", title_style="bold", show_header=has_tags, box=None, padding=(0, 2))
+            has_community = any(wf.tier == "community" for wf in skills)
+            table = Table(title="skills", title_style="bold", show_header=True, box=None, padding=(0, 2))
             table.add_column("ID", style="green", min_width=30)
+            if has_community:
+                table.add_column("Tier", style="dim", min_width=10)
             if has_tags:
                 table.add_column("Tags", style="cyan", min_width=20)
             table.add_column("Description")
             for wf in skills:
+                row = [wf.workflow_id]
+                if has_community:
+                    tier_label = "[dim]community[/dim]" if wf.tier == "community" else "core"
+                    row.append(tier_label)
                 if has_tags:
-                    table.add_row(wf.workflow_id, ", ".join(wf.tags), _truncate(wf.description))
-                else:
-                    table.add_row(wf.workflow_id, _truncate(wf.description))
+                    row.append(", ".join(wf.tags))
+                row.append(_truncate(wf.description))
+                table.add_row(*row)
             console.print(table)
             console.print()
 

@@ -65,6 +65,7 @@ class Workflow:
     description: str = ""
     path: Path = field(default_factory=lambda: Path("."))
     tags: list[str] = field(default_factory=list)
+    tier: str = "core"  # "core" or "community"
 
     @property
     def workflow_id(self) -> str:
