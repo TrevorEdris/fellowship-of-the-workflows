@@ -87,6 +87,14 @@ alwaysApply: true
   - **Traceability** — map each discovery finding to a plan step
   - **Git strategy** — branch name, commit checkpoints with messages, anticipated PR title and description
 
+Each step that introduces new behavior must be structured as RED-GREEN:
+1. Write failing test for the desired behavior
+2. Confirm it fails for the right reason (missing behavior, not a syntax error)
+3. Write minimal production code to pass
+4. Confirm GREEN — full suite passes
+
+Steps that are config, docs, generated code, or infrastructure are exempt (per `tdd-enforcement.mdc`).
+
 Include a traceability table:
 
 | Discovery Finding | Plan Step | Notes |
@@ -122,9 +130,16 @@ Before presenting, validate the plan:
 **Goal:** Execute the plan with minimal, traceable diffs.
 
 - Do NOT modify code until the user explicitly approves the plan
-- Execute one step at a time; verify before moving to the next
+- Execute one step at a time; confirm GREEN before moving to the next
 - Keep diffs minimal and traceable to plan steps
 - Update `SESSION.md` as work progresses
+
+For each step that adds or changes behavior, follow RED-GREEN-REFACTOR:
+1. **RED** — Write the failing test. Run it. Confirm the failure message matches the missing behavior.
+2. **GREEN** — Write the minimal production code to make it pass. Run the full suite.
+3. **REFACTOR** — Clean up without adding behavior. Confirm the suite stays green.
+
+Steps that are config, docs, generated code, or infrastructure skip RED-GREEN and go straight to verification (lint/build/manual check).
 
 #### Phase-Boundary After-Action
 
@@ -138,6 +153,7 @@ Record answers in `SESSION.md` before continuing.
 #### Post-Implementation
 
 After all steps are complete, before committing:
+- Run the full test suite as a final confirmation — this is distinct from the per-step GREEN checks
 - Verify each repository independently (tests/build/lint)
 - Suggest: "Consider running `/code-review` to validate changes against requirements before committing."
 
@@ -153,6 +169,7 @@ After all steps are complete, before committing:
 - Present a vague plan with "update the config" steps
 - Stay silent on flawed approaches — speak up
 - Make code changes on `main`/`master` without explicit user consent
+- Write production code before a failing test exists for any behavioral step
 
 **ALWAYS:**
 - Surface design decisions before reading code
@@ -162,6 +179,7 @@ After all steps are complete, before committing:
 - Give every step an exact file path and a verification action
 - Call out misconceptions directly
 - Wait for explicit approval before implementing
+- Apply RED-GREEN-REFACTOR to each behavioral implementation step — RED confirmation is the gate before writing production code
 - Run after-action reviews at phase boundaries
 - Suggest self-review before committing
 - Include a Git Strategy section in every PLAN.md (branch, commit checkpoints, PR description)
