@@ -20,43 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check plugin version bump
-        run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          PLUGIN_PATHS="^(agents/|hooks/|skills/|plugin/.claude-plugin/)"
-
-          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | grep -E "$PLUGIN_PATHS" || true)
-
-          if [ -z "$CHANGED" ]; then
-            echo "No plugin-included files changed. Skipping version check."
-            exit 0
-          fi
-
-          echo "Plugin-included files changed:"
-          echo "$CHANGED"
-          echo ""
-
-          BASE_VERSION=$(git show "$BASE_SHA":plugin/.claude-plugin/plugin.json | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])")
-          PR_VERSION=$(python3 -c "import json; print(json.load(open('plugin/.claude-plugin/plugin.json'))['version'])")
-
-          echo "Base version: $BASE_VERSION"
-          echo "PR version:   $PR_VERSION"
-
-          if [ "$BASE_VERSION" = "$PR_VERSION" ]; then
-            echo ""
-            echo "::error::Plugin version not bumped. Update 'version' in plugin/.claude-plugin/plugin.json (current: $BASE_VERSION)."
-            echo "Semver guide: patch for fixes, minor for new skills/agents/hooks, major for breaking changes."
-            exit 1
-          fi
-
-          HIGHER=$(printf '%s\n%s\n' "$BASE_VERSION" "$PR_VERSION" | sort -V | tail -1)
-          if [ "$HIGHER" != "$PR_VERSION" ]; then
-            echo ""
-            echo "::error::PR version ($PR_VERSION) is not greater than base version ($BASE_VERSION). Version must increase."
-            exit 1
-          fi
-
-          echo ""
-          echo "Version bump OK: $BASE_VERSION -> $PR_VERSION"
+        run: ./bin/check-version "${{ github.event.pull_request.base.sha }}"
 
   ci:
     runs-on: ubuntu-latest
