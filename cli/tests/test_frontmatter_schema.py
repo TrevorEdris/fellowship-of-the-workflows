@@ -8,7 +8,7 @@ import frontmatter
 import pytest
 
 from fotw.models.workflow import VALID_TAGS
-from fotw.services.catalog import WORKFLOWS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_AGENT_DIRS, _EXTRA_RULE_DIRS
 
 # --- Allowed frontmatter keys per workflow type ---
 
@@ -41,16 +41,19 @@ def _parse(path):
 # --- Rules ---
 
 
+def _iter_rule_files():
+    """Yield all rule files from core and language/platform/vendor dirs."""
+    for rules_dir, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
+        if rules_dir.is_dir():
+            for path in sorted(rules_dir.iterdir()):
+                if path.suffix in (".mdc", ".md") and path.name != ".gitkeep":
+                    yield path
+
+
 def test_rules_no_extra_frontmatter_keys():
     """Every rule frontmatter key must be in the allowed set."""
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if not rules_dir.is_dir():
-        pytest.skip("No rules directory")
-
     violations = []
-    for path in sorted(rules_dir.iterdir()):
-        if path.suffix not in (".mdc", ".md") or path.name == ".gitkeep":
-            continue
+    for path in _iter_rule_files():
         meta = _parse(path)
         extra = set(meta.keys()) - RULE_ALLOWED_KEYS
         if extra:
@@ -61,14 +64,8 @@ def test_rules_no_extra_frontmatter_keys():
 
 def test_rules_required_frontmatter():
     """Every rule must have a description."""
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if not rules_dir.is_dir():
-        pytest.skip("No rules directory")
-
     missing = []
-    for path in sorted(rules_dir.iterdir()):
-        if path.suffix not in (".mdc", ".md") or path.name == ".gitkeep":
-            continue
+    for path in _iter_rule_files():
         meta = _parse(path)
         if not meta.get("description"):
             missing.append(path.name)
@@ -194,16 +191,19 @@ def test_skill_name_matches_directory():
 # --- Agents ---
 
 
+def _iter_agent_files():
+    """Yield all agent files from core and platform/vendor dirs."""
+    for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
+        if agents_dir.is_dir():
+            for path in sorted(agents_dir.iterdir()):
+                if path.suffix == ".md" and path.name != ".gitkeep":
+                    yield path
+
+
 def test_agents_no_extra_frontmatter_keys():
     """Every agent frontmatter key must be in the allowed set."""
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if not agents_dir.is_dir():
-        pytest.skip("No agents directory")
-
     violations = []
-    for path in sorted(agents_dir.iterdir()):
-        if path.suffix != ".md" or path.name == ".gitkeep":
-            continue
+    for path in _iter_agent_files():
         meta = _parse(path)
         extra = set(meta.keys()) - AGENT_ALLOWED_KEYS
         if extra:
@@ -214,14 +214,8 @@ def test_agents_no_extra_frontmatter_keys():
 
 def test_agents_required_frontmatter():
     """Every agent must have name and description."""
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if not agents_dir.is_dir():
-        pytest.skip("No agents directory")
-
     violations = []
-    for path in sorted(agents_dir.iterdir()):
-        if path.suffix != ".md" or path.name == ".gitkeep":
-            continue
+    for path in _iter_agent_files():
         meta = _parse(path)
         missing = []
         if not meta.get("name"):
@@ -260,14 +254,8 @@ def test_skill_model_valid_values():
 
 def test_agent_model_valid_values():
     """Agent 'model' field, if present, must be opus/sonnet/haiku."""
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if not agents_dir.is_dir():
-        pytest.skip("No agents directory")
-
     invalid = []
-    for path in sorted(agents_dir.iterdir()):
-        if path.suffix != ".md" or path.name == ".gitkeep":
-            continue
+    for path in _iter_agent_files():
         meta = _parse(path)
         model = meta.get("model")
         if model and model not in VALID_MODEL_VALUES:

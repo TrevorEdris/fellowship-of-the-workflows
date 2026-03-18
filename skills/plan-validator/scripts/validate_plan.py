@@ -389,6 +389,101 @@ def check_testable_outcomes(lines: list[str], report: ValidationReport) -> None:
         report.score -= 5
 
 
+def check_step_file_specificity(lines: list[str], report: ValidationReport) -> None:
+    """Check 12: Each numbered step names a specific file path, not just a vague area."""
+    numbered_step = re.compile(r"^\s*(\d+)\.\s+(.+)$")
+    vague_step_phrases = re.compile(
+        r"\b(?:update the (?:config|code|file|database|model|service)|"
+        r"modify (?:the )?(?:config|settings|code)|"
+        r"change (?:the )?(?:config|code|logic))\b",
+        re.IGNORECASE,
+    )
+    vague_steps = []
+    for i, line in enumerate(lines, 1):
+        m = numbered_step.match(line)
+        if m:
+            step_text = m.group(2)
+            # Only flag if vague phrase AND no file path found
+            if vague_step_phrases.search(step_text) and not FILE_PATH_PATTERN.search(step_text):
+                vague_steps.append((i, m.group(1), step_text[:80]))
+
+    for lineno, step_num, text in vague_steps[:3]:  # cap at 3 to avoid noise
+        report.issues.append(
+            Issue(
+                severity="warning",
+                category="specificity",
+                message=f"Step {step_num} uses vague language without a file path: \"{text}...\"",
+                line=lineno,
+            )
+        )
+        report.score -= 3
+
+
+def check_per_step_verification(lines: list[str], report: ValidationReport) -> None:
+    """Check 13: Each step should have a verification action."""
+    step_sections = []
+    step_pattern = re.compile(r"^#{1,4}\s+step\s+(\d+)", re.IGNORECASE)
+    current_step = None
+    step_start = 0
+
+    for i, line in enumerate(lines):
+        m = step_pattern.match(line.strip())
+        if m:
+            if current_step is not None:
+                step_sections.append((current_step, step_start, i))
+            current_step = m.group(1)
+            step_start = i + 1
+
+    if current_step is not None:
+        step_sections.append((current_step, step_start, len(lines)))
+
+    if not step_sections:
+        # Can't check per-step verification without labeled steps
+        return
+
+    steps_missing_verification = []
+    for step_num, start, end in step_sections:
+        body = "\n".join(lines[start:end])
+        if not VERIFICATION_KEYWORDS.search(body):
+            steps_missing_verification.append(step_num)
+
+    if len(steps_missing_verification) > len(step_sections) // 2:
+        # Only flag if more than half of steps lack verification
+        report.issues.append(
+            Issue(
+                severity="warning",
+                category="verification",
+                message=(
+                    f"Steps {', '.join(steps_missing_verification[:5])} lack per-step verification. "
+                    "Each step should state how to confirm it succeeded (test/lint/build/manual check)."
+                ),
+            )
+        )
+        report.score -= 5
+
+
+def check_structure_section(lines: list[str], report: ValidationReport) -> None:
+    """Check 14: Plan should include a structure section with phase breakdown or dependency ordering."""
+    content = "\n".join(lines)
+    has_structure = bool(
+        re.search(r"^#{1,3}\s+(?:structure|phases?|phase\s+breakdown|phase\s+ordering|dependency)", content, re.IGNORECASE | re.MULTILINE)
+        or re.search(r"\bphase\s+\d+\b|\bP\d+\b", content)
+        or re.search(r"depends?\s+on\s+(?:phase|step|P\d)", content, re.IGNORECASE)
+    )
+    if not has_structure:
+        report.issues.append(
+            Issue(
+                severity="warning",
+                category="structure",
+                message=(
+                    "No structure section found. Plans should include a phase breakdown or "
+                    "dependency ordering (e.g., 'Phase 1 → Phase 2', dependency graph, or critical path)."
+                ),
+            )
+        )
+        report.score -= 5
+
+
 # ---------------------------------------------------------------------------
 # Report rendering
 # ---------------------------------------------------------------------------
@@ -494,6 +589,9 @@ def validate_plan(path: Path) -> ValidationReport:
     check_scope_boundary(lines, report)
     check_traceability_table(lines, report)
     check_testable_outcomes(lines, report)
+    check_step_file_specificity(lines, report)
+    check_per_step_verification(lines, report)
+    check_structure_section(lines, report)
 
     report.score = max(0, report.score)
     return report

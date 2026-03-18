@@ -18,12 +18,18 @@ def _normalize_type(value: str) -> str:
     return _PLURAL_MAP.get(value, value)
 
 
+VALID_TIERS = ("core", "languages", "platforms", "vendors", "all")
+
+
 def list_cmd(
     type_: Optional[str] = typer.Option(
         None, "--type", "-T", help="Filter by type (rule, skill, agent, starter, persona, hook)"
     ),
     tag: Optional[str] = typer.Option(
         None, "--tag", "-t", help="Filter skills by tag (e.g., aws, infrastructure, review)"
+    ),
+    tier: Optional[str] = typer.Option(
+        None, "--tier", help="Filter by tier (core, languages, platforms, vendors, all). Default: all"
     ),
     as_json: bool = typer.Option(False, "--json", help="Output as JSON"),
     context_budget: bool = typer.Option(False, "--context-budget", help="Show estimated token budget per skill"),
@@ -37,6 +43,17 @@ def list_cmd(
             err_console.print(f"Valid types: {', '.join(VALID_TYPES)}")
             raise typer.Exit(1)
 
+    # Validate tier
+    tier_filter = None
+    if tier is not None:
+        tier_lower = tier.lower()
+        if tier_lower not in VALID_TIERS:
+            err_console.print(f"[red]Unknown tier: {tier}[/red]")
+            err_console.print(f"Valid tiers: {', '.join(VALID_TIERS)}")
+            raise typer.Exit(1)
+        if tier_lower != "all":
+            tier_filter = tier_lower
+
     # Validate and normalize tag
     if tag:
         tag = tag.lower()
@@ -49,16 +66,25 @@ def list_cmd(
     if tag and not type_filter:
         type_filter = "skill"
 
+    # --tier with no type filter: show rules, skills, and agents (all filterable types)
+    # We do NOT force --type skill here; tier filtering applies to all three types.
+
     if context_budget:
         from rich.table import Table
 
-        from fotw.services.catalog import WORKFLOWS_DIR
+        from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_SKILL_DIRS
         from fotw.services.context_budget import estimate_skill
 
-        skills_dir = WORKFLOWS_DIR / "skills"
+        skill_dirs_to_scan = []
+        for base_dir, t in [(WORKFLOWS_DIR / "skills", "core")] + _EXTRA_SKILL_DIRS:
+            if base_dir.is_dir():
+                for skill_dir in sorted(base_dir.iterdir()):
+                    if skill_dir.is_dir() and (skill_dir / "SKILL.md").is_file():
+                        skill_dirs_to_scan.append((skill_dir, t))
+
         budgets = []
-        for skill_dir in sorted(skills_dir.iterdir()):
-            if not skill_dir.is_dir() or not (skill_dir / "SKILL.md").is_file():
+        for skill_dir, t in skill_dirs_to_scan:
+            if tier_filter and t != tier_filter:
                 continue
             budgets.append(estimate_skill(skill_dir))
 
@@ -94,6 +120,13 @@ def list_cmd(
     if tag:
         workflows = [wf for wf in workflows if tag in wf.tags]
 
+    # Filter by tier (rules, skills, agents)
+    if tier_filter:
+        workflows = [
+            wf for wf in workflows
+            if wf.wtype.value not in ("rule", "skill", "agent") or wf.tier == tier_filter
+        ]
+
     if as_json:
         data = []
         if not type_filter or type_filter in ("rule", "skill", "agent"):
@@ -108,6 +141,8 @@ def list_cmd(
                 }
                 if wf.tags:
                     entry["tags"] = wf.tags
+                if wf.wtype.value in ("rule", "skill", "agent"):
+                    entry["tier"] = wf.tier
                 data.append(entry)
         if not type_filter or type_filter == "starter":
             for s in starters:

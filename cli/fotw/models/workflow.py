@@ -65,10 +65,14 @@ class Workflow:
     description: str = ""
     path: Path = field(default_factory=lambda: Path("."))
     tags: list[str] = field(default_factory=list)
+    tier: str = "core"  # "core", "languages", "platforms", "vendors"
 
     @property
     def workflow_id(self) -> str:
-        return f"{self.wtype.value}s/{self.name}"
+        type_segment = f"{self.wtype.value}s"
+        if self.tier == "core":
+            return f"{type_segment}/{self.name}"
+        return f"{self.tier}/{type_segment}/{self.name}"
 
 
 @dataclass

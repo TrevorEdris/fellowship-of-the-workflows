@@ -13,9 +13,14 @@ Coordinate multiple specialized agents to complete a complex, multi-faceted task
 
 ## Context
 
-AVAILABLE AGENTS:
+AVAILABLE AGENTS (core):
 ```
-!`ls agents/ 2>/dev/null | sed 's/\.md$//' || echo "No agents found"`
+!`ls agents/ 2>/dev/null | sed 's/\.md$//' | sort || echo "No agents found"`
+```
+
+AVAILABLE AGENTS (platforms/vendors — if installed):
+```
+!`{ ls platforms/agents/ 2>/dev/null; ls vendors/agents/ 2>/dev/null; } | sed 's/\.md$//' | sort 2>/dev/null || true`
 ```
 
 GIT STATUS:

@@ -39,6 +39,26 @@ REPO_ROOT = _repo_root()
 # After the plugin-first flatten, workflows live at repo root.
 # WORKFLOWS_DIR is kept as a backward-compatible alias used by tests and other modules.
 WORKFLOWS_DIR = REPO_ROOT
+LANGUAGES_DIR = REPO_ROOT / "languages"
+PLATFORMS_DIR = REPO_ROOT / "platforms"
+VENDORS_DIR = REPO_ROOT / "vendors"
+
+# Ordered lists of (dir, tier) for each workflow type
+_EXTRA_SKILL_DIRS: list[tuple] = [
+    (LANGUAGES_DIR / "skills", "languages"),
+    (PLATFORMS_DIR / "skills", "platforms"),
+    (VENDORS_DIR / "skills", "vendors"),
+]
+_EXTRA_RULE_DIRS: list[tuple] = [
+    (LANGUAGES_DIR / "rules", "languages"),
+    (PLATFORMS_DIR / "rules", "platforms"),
+    (VENDORS_DIR / "rules", "vendors"),
+]
+_EXTRA_AGENT_DIRS: list[tuple] = [
+    (PLATFORMS_DIR / "agents", "platforms"),
+    (VENDORS_DIR / "agents", "vendors"),
+]
+
 STARTERS_DIR = REPO_ROOT / "starters"
 ROSTERS_DIR = STARTERS_DIR / "rosters"
 
@@ -53,79 +73,79 @@ def _parse_frontmatter(path: Path) -> dict:
 
 
 def scan_rules() -> list[Workflow]:
-    """Scan rules/ for rule files."""
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if not rules_dir.is_dir():
-        return []
-
+    """Scan rules/ and language/platform/vendor rule dirs for rule files."""
     results = []
-    for path in sorted(rules_dir.iterdir()):
-        if path.name == ".gitkeep":
+    for base_dir, tier in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
+        if not base_dir.is_dir():
             continue
-        if path.suffix not in (".mdc", ".md"):
-            continue
-        meta = _parse_frontmatter(path)
-        results.append(
-            Workflow(
-                wtype=WorkflowType.RULE,
-                name=path.stem,
-                description=meta.get("description", ""),
-                path=path,
+        for path in sorted(base_dir.iterdir()):
+            if path.name == ".gitkeep":
+                continue
+            if path.suffix not in (".mdc", ".md"):
+                continue
+            meta = _parse_frontmatter(path)
+            results.append(
+                Workflow(
+                    wtype=WorkflowType.RULE,
+                    name=path.stem,
+                    description=meta.get("description", ""),
+                    path=path,
+                    tier=tier,
+                )
             )
-        )
     return results
 
 
 def scan_skills() -> list[Workflow]:
-    """Scan skills/ for skill directories."""
-    skills_dir = WORKFLOWS_DIR / "skills"
-    if not skills_dir.is_dir():
-        return []
-
+    """Scan skills/ and language/platform/vendor skill dirs for skill directories."""
     results = []
-    for skill_dir in sorted(skills_dir.iterdir()):
-        if not skill_dir.is_dir():
+    for base_dir, tier in [(WORKFLOWS_DIR / "skills", "core")] + _EXTRA_SKILL_DIRS:
+        if not base_dir.is_dir():
             continue
-        skill_file = skill_dir / "SKILL.md"
-        if not skill_file.is_file():
-            continue
-        meta = _parse_frontmatter(skill_file)
-        tags = meta.get("tags", [])
-        if isinstance(tags, str):
-            tags = [t.strip() for t in tags.split(",")]
-        results.append(
-            Workflow(
-                wtype=WorkflowType.SKILL,
-                name=skill_dir.name,
-                description=meta.get("description", ""),
-                path=skill_dir,
-                tags=tags,
+        for skill_dir in sorted(base_dir.iterdir()):
+            if not skill_dir.is_dir():
+                continue
+            skill_file = skill_dir / "SKILL.md"
+            if not skill_file.is_file():
+                continue
+            meta = _parse_frontmatter(skill_file)
+            tags = meta.get("tags", [])
+            if isinstance(tags, str):
+                tags = [t.strip() for t in tags.split(",")]
+            results.append(
+                Workflow(
+                    wtype=WorkflowType.SKILL,
+                    name=skill_dir.name,
+                    description=meta.get("description", ""),
+                    path=skill_dir,
+                    tags=tags,
+                    tier=tier,
+                )
             )
-        )
     return results
 
 
 def scan_agents() -> list[Workflow]:
-    """Scan agents/ for agent files."""
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if not agents_dir.is_dir():
-        return []
-
+    """Scan agents/ and platform/vendor agent dirs for agent files."""
     results = []
-    for path in sorted(agents_dir.iterdir()):
-        if path.name == ".gitkeep":
+    for base_dir, tier in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
+        if not base_dir.is_dir():
             continue
-        if path.suffix != ".md":
-            continue
-        meta = _parse_frontmatter(path)
-        results.append(
-            Workflow(
-                wtype=WorkflowType.AGENT,
-                name=path.stem,
-                description=meta.get("description", ""),
-                path=path,
+        for path in sorted(base_dir.iterdir()):
+            if path.name == ".gitkeep":
+                continue
+            if path.suffix != ".md":
+                continue
+            meta = _parse_frontmatter(path)
+            results.append(
+                Workflow(
+                    wtype=WorkflowType.AGENT,
+                    name=path.stem,
+                    description=meta.get("description", ""),
+                    path=path,
+                    tier=tier,
+                )
             )
-        )
     return results
 
 
@@ -417,22 +437,35 @@ def validate_role(path: Path) -> ValidationResult:
     if not meta.get("allowed-skills"):
         errors.append("Missing 'allowed-skills' in frontmatter (a role must include at least one skill)")
 
-    # Validate allowed-skills reference real skills
+    # Validate allowed-skills reference real skills (core or language/platform/vendor)
     allowed = meta.get("allowed-skills", [])
     if isinstance(allowed, str):
         allowed = [s.strip() for s in allowed.split(",")]
     skills_dir = WORKFLOWS_DIR / "skills"
+    extra_skill_dirs = [d for d, _ in _EXTRA_SKILL_DIRS]
     for skill_name in allowed:
-        if not (skills_dir / skill_name).is_dir():
+        exists = (skills_dir / skill_name).is_dir() or any(
+            (d / skill_name).is_dir() for d in extra_skill_dirs
+        )
+        if not exists:
             warnings.append(f"allowed-skills references non-existent skill: {skill_name}")
 
-    # Validate rules reference real rules
+    # Validate rules reference real rules (core or language/platform/vendor)
     rules = meta.get("rules", [])
     if isinstance(rules, str):
         rules = [r.strip() for r in rules.split(",")]
     rules_dir = WORKFLOWS_DIR / "rules"
+    extra_rule_dirs = [d for d, _ in _EXTRA_RULE_DIRS]
     for rule_name in rules:
-        if not (rules_dir / f"{rule_name}.mdc").is_file() and not (rules_dir / f"{rule_name}.md").is_file():
+        exists = (
+            (rules_dir / f"{rule_name}.mdc").is_file()
+            or (rules_dir / f"{rule_name}.md").is_file()
+            or any(
+                (d / f"{rule_name}.mdc").is_file() or (d / f"{rule_name}.md").is_file()
+                for d in extra_rule_dirs
+            )
+        )
+        if not exists:
             warnings.append(f"rules references non-existent rule: {rule_name}")
 
     return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
@@ -455,29 +488,29 @@ def validate_all(target_path: str | None = None) -> list[ValidationResult]:
             results.append(validate_skill(path))
         return results
 
-    # Validate rules
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if rules_dir.is_dir():
-        for path in sorted(rules_dir.iterdir()):
-            if path.name == ".gitkeep" or path.suffix not in (".mdc", ".md"):
-                continue
-            results.append(validate_rule(path))
+    # Validate rules (core + language/platform/vendor)
+    for rules_base, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
+        if rules_base.is_dir():
+            for path in sorted(rules_base.iterdir()):
+                if path.name == ".gitkeep" or path.suffix not in (".mdc", ".md"):
+                    continue
+                results.append(validate_rule(path))
 
-    # Validate skills
-    skills_dir = WORKFLOWS_DIR / "skills"
-    if skills_dir.is_dir():
-        for skill_dir in sorted(skills_dir.iterdir()):
-            if not skill_dir.is_dir():
-                continue
-            results.append(validate_skill(skill_dir))
+    # Validate skills (core + language/platform/vendor)
+    for base_dir, _ in [(WORKFLOWS_DIR / "skills", "core")] + _EXTRA_SKILL_DIRS:
+        if base_dir.is_dir():
+            for skill_dir in sorted(base_dir.iterdir()):
+                if not skill_dir.is_dir():
+                    continue
+                results.append(validate_skill(skill_dir))
 
-    # Validate agents
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if agents_dir.is_dir():
-        for path in sorted(agents_dir.iterdir()):
-            if path.name == ".gitkeep" or path.suffix != ".md":
-                continue
-            results.append(validate_agent(path))
+    # Validate agents (core + platform/vendor)
+    for agents_base, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
+        if agents_base.is_dir():
+            for path in sorted(agents_base.iterdir()):
+                if path.name == ".gitkeep" or path.suffix != ".md":
+                    continue
+                results.append(validate_agent(path))
 
     # Validate hooks
     hooks_dir = WORKFLOWS_DIR / "hooks"

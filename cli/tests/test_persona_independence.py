@@ -8,7 +8,7 @@ import re
 
 import pytest
 
-from fotw.services.catalog import WORKFLOWS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_AGENT_DIRS, _EXTRA_RULE_DIRS
 
 # Persona character names — specific enough to avoid false positives.
 # Intentionally excludes generic words like "enterprise", "neighborhood"
@@ -88,17 +88,16 @@ def _format_violations(filepath, violations):
 
 def test_no_persona_terms_in_rules():
     """Rules must not contain persona-specific names or terms."""
-    rules_dir = WORKFLOWS_DIR / "rules"
-    if not rules_dir.is_dir():
-        pytest.skip("No rules directory")
-
     all_violations = []
-    for path in sorted(rules_dir.iterdir()):
-        if path.suffix not in (".mdc", ".md"):
+    for rules_dir, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
+        if not rules_dir.is_dir():
             continue
-        violations = _scan_file_for_persona_terms(path)
-        if violations:
-            all_violations.append(_format_violations(path, violations))
+        for path in sorted(rules_dir.iterdir()):
+            if path.suffix not in (".mdc", ".md"):
+                continue
+            violations = _scan_file_for_persona_terms(path)
+            if violations:
+                all_violations.append(_format_violations(path, violations))
 
     assert not all_violations, f"Persona terms found in rules:{''.join(all_violations)}"
 
@@ -135,16 +134,15 @@ def test_no_persona_terms_in_skills():
 
 def test_no_persona_terms_in_agents():
     """Agent definitions must not contain persona-specific names or terms."""
-    agents_dir = WORKFLOWS_DIR / "agents"
-    if not agents_dir.is_dir():
-        pytest.skip("No agents directory")
-
     all_violations = []
-    for path in sorted(agents_dir.iterdir()):
-        if path.suffix != ".md":
+    for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
+        if not agents_dir.is_dir():
             continue
-        violations = _scan_file_for_persona_terms(path)
-        if violations:
-            all_violations.append(_format_violations(path, violations))
+        for path in sorted(agents_dir.iterdir()):
+            if path.suffix != ".md":
+                continue
+            violations = _scan_file_for_persona_terms(path)
+            if violations:
+                all_violations.append(_format_violations(path, violations))
 
     assert not all_violations, f"Persona terms found in agents:{''.join(all_violations)}"

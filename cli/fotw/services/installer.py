@@ -8,7 +8,14 @@ from pathlib import Path
 
 from fotw.models.workflow import Hook
 from fotw.services.agents import AgentConfig, expand_tools, get_agent_config
-from fotw.services.catalog import REPO_ROOT, STARTERS_DIR, WORKFLOWS_DIR
+from fotw.services.catalog import (
+    REPO_ROOT,
+    STARTERS_DIR,
+    WORKFLOWS_DIR,
+    _EXTRA_AGENT_DIRS,
+    _EXTRA_RULE_DIRS,
+    _EXTRA_SKILL_DIRS,
+)
 from fotw.services.frontmatter_translator import translate_content, translate_to_target
 from fotw.services.settings_merger import merge_hooks, read_settings, write_settings
 from fotw.ui.console import console, err_console
@@ -207,7 +214,7 @@ def _target_dir_for_type(ctx: InstallContext, wtype: str) -> Path:
     base = _base_dir(ctx)
     if wtype == "rules":
         return base / cfg.rules_subdir
-    elif wtype == "skills":
+    elif wtype in ("skills", "languages", "platforms", "vendors"):
         return base / cfg.skills_subdir
     elif wtype == "agents":
         return base / cfg.agents_subdir
@@ -221,20 +228,36 @@ def _target_dir_for_type(ctx: InstallContext, wtype: str) -> Path:
 def _find_source(wtype: str, name: str) -> Path | None:
     """Find the source file/directory for a workflow."""
     if wtype == "rules":
-        mdc = WORKFLOWS_DIR / "rules" / f"{name}.mdc"
-        if mdc.is_file():
-            return mdc
-        md = WORKFLOWS_DIR / "rules" / f"{name}.md"
-        if md.is_file():
-            return md
-    elif wtype == "skills":
+        # Check core rules first
+        for ext in (".mdc", ".md"):
+            p = WORKFLOWS_DIR / "rules" / f"{name}{ext}"
+            if p.is_file():
+                return p
+        # Then language/platform/vendor rule dirs
+        for extra_dir, _ in _EXTRA_RULE_DIRS:
+            for ext in (".mdc", ".md"):
+                p = extra_dir / f"{name}{ext}"
+                if p.is_file():
+                    return p
+    elif wtype in ("skills", "languages", "platforms", "vendors"):
+        # Check core skills first
         skill_dir = WORKFLOWS_DIR / "skills" / name
         if skill_dir.is_dir():
             return skill_dir
+        # Then language/platform/vendor skill dirs
+        for extra_dir, _ in _EXTRA_SKILL_DIRS:
+            p = extra_dir / name
+            if p.is_dir():
+                return p
     elif wtype == "agents":
         agent = WORKFLOWS_DIR / "agents" / f"{name}.md"
         if agent.is_file():
             return agent
+        # Then platform/vendor agent dirs
+        for extra_dir, _ in _EXTRA_AGENT_DIRS:
+            p = extra_dir / f"{name}.md"
+            if p.is_file():
+                return p
     return None
 
 
@@ -257,18 +280,40 @@ def _get_new_content(source: Path, wtype: str, cfg: AgentConfig) -> str:
     return source.read_text()
 
 
+_TIER_DIRS = {"languages", "platforms", "vendors"}
+
+
 def install_single_workflow(
     wf_id: str, ctx: InstallContext
 ) -> bool:
     """Install a single workflow. Returns True on success."""
-    parts = wf_id.split("/", 1)
-    if len(parts) != 2:
+    parts = wf_id.split("/")
+
+    if len(parts) == 3 and parts[0] in _TIER_DIRS:
+        # New-style: languages/skills/go-patterns, platforms/rules/cloudformation-conventions
+        _tier_dir, wtype, name = parts
+        install_as = wtype  # "skills", "rules", or "agents"
+        base = REPO_ROOT / wf_id
+        if wtype == "rules":
+            # Rules have extensions: try .mdc then .md
+            source: Path | None = next(
+                (p for ext in (".mdc", ".md") if (p := base.parent / f"{base.name}{ext}").is_file()),
+                None,
+            )
+        elif wtype == "agents":
+            # Agents have .md extension
+            candidate = base.parent / f"{base.name}.md"
+            source = candidate if candidate.is_file() else None
+        else:
+            # Skills are directories
+            source = base if base.exists() else None
+    elif len(parts) == 2:
+        wtype, name = parts
+        install_as = wtype
+        source = _find_source(wtype, name)
+    else:
         err_console.print(f"[red]Error: Invalid workflow ID: {wf_id}[/red]")
         return False
-
-    wtype, name = parts
-
-    source = _find_source(wtype, name)
     if source is None:
         if not ctx.quiet:
             err_console.print(f"[red]Error: {wtype[:-1].title()} not found: {name}[/red]")
@@ -277,23 +322,23 @@ def install_single_workflow(
     cfg = _get_agent_cfg(ctx)
 
     # Check if this workflow type is supported by the target agent
-    if wtype == "agents" and not cfg.supports_agents:
+    if install_as == "agents" and not cfg.supports_agents:
         if not ctx.quiet:
             console.print(f"  [dim]Skipped {wf_id} ({cfg.name} does not support agents)[/dim]")
         return True
 
-    if wtype == "skills" and not cfg.supports_skills:
+    if install_as == "skills" and not cfg.supports_skills:
         if not ctx.quiet:
             console.print(f"  [dim]Skipped {wf_id} ({cfg.name} does not support skills)[/dim]")
         return True
 
-    target_dir = _target_dir_for_type(ctx, wtype)
+    target_dir = _target_dir_for_type(ctx, install_as)
     is_dir = source.is_dir()
 
     if is_dir:
         target_path = target_dir / name
     else:
-        target_name = _target_filename(source, wtype, cfg)
+        target_name = _target_filename(source, install_as, cfg)
         target_path = target_dir / target_name
 
     # Info output
@@ -305,7 +350,7 @@ def install_single_workflow(
         console.print(f"Scope:    {scope}")
         console.print(f"Source:   {source}")
         console.print(f"Target:   {target_path}")
-        if _needs_translation(wtype, cfg):
+        if _needs_translation(install_as, cfg):
             console.print(f"Note:     Frontmatter will be translated for {cfg.name}")
         console.print()
 
