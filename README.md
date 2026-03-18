@@ -1,189 +1,101 @@
 # Fellowship of the Workflows
 
-A centralized repository for sharing AI agent workflows across your team. Works with Claude Code, Cursor, Copilot, Codex, Windsurf, Gemini, Roo, Goose, and more.
-
-## What's Inside
-
-| Type | Count | Description |
-|------|-------|-------------|
-| **Skills** | 34 core · 4 languages · 16 platforms · 4 vendors | Executable packages — code review, Terraform, AWS, security audits, and more |
-| **Rules** | 16 core · 4 languages · 7 platforms · 1 vendors | Conditional context files — git safety, output style, model guidance, coding patterns |
-| **Agents** | 20 core · 10 platforms · 5 vendors | Subagent definitions — specialist agents for focused tasks |
-| **Hooks** | 5 | Claude Code event hooks — block dangerous commands, guard branches |
-| **Personas** | 12 | AI personality overlays — Gandalf, Sauron, and friends |
-| **Starters** | 3 | Project templates — minimal, standard, full |
-
-All workflows are authored once and automatically translated to each tool's native format on install.
+A complete AI agent workflow system for software engineering. Author workflows once, use them across Claude Code, Cursor, Copilot, and 6 more tools — no copy-paste, no per-tool maintenance. Single source, multi-target.
 
 ---
 
-## Philosophy
+## Installation
 
-**Single-source, multi-target.** Author a workflow once in a tool-agnostic format. Install it to any of 9 AI tools without maintaining 9 copies. When the workflow improves, update one file and re-sync.
+### Claude Code Plugin (recommended)
 
-**Least-privilege by default.** Skills declare exactly which tools they need — no more. A read-only code review skill cannot run `git push`. A commit-generating skill cannot `git reset --hard`. The validator enforces this.
+```bash
+# Register the marketplace (one-time)
+/plugin marketplace add TrevorEdris/fellowship-of-the-workflows
 
-**Phase-scoped context for token efficiency.** Complex skills can declare which files are relevant to each phase (discover, plan, implement). Only the files needed for the current phase are loaded into context — keeping prompts tight.
+# Install the plugin
+/plugin install fotw@fellowship-of-the-workflows
+```
 
-**Workflow authoring as engineering.** Skills have golden tests. The plan validator is a linter for PLAN.md files. Breaking changes in rules are caught by translation tests. The same discipline applied to production code applies to the workflows that guide it.
+All core skills, agents, and hooks are auto-discovered immediately. Use `/code-review`, `/security-review`, `/terraform`, etc.
+
+> **Rules and starters** need to live in your project directory. Use `fotw setup` to install them:
+> ```bash
+> git clone https://github.com/TrevorEdris/fellowship-of-the-workflows.git
+> cd fellowship-of-the-workflows && ./bin/bootstrap
+> ./bin/fotw setup ~/my-project --for claude-code
+> ```
+
+### Install Mode (any tool)
+
+For non-Claude tools or selective installation:
+
+```bash
+git clone https://github.com/TrevorEdris/fellowship-of-the-workflows.git
+cd fellowship-of-the-workflows
+./bin/bootstrap                                                     # Python 3.10+ required
+
+./bin/fotw list                                                     # See what's available
+./bin/fotw install starters/standard ~/my-project --for claude-code # Starter template
+./bin/fotw install skills/code-review ~/my-project --for cursor     # Individual skill
+./bin/fotw install rules/git-safety --global --for claude-code      # Global rule
+```
+
+Run any command with `--help` for full options.
+
+---
+
+## Updating
+
+### Plugin Mode
+
+```bash
+/plugin                                           # Check for updates
+/plugin update fotw@fellowship-of-the-workflows   # Apply update
+```
+
+### Install Mode
+
+```bash
+cd fellowship-of-the-workflows && git pull
+./bin/fotw update ~/my-project                    # Re-sync changed rules
+```
+
+---
+
+## Uninstalling
+
+### Plugin Mode
+
+```bash
+/plugin uninstall fotw@fellowship-of-the-workflows
+```
+
+### Install Mode
+
+Remove the files installed by `fotw install` or `fotw setup` from your project's config directory (e.g., `.claude/rules/`, `.cursor/rules/`). Check `.fotw-lock.json` in your project root for the full list of installed files.
+
+---
+
+## What You Get
+
+- **Review & quality** — code review, security review, design review, performance analysis, chaos review, accessibility audit
+- **Architecture & design** — system design, API design, database schemas, event-driven architecture, C4 diagrams
+- **Infrastructure** — Terraform, Pulumi, Kubernetes, Docker, AWS/Azure/GCP services
+- **Development workflow** — TDD enforcement, git workflow, CI/CD pipelines, session management, plan validation
+- **Incident response** — PagerDuty, Grafana IRM, incident.io, Better Stack (auto-detected routing)
+- **Language patterns** — Go, Python, Rust, TypeScript (skills + rules)
+
+Full listing: [docs/CATALOG.md](docs/CATALOG.md)
 
 ---
 
 ## How It Works
 
-### The Translation Pipeline
+Rules are authored once in Cursor `.mdc` format. On install, the translator rewrites frontmatter for the target tool — `globs` becomes `paths` for Claude Code, `applyTo` for Copilot, stripped for tools that only support plain Markdown. The rule body is preserved exactly.
 
-Rules are authored in Cursor `.mdc` format — a superset of Markdown with YAML frontmatter. When you run `fotw install`, the translator rewrites the frontmatter for the target tool: `globs` becomes `paths` for Claude Code, `applyTo` for Copilot, and the frontmatter is stripped entirely for tools that only support plain Markdown. The rule body is preserved exactly. One source, many targets.
+Skills are instruction documents invoked as slash commands. Agents are specialist subprocesses that execute focused tasks in isolation. Skills may invoke agents and synthesize results.
 
-```mermaid
-flowchart LR
-    A["rules/*.mdc\n(source)"] --> T["fotw install\n(translator)"]
-    T --> B[".claude/rules/*.md\n(Claude Code)"]
-    T --> C[".cursor/rules/*.mdc\n(Cursor)"]
-    T --> D[".github/instructions/*.instructions.md\n(Copilot)"]
-    T --> E["...6 more targets"]
-```
-
-### Plugin Mode vs Install Mode
-
-**Plugin mode** loads the entire repo as a Claude Code plugin in one command. Skills and agents are auto-discovered and available immediately as slash commands. This is the fastest way to get started — no per-workflow installation needed. Rules and starters are not auto-discovered because they need to live inside your project's config directory; use `fotw setup` to install them.
-
-**Install mode** copies individual workflows into a target project, translating format as needed. Use this for non-Claude tools, for selecting specific workflows, or for distributing workflows to teammates who use different tools.
-
-### Skills, Agents, and Execution
-
-A skill (`/code-review`) is an instruction document that tells Claude how to perform a task. An agent (`agents/pragmatic-code-review.md`) is a specialist subprocess that performs the task in isolation. Skills and agents are complementary: a skill may invoke one or more agents to execute focused sub-tasks, then synthesize the results.
-
-```mermaid
-flowchart LR
-    U["User: /code-review"] --> S["Skill: code-review/SKILL.md\n(orchestrator)"]
-    S --> A1["Agent: pragmatic-code-review\n(code quality)"]
-    S --> A2["Agent: security-review\n(security)"]
-    A1 --> R["Synthesized review"]
-    A2 --> R
-```
-
----
-
-## Quick Start
-
-There are two ways to use this repo:
-
-| | Plugin Mode | Install Mode |
-|---|---|---|
-| **How** | Load directly as a Claude Code plugin | Copy workflows into your project |
-| **Tools** | Claude Code only | All 9 tools |
-| **Components** | Skills, agents, hooks (auto) · Rules, starters (manual) | Skills, agents, rules, starters, personas |
-| **Setup** | One command | Per-workflow install |
-
-### Option A: Claude Code Plugin (fastest)
-
-![Load as a Claude Code plugin](demos/gifs/demo-plugin.gif)
-
-```bash
-# One-time: register the marketplace (inside Claude Code)
-/plugin marketplace add TrevorEdris/fellowship-of-the-workflows
-
-# Install the plugin
-/plugin install fotw@fellowship-of-the-workflows
-
-# Or load directly for a single session (requires local clone)
-claude --plugin-dir /path/to/fellowship-of-the-workflows
-```
-
-All 34 core skills, 20 core agents, and 5 hooks are auto-discovered. Use `/code-review`, `/security-review`, `/git-workflow`, etc. immediately.
-
-> **Language, platform, and vendor workflows** are not auto-discovered. Install explicitly: `fotw install platforms/skills/aws ~/project --for claude-code`
-
-> **Rules and starters** still need `fotw setup` or `fotw install` — they must live in your project directory. Use `fotw setup ~/my-project --for claude-code` to install all rules with lock file tracking. See [Option B](#option-b-install-mode-any-tool).
-
-### Option B: Install Mode (any tool)
-
-![Browse and install workflows](demos/gifs/demo-browse.gif)
-
-```bash
-# 1. Clone and set up the CLI
-git clone https://github.com/TrevorEdris/fellowship-of-the-workflows.git
-cd fellowship-of-the-workflows
-./bin/bootstrap                    # Creates a project-local Python venv (3.10+ required)
-
-# 2. See what's available
-./bin/fotw list                    # Everything
-./bin/fotw list --type skill       # Just skills
-./bin/fotw list --tier core        # Core workflows only
-./bin/fotw list --tier platforms   # Platform-specific workflows
-./bin/fotw list --tier vendors     # Vendor-specific workflows
-./bin/fotw list --tag aws          # Workflows tagged "aws"
-
-# 3. Install a starter template to your project
-./bin/fotw install starters/standard ~/my-project --for claude-code
-
-# 4. Install individual workflows
-./bin/fotw install skills/code-review ~/my-project --for claude-code
-./bin/fotw install platforms/skills/aws ~/my-project --for claude-code
-./bin/fotw install languages/skills/go-patterns ~/my-project --for claude-code
-./bin/fotw install rules/ai-session ~/my-project --for cursor
-./bin/fotw install rules/git-safety --global --for claude-code   # Available in all projects
-```
-
-> **Which `--for` value do I use?** See [Supported Tools](#supported-tools) below.
-
----
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `./bin/bootstrap` | Set up the CLI environment (Python 3.10+ required) |
-| `./bin/fotw list` | List available workflows |
-| `./bin/fotw install` | Deploy a workflow or starter to a project |
-| `./bin/fotw setup` | Install all rules to a project with lock file tracking |
-| `./bin/fotw update` | Re-sync installed rules after upstream changes |
-| `./bin/fotw new` | Create a new workflow from template |
-| `./bin/fotw validate` | Validate workflow files |
-
-Run any command with `--help` for full options.
-
-### Install Options
-
-```bash
-./bin/fotw install skills/code-review ~/my-project --for claude-code                    # Core skill
-./bin/fotw install platforms/skills/terraform ~/my-project --for claude-code            # Platform skill
-./bin/fotw install languages/skills/go-patterns ~/my-project --for claude-code          # Language skill
-./bin/fotw install vendors/skills/pagerduty ~/my-project --for claude-code              # Vendor skill
-./bin/fotw install rules/ai-session --global --for cursor                               # Global rule
-./bin/fotw install --all ~/my-project --for claude-code --force                         # Everything
-./bin/fotw install skills/code-review ~/my-project --for claude-code --dry-run          # Preview only
-```
-
-| Flag | Description |
-|------|-------------|
-| `--for <tool>` | **Required.** Target tool (see table below) |
-| `--global` / `-g` | Install to `~/.<tool>/` (available in all projects) |
-| `--all` / `-a` | Install all workflows at once |
-| `--force` / `-f` | Overwrite without prompting |
-| `--dry-run` / `-n` | Preview what would be installed |
-| `--tier core\|languages\|platforms\|vendors\|all` | Filter workflow listing by tier |
-
-Without `--force`, the installer prompts before overwriting: `[o]verwrite / [s]kip / [d]iff / [b]ackup / [O]verwrite-all / [S]kip-all / [q]uit`.
-
-### Supported Tools
-
-| Tool | `--for` value | Config directory | Rule extension |
-|------|---------------|------------------|----------------|
-| Claude Code | `claude-code` | `.claude/` | `.md` |
-| Cursor | `cursor` | `.cursor/` | `.mdc` |
-| GitHub Copilot | `copilot` | `.github/` | `.instructions.md` |
-| OpenAI Codex | `codex` | `.codex/` | `.md` |
-| Windsurf | `windsurf` | `.windsurf/` | `.md` |
-| Gemini Code Assist | `gemini` | `.gemini/` | `.md` |
-| Roo Code | `roo` | `.roo/` | `.md` |
-| Goose | `goose` | `.goose/` | `.md` |
-| Universal | `universal` | `.ai/` | `.md` |
-
-Use `--for both` to install for both Claude Code and Cursor simultaneously.
-
-![Same rule for Claude Code, Cursor, and Copilot](demos/gifs/demo-multi-tool.gif)
+For full architecture details, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
@@ -194,7 +106,6 @@ Starters give you a ready-made project config file with bundled rules.
 ```bash
 ./bin/fotw install starters/standard ~/my-project --for claude-code  # → CLAUDE.md
 ./bin/fotw install starters/standard ~/my-project --for cursor       # → AGENTS.md
-./bin/fotw install starters/standard ~/my-project --for copilot      # → AGENTS.md + .github/instructions/
 ```
 
 | Tier | Description | Bundled Rules |
@@ -207,95 +118,48 @@ See [starters/README.md](starters/README.md) for details and modular snippets.
 
 ---
 
-## Workflow Tiers
-
-Workflows are organized into four tiers:
-
-| Tier | Location | Audience | Plugin Auto-Discovery |
-|------|----------|----------|-----------------------|
-| **Core** | `skills/`, `rules/`, `agents/` | Universal (any stack) | Yes |
-| **Languages** | `languages/` | Specific programming language | No — explicit install only |
-| **Platforms** | `platforms/` | Specific cloud or infra platform | No — explicit install only |
-| **Vendors** | `vendors/` | Specific commercial vendor | No — explicit install only |
-
-All tiers follow the same quality bar — the distinction is audience, not quality. Install only what your team uses.
-
-See [languages/README.md](languages/README.md), [platforms/README.md](platforms/README.md), and [vendors/README.md](vendors/README.md) for the full listings and install instructions.
-
-### Skill Tags
-
-Use `./bin/fotw list --tag <tag>` to filter.
-
-| Tag | Description |
-|-----|-------------|
-| `architecture` | System design, API design, patterns, databases |
-| `infrastructure` | IaC, provisioning, containers, cloud resources |
-| `documentation` | Docs generation, writing, diagrams |
-| `meta` | Agent self-management, session tools, orchestration |
-| `review` | Code, design, security, or performance review |
-| `incident-response` | Alerting, on-call, incident management |
-| `aws` | Amazon Web Services |
-| `gcp` | Google Cloud Platform |
-| `azure` | Microsoft Azure |
-| `observability` | Monitoring instrumentation, dashboards, SLOs |
-| `security` | Security hardening, IAM, vulnerability analysis |
-| `testing` | TDD, E2E, test scaffolding, debugging |
-| `ci-cd` | CI/CD pipelines, deployment automation |
-| `git` | Git workflows, branching, PRs, commits |
-| `go` | Go language patterns |
-| `python` | Python language patterns |
-| `rust` | Rust language patterns |
-| `typescript` | TypeScript language patterns |
-
-**Full skill listing:** [docs/CATALOG.md](docs/CATALOG.md)
-
----
-
-## Workflow Types
-
-| Type | Storage | Description |
-|------|---------|-------------|
-| **Skills** | `skills/<name>/SKILL.md` | Executable packages ([Agent Skills](https://agentskills.io) standard) |
-| **Rules** | `rules/*.mdc` | Conditional context files (Cursor format, auto-translated on install) |
-| **Agents** | `agents/*.md` | Subagent definitions with tool restrictions |
-| **Hooks** | `hooks/*.js` | Claude Code hook scripts (Claude Code only) |
-
-Rules are authored in Cursor `.mdc` format and automatically translated to each tool's native format on install.
-
----
-
 ## Hooks (Claude Code only)
 
-Hooks are Node.js scripts that intercept Claude Code events at runtime — blocking dangerous commands, protecting secrets, guarding branches, etc.
+Hooks are Node.js scripts that intercept Claude Code events — blocking dangerous commands, protecting secrets, guarding branches.
 
 ```bash
-./bin/fotw list --type hook                                          # List available hooks
-./bin/fotw install hooks --global --for claude-code                 # Install all hooks globally
-./bin/fotw install hooks/branch-guard --global --for claude-code    # Install a single hook
-./bin/fotw install hooks --global --for claude-code --include-tests # With test files
-./bin/fotw install hooks --global --for claude-code --dry-run       # Preview only
+./bin/fotw install hooks --global --for claude-code    # Install all hooks
 ```
 
-Hooks require `--global` and `--for claude-code`. The installer copies scripts to `~/.claude/hooks/` and merges hook configuration into `~/.claude/settings.json` (with backup).
+Hooks require `--global` and `--for claude-code`. The installer copies scripts to `~/.claude/hooks/` and merges configuration into `~/.claude/settings.json`.
 
 ---
 
-## Claude Code Plugin Architecture
+## Supported Tools
 
-This repo is structured as a [Claude Code plugin](https://code.claude.com/docs/en/plugins-reference). When loaded via `claude --plugin-dir` or `claude plugin install`, Claude Code auto-discovers:
+| Tool | `--for` value | Config directory |
+|------|---------------|------------------|
+| Claude Code | `claude-code` | `.claude/` |
+| Cursor | `cursor` | `.cursor/` |
+| GitHub Copilot | `copilot` | `.github/` |
+| OpenAI Codex | `codex` | `.codex/` |
+| Windsurf | `windsurf` | `.windsurf/` |
+| Gemini Code Assist | `gemini` | `.gemini/` |
+| Roo Code | `roo` | `.roo/` |
+| Goose | `goose` | `.goose/` |
+| Universal | `universal` | `.ai/` |
 
-| Component | Location | Discovery |
-|-----------|----------|-----------|
-| Skills | `skills/*/SKILL.md` | Auto — available as `/skill-name` slash commands |
-| Agents | `agents/*.md` | Auto — Claude invokes based on task context |
-| Hooks | `hooks/hooks.json` | Auto — registered as event handlers |
-| Rules | `rules/*.mdc` | **Manual** — requires `fotw install` to copy to project |
-| Starters | `starters/*.md` | **Manual** — requires `fotw install` to copy to project |
-| Language skills/rules | `languages/` | **Manual** — excluded from auto-discovery |
-| Platform skills/rules/agents | `platforms/` | **Manual** — excluded from auto-discovery |
-| Vendor skills/rules/agents | `vendors/` | **Manual** — excluded from auto-discovery |
+Use `--for both` to install for both Claude Code and Cursor simultaneously.
 
-The `.claude-plugin/plugin.json` manifest declares the plugin metadata. Hook scripts use `${CLAUDE_PLUGIN_ROOT}` to resolve paths relative to the plugin directory.
+---
+
+## Workflow Tiers
+
+| Tier | Location | Plugin Auto-Discovery |
+|------|----------|-----------------------|
+| **Core** | `skills/`, `rules/`, `agents/` | Yes |
+| **Languages** | `languages/` | No — explicit install |
+| **Platforms** | `platforms/` | No — explicit install |
+| **Vendors** | `vendors/` | No — explicit install |
+
+Install only what your team uses. All tiers follow the same quality bar.
+
+See [languages/README.md](languages/README.md), [platforms/README.md](platforms/README.md), and [vendors/README.md](vendors/README.md) for full listings.
 
 ---
 
