@@ -1,12 +1,12 @@
 ---
 description: Remind to bump plugin version when modifying plugin-included files.
-globs: "agents/**,hooks/**,skills/**,plugin/.claude-plugin/plugin.json"
+globs: "agents/**,hooks/**,skills/**,.claude-plugin/plugin.json"
 alwaysApply: false
 ---
 
 ## Plugin Version Bump
 
-When modifying files in `agents/`, `hooks/`, or `skills/`, bump the `version` field in `plugin/.claude-plugin/plugin.json` before committing.
+When modifying files in `agents/`, `hooks/`, or `skills/`, bump the `version` field in `.claude-plugin/plugin.json` before committing.
 
 ### Semver Rules
 
