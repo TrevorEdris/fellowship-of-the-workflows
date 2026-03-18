@@ -12,11 +12,13 @@ from fotw.services.frontmatter_translator import translate_content
 from fotw.services.installer import (
     InstallContext,
     install_all,
+    install_filtered,
     install_personas,
     install_single_workflow,
     install_starter,
 )
-from fotw.services.catalog import WORKFLOWS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR, filter_workflows
+from fotw.models.workflow import Workflow, WorkflowType
 from fotw.ui.diff import dirs_are_identical, files_are_identical, show_diff, show_dir_diff
 
 
@@ -561,3 +563,94 @@ def test_dir_conflict_prompt_offers_diff():
     )
     output = buf.getvalue()
     assert "[d]iff" in output
+
+
+# --- filter_workflows tests ---
+
+def _make_wf(wtype: str, name: str, tier: str = "core", tags: list[str] | None = None) -> Workflow:
+    """Helper to create a Workflow for testing."""
+    return Workflow(
+        wtype=WorkflowType(wtype),
+        name=name,
+        description=f"Test {name}",
+        tags=tags or [],
+        tier=tier,
+    )
+
+
+@pytest.fixture
+def sample_workflows() -> list[Workflow]:
+    """A mixed set of workflows for filter tests."""
+    return [
+        _make_wf("rule", "git-safety", tags=["git", "security"]),
+        _make_wf("rule", "output-style", tags=["meta"]),
+        _make_wf("rule", "cdk-conventions", tier="platforms", tags=["aws", "infrastructure"]),
+        _make_wf("skill", "code-review", tags=["review"]),
+        _make_wf("skill", "aws-serverless", tier="platforms", tags=["aws"]),
+        _make_wf("agent", "security-review", tags=["security", "review"]),
+        _make_wf("agent", "terraform-specialist", tier="platforms", tags=["infrastructure"]),
+    ]
+
+
+def test_filter_by_type(sample_workflows):
+    """filter_workflows with type_filter='rule' returns only rules."""
+    result = filter_workflows(sample_workflows, type_filter="rule")
+    assert len(result) == 3
+    assert all(wf.wtype == WorkflowType.RULE for wf in result)
+
+
+def test_filter_by_tier(sample_workflows):
+    """filter_workflows with tier_filter='platforms' returns only platform-tier workflows."""
+    result = filter_workflows(sample_workflows, tier_filter="platforms")
+    assert len(result) == 3
+    assert all(wf.tier == "platforms" for wf in result)
+
+
+def test_filter_by_tag(sample_workflows):
+    """filter_workflows with tags=['aws'] returns all workflows tagged aws."""
+    result = filter_workflows(sample_workflows, tags=["aws"])
+    assert len(result) == 2
+    names = {wf.name for wf in result}
+    assert names == {"cdk-conventions", "aws-serverless"}
+
+
+def test_filter_multiple_tags_and(sample_workflows):
+    """Multiple tags use AND logic — must have all specified tags."""
+    result = filter_workflows(sample_workflows, tags=["security", "review"])
+    assert len(result) == 1
+    assert result[0].name == "security-review"
+
+
+def test_filter_composable(sample_workflows):
+    """type + tier + tags compose with AND logic."""
+    result = filter_workflows(
+        sample_workflows, type_filter="rule", tier_filter="platforms", tags=["aws"]
+    )
+    assert len(result) == 1
+    assert result[0].name == "cdk-conventions"
+
+
+def test_filter_no_match(sample_workflows):
+    """Impossible combination returns empty list."""
+    result = filter_workflows(
+        sample_workflows, type_filter="skill", tags=["security"]
+    )
+    assert result == []
+
+
+# --- install_filtered tests ---
+
+
+def test_install_filtered_dry_run(sample_workflows, tmp_target):
+    """install_filtered in dry-run mode succeeds without writing files."""
+    ctx = InstallContext(
+        tool="claude-code",
+        target_repo=tmp_target,
+        is_global=False,
+        dry_run=True,
+        force=True,
+        quiet=True,
+    )
+    rules = filter_workflows(sample_workflows, type_filter="rule", tier_filter="core")
+    result = install_filtered(rules, ctx)
+    assert result is True

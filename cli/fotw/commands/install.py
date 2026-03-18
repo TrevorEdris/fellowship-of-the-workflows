@@ -10,6 +10,7 @@ from fotw.services.installer import (
     InstallContext,
     InstallQuit,
     install_all,
+    install_filtered,
     install_hooks,
     install_personas,
     install_single_hook,
@@ -17,6 +18,9 @@ from fotw.services.installer import (
     install_starter,
 )
 from fotw.ui.console import console, err_console
+
+_VALID_TYPE_FILTERS = {"rule", "skill", "agent"}
+_VALID_TIER_FILTERS = {"core", "languages", "platforms", "vendors"}
 
 
 def _normalize_workflow_id(wf_id: str) -> str:
@@ -66,12 +70,22 @@ def install_cmd(
     phase: Optional[str] = typer.Option(
         None, "--phase", help="Install phase-scoped context only (discover/plan/implement)"
     ),
+    type_filter: Optional[str] = typer.Option(
+        None, "--type", "-T", help="Filter by type (rule, skill, agent)"
+    ),
+    tier_filter: Optional[str] = typer.Option(
+        None, "--tier", help="Filter by tier (core, languages, platforms, vendors)"
+    ),
+    tags: Optional[list[str]] = typer.Option(
+        None, "--tag", "-t", help="Filter by tag (repeatable, AND logic)"
+    ),
 ) -> None:
     """Install workflows, starters, or personas to a target project."""
     try:
         _install_cmd_inner(
             workflow_id, target_repo, for_tool, all_workflows,
             force, global_install, dry_run, to_claude_dir, include_tests, phase,
+            type_filter, tier_filter, tags,
         )
     except InstallQuit:
         console.print("\nQuit.")
@@ -89,6 +103,9 @@ def _install_cmd_inner(
     to_claude_dir: bool,
     include_tests: bool = False,
     phase: str | None = None,
+    type_filter: str | None = None,
+    tier_filter: str | None = None,
+    tags: list[str] | None = None,
 ) -> None:
     # When --all is used, the first positional arg is the target repo, not workflow_id.
     # Same for paths that look like directories (start with /, ~, .).
@@ -262,6 +279,57 @@ def _install_cmd_inner(
                 is_global=global_install, dry_run=dry_run, force=force,
             )
             if not install_all(ctx):
+                any_failed = True
+        if any_failed:
+            raise typer.Exit(1)
+        return
+
+    # --- Filtered install ---
+    if type_filter or tier_filter or tags:
+        # Validate filter values
+        if type_filter and type_filter not in _VALID_TYPE_FILTERS:
+            err_console.print(f"[red]Error: Invalid --type: {type_filter}[/red]")
+            err_console.print(f"Valid types: {', '.join(sorted(_VALID_TYPE_FILTERS))}")
+            raise typer.Exit(1)
+
+        if tier_filter and tier_filter not in _VALID_TIER_FILTERS:
+            err_console.print(f"[red]Error: Invalid --tier: {tier_filter}[/red]")
+            err_console.print(f"Valid tiers: {', '.join(sorted(_VALID_TIER_FILTERS))}")
+            raise typer.Exit(1)
+
+        if tags:
+            from fotw.models.workflow import VALID_TAGS
+            bad_tags = [t for t in tags if t not in VALID_TAGS]
+            if bad_tags:
+                err_console.print(f"[red]Error: Invalid tags: {bad_tags}[/red]")
+                err_console.print(f"Valid tags: {', '.join(sorted(VALID_TAGS))}")
+                raise typer.Exit(1)
+
+        if not target_repo and not global_install:
+            err_console.print("[red]Error: target-repo is required with filters (or use --global)[/red]")
+            raise typer.Exit(1)
+
+        if target_repo and not resolved_target.is_dir():
+            err_console.print(f"[red]Error: Target does not exist: {resolved_target}[/red]")
+            raise typer.Exit(1)
+
+        from fotw.services.catalog import filter_workflows, scan_all
+        workflows = scan_all()
+        workflows = filter_workflows(workflows, type_filter, tier_filter, tags)
+
+        if not workflows:
+            err_console.print("[yellow]No workflows match the given filters.[/yellow]")
+            raise typer.Exit(0)
+
+        console.print(f"Found {len(workflows)} matching workflow(s).")
+
+        any_failed = False
+        for t in tools:
+            ctx = InstallContext(
+                tool=t, target_repo=resolved_target,
+                is_global=global_install, dry_run=dry_run, force=force,
+            )
+            if not install_filtered(workflows, ctx):
                 any_failed = True
         if any_failed:
             raise typer.Exit(1)
