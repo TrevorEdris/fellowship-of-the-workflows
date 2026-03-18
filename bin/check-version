@@ -8,8 +8,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-PLUGIN_JSON=".claude-plugin/plugin.json"
-PLUGIN_PATHS="^(agents/|hooks/|skills/|\.claude-plugin/)"
+PLUGIN_JSON="plugin/.claude-plugin/plugin.json"
+PLUGIN_PATHS="^(agents/|hooks/|skills/|plugin/\.claude-plugin/)"
 
 BASE_SHA="${1:-origin/main}"
 
