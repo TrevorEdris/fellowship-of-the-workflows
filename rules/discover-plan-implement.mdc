@@ -110,12 +110,13 @@ If a finding has no plan step, state why it is out of scope.
 - **Call out misconceptions** — correct incorrect assumptions explicitly.
 - **Tell the user when they're wrong** — flawed approaches must be challenged, not accommodated.
 
-#### Plan Validation
+#### Plan Validation (Gate)
 
-Before presenting, validate the plan:
-- Run `/plan-validator` on the `PLAN.md` file
-- Fix any NEEDS WORK findings before presenting
-- Include the validation score in the plan presentation
+After writing PLAN.md, automatically run `/plan-validator`:
+1. Run `/plan-validator <session-dir>/PLAN.md`
+2. If score < 70 (NEEDS WORK): fix all errors and warnings, then re-run. Repeat until PASS.
+3. If score >= 70 (PASS): include the score when presenting the plan.
+4. Do NOT present the plan to the user until it scores PASS (>= 70).
 
 #### Approval Gate
 
@@ -170,6 +171,7 @@ After all steps are complete, before committing:
 - Stay silent on flawed approaches — speak up
 - Make code changes on `main`/`master` without explicit user consent
 - Write production code before a failing test exists for any behavioral step
+- Present a plan that has not passed `/plan-validator` (score >= 70)
 
 **ALWAYS:**
 - Surface design decisions before reading code
@@ -183,6 +185,7 @@ After all steps are complete, before committing:
 - Run after-action reviews at phase boundaries
 - Suggest self-review before committing
 - Include a Git Strategy section in every PLAN.md (branch, commit checkpoints, PR description)
+- Run `/plan-validator` and achieve PASS (>= 70) before presenting any plan
 
 ---
 *Do not push to main without approval.*
