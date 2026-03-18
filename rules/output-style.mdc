@@ -1,5 +1,6 @@
 ---
 description: Enforce concise, professional output — no filler phrases, no preamble.
+tags: [meta]
 globs: "**/*"
 alwaysApply: true
 ---

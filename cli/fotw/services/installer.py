@@ -892,6 +892,51 @@ def install_hooks(ctx: InstallContext, include_tests: bool = False) -> bool:
 # Install all
 # ---------------------------------------------------------------------------
 
+def install_filtered(workflows: list, ctx: InstallContext) -> bool:
+    """Install a pre-filtered list of workflows. Returns True if all succeed."""
+    if not workflows:
+        return True
+
+    if not ctx.quiet:
+        console.print()
+        console.print(f"Installing {len(workflows)} matching workflow(s)...")
+        console.print(f"Tool: {ctx.tool}")
+        scope = "Global" if ctx.is_global else f"Project ({ctx.target_repo})"
+        console.print(f"Scope: {scope}")
+        console.print()
+
+    for wf in workflows:
+        wf_id = wf.workflow_id
+        if not ctx.quiet:
+            console.print(f"[yellow]\u2192[/yellow] Installing {wf_id}...")
+        wf_ctx = InstallContext(
+            tool=ctx.tool,
+            target_repo=ctx.target_repo,
+            is_global=ctx.is_global,
+            dry_run=ctx.dry_run,
+            force=ctx.force,
+            quiet=True,
+            sticky_action=ctx.sticky_action,
+        )
+        if install_single_workflow(wf_id, wf_ctx):
+            ctx.succeeded.append(wf_id)
+            if not ctx.quiet:
+                console.print(f"  [green]\u2713[/green] Done")
+        else:
+            ctx.failed.append(wf_id)
+            if not ctx.quiet:
+                console.print(f"  [red]\u2717[/red] Failed")
+        ctx.sticky_action = wf_ctx.sticky_action
+
+    if not ctx.quiet:
+        console.print()
+        console.print(f"[green]Installed {len(ctx.succeeded)} workflow(s)[/green]")
+        if ctx.failed:
+            console.print(f"[red]Failed: {', '.join(ctx.failed)}[/red]")
+
+    return len(ctx.failed) == 0
+
+
 def install_all(ctx: InstallContext) -> bool:
     """Install all workflows and personas."""
     from fotw.services.catalog import scan_all

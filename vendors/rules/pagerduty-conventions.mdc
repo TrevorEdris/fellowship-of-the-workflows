@@ -1,5 +1,6 @@
 ---
 description: "Enforces PagerDuty integration conventions: dedup_key naming, severity mapping, no hardcoded credentials, escalation policy structure limits."
+tags: [incident-response, observability]
 globs: "**/*pagerduty*.{tf,hcl},**/main.tf,**/alertmanager*.yaml,**/alertmanager*.yml"
 alwaysApply: false
 ---

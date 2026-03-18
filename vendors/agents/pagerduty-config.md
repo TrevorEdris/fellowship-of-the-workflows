@@ -1,6 +1,7 @@
 ---
 name: pagerduty-config
 description: "PagerDuty configuration specialist. Designs and implements PD services, escalation policies, on-call schedules, event orchestration rules, Events API v2 integrations, and Terraform-managed PD infrastructure."
+tags: [incident-response]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

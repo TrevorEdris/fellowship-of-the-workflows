@@ -1,5 +1,6 @@
 ---
 description: "Enforces resilience patterns on HTTP client code and external service calls: explicit timeouts, bounded retry with jitter, circuit breaker usage, and idempotency key propagation for state-mutating operations."
+tags: [architecture]
 globs: "**/*client*.{go,ts,py,java},**/*http*.{go,ts,py,java},**/*grpc*.{go,ts,py,java},**/*service*.{go,ts,py,java},**/*gateway*.{go,ts,py,java},**/*adapter*.{go,ts,py,java}"
 alwaysApply: false
 ---

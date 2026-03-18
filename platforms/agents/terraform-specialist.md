@@ -1,6 +1,7 @@
 ---
 name: terraform-specialist
 description: Terraform configuration specialist for writing, reviewing, refactoring, and auditing Terraform modules and root configurations with production-ready patterns.
+tags: [infrastructure]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

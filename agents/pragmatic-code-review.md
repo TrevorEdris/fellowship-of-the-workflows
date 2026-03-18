@@ -1,6 +1,7 @@
 ---
 name: pragmatic-code-review
 description: Use this agent when you need a thorough code review that balances engineering excellence with development velocity. Invoke after completing a logical chunk of code, implementing a feature, or before merging a pull request. Focuses on substantive issues while also addressing style.
+tags: [review]
 tools: Bash, Glob, Grep, Read, Write, WebFetch, TodoWrite
 model: opus
 ---

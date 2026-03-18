@@ -1,5 +1,6 @@
 ---
 description: "CloudFormation and SAM template authoring conventions: intrinsic function usage, parameter security, stateful resource protection, cross-stack coupling, and change set discipline."
+tags: [aws, infrastructure]
 globs: "**/*.cfn.yaml,**/*.cfn.json,**/template.yaml,**/template.json,**/*.sam.yaml,**/samconfig.toml"
 alwaysApply: false
 ---

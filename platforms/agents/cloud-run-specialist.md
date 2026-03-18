@@ -1,6 +1,7 @@
 ---
 name: cloud-run-specialist
 description: Use this agent for deep Cloud Run and GCP serverless operations — deploying services, configuring traffic splits, debugging cold starts, setting up Pub/Sub push subscriptions, configuring Eventarc triggers, and choosing between Cloud Run, Cloud Functions, and GKE. Invoke when the /cloud-run skill needs specialist execution.
+tags: [gcp, infrastructure]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

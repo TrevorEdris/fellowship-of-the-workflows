@@ -1,6 +1,7 @@
 ---
 name: multi-agent-orchestrator
 description: "Use this agent to coordinate multiple subagents for large, multi-faceted tasks. Decomposes work into dependency-aware subtasks, delegates to specialist agents, aggregates results, and handles failures. Invoke when a task spans multiple domains (e.g., code + tests + docs + security), requires parallel workstreams, or exceeds what a single agent can reasonably handle."
+tags: [meta]
 tools: Bash, Glob, Grep, Read, Write, Task
 model: opus
 ---

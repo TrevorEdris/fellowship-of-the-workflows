@@ -1,6 +1,7 @@
 ---
 name: system-design-reviewer
 description: "Reviews architecture decisions, system designs, and technical proposals against distributed systems best practices. Identifies missing resilience patterns, scalability risks, data consistency hazards, and anti-patterns. Use for RFC reviews, design document audits, ADR evaluation, or architecture Q&A. Complements pragmatic-code-review (which reviews code quality) by focusing on architectural and distributed systems correctness."
+tags: [architecture, review]
 tools: Read, Glob, Grep
 model: sonnet
 ---

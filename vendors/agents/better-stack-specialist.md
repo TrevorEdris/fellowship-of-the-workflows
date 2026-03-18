@@ -1,6 +1,7 @@
 ---
 name: better-stack-specialist
 description: Better Stack specialist. Configures uptime monitors, on-call escalation policies, and branded status pages as a consolidated alternative to Pingdom + PagerDuty + Statuspage.io. Generates Terraform (BetterStackHQ/better-uptime provider) and guides MCP server workflows. Best for startups and mid-market teams consolidating their observability vendor footprint.
+tags: [observability, incident-response]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

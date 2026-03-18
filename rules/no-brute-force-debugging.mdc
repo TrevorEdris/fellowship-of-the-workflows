@@ -1,5 +1,6 @@
 ---
 description: Prevent guess-and-check debugging. Enforce root cause investigation before any fix attempt.
+tags: [meta]
 globs: "**/*"
 alwaysApply: true
 ---

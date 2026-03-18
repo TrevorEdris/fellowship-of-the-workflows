@@ -1,6 +1,7 @@
 ---
 name: pulumi-specialist
 description: "Specialist for Pulumi infrastructure programs in TypeScript, Python, Go, and C#. Use for authoring multi-cloud Pulumi programs, writing CrossGuard policy packs, managing state backends, interpreting pulumi preview output, and migrating from Terraform or CloudFormation. Enforces Output/Input typing discipline and stack naming conventions."
+tags: [infrastructure]
 tools: Bash, Glob, Grep, Read, Write
 model: sonnet
 ---

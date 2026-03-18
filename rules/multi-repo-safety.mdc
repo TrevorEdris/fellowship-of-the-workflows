@@ -1,5 +1,6 @@
 ---
 description: Guardrails for cross-repository changes — only touch explicitly named repos.
+tags: [git]
 globs: "**/*"
 alwaysApply: false
 ---

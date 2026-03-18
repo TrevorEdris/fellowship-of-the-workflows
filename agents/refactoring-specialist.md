@@ -1,6 +1,7 @@
 ---
 name: refactoring-specialist
 description: Use this agent for systematic code refactoring — code smell detection, extract method, rename symbol, dead code removal, dependency inversion, and safe transformation patterns. Invoke when improving code structure without changing behavior, paying down tech debt, or preparing code for a new feature.
+tags: [review]
 tools: Bash, Glob, Grep, Read, Write, Edit
 model: sonnet
 ---

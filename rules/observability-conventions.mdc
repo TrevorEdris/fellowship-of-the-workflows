@@ -1,5 +1,6 @@
 ---
 description: "Enforces observability naming conventions, cardinality limits, and structured logging standards on instrumentation code and metric definitions."
+tags: [observability]
 globs: "**/*metrics*.{ts,go,py,rs},**/*tracing*.{ts,go,py,rs},**/*telemetry*.{ts,go,py,rs},**/*instrumentation*.{ts,go,py,rs},**/otel*.yaml,**/collector*.yaml,**/*datadog*.{tf,hcl}"
 alwaysApply: false
 ---

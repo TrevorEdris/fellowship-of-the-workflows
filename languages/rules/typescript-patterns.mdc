@@ -1,5 +1,6 @@
 ---
 description: TypeScript idioms, type system, and tooling conventions.
+tags: [typescript]
 globs: "**/*.ts, **/*.tsx, **/tsconfig*.json"
 alwaysApply: false
 ---

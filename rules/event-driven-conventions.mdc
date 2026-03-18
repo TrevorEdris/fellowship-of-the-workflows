@@ -1,5 +1,6 @@
 ---
 description: "Enforces event-driven architecture conventions: schema contracts, idempotency patterns, consumer group naming, DLQ configuration, and outbox pattern requirements."
+tags: [architecture]
 globs: "**/*consumer*.{go,ts,py,java},**/*producer*.{go,ts,py,java},**/*subscriber*.{go,ts,py,java},**/*publisher*.{go,ts,py,java},**/kafka*.{yaml,properties,json},**/rabbitmq*.{yaml,json},**/pubsub*.{yaml,json},**/*queue*.{tf,yaml},**/*outbox*.{go,ts,py,java,sql}"
 alwaysApply: false
 ---

@@ -1,5 +1,6 @@
 ---
 description: "Enforce Dockerfile best practices: multi-stage builds, non-root USER, no secrets in ENV/ARG, and .dockerignore hygiene."
+tags: [infrastructure]
 globs: "Dockerfile,Dockerfile.*,*.Dockerfile"
 alwaysApply: false
 ---

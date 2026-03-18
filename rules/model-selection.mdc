@@ -1,5 +1,6 @@
 ---
 description: Guide model selection based on task complexity. Advisory — not blocking.
+tags: [meta]
 globs: "**/*"
 alwaysApply: false
 ---

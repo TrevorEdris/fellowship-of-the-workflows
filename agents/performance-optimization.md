@@ -1,6 +1,7 @@
 ---
 name: performance-optimization
 description: Use this agent for performance-focused analysis of application code, database queries, and system architecture. Invoke when profiling bottlenecks, optimizing slow queries, reducing bundle size, or detecting memory leaks. Produces a structured performance report with prioritized findings.
+tags: [review]
 tools: Bash, Glob, Grep, LS, Read, Task
 model: opus
 ---

@@ -1,5 +1,6 @@
 ---
 description: "Prefer phase-scoped context when a skill has a context-manifest."
+tags: [meta]
 globs: "**/*"
 alwaysApply: false
 ---

@@ -1,6 +1,7 @@
 ---
 name: azure-architect
 description: "Specialized agent for Azure architecture decisions — service selection, resource sizing, region strategy, redundancy, cost optimization, and Well-Architected Framework alignment. Use when designing new Azure workloads or evaluating existing architecture."
+tags: [azure, architecture]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: opus
 ---

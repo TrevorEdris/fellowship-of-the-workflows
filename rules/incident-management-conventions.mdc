@@ -1,5 +1,6 @@
 ---
 description: Enforce incident management conventions — symptom-based alerting, severity classification, runbook requirements, and on-call sustainability standards when working with alerting or incident management configuration.
+tags: [incident-response]
 globs: "**/*.tf,**/*.hcl,**/*.yml,**/*.yaml"
 alwaysApply: false
 ---

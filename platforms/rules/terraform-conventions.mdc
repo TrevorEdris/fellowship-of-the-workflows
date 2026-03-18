@@ -1,5 +1,6 @@
 ---
 description: HCL formatting, naming, and structure conventions for Terraform and Terragrunt configurations.
+tags: [infrastructure]
 globs: "**/*.tf, **/*.tfvars, **/*.tftest.hcl, **/terragrunt.hcl, **/.tflint.hcl"
 alwaysApply: false
 ---

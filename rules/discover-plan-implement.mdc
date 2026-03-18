@@ -1,5 +1,6 @@
 ---
 description: Enforce Question → Research → Structure → Plan → Implement workflow with explicit gates.
+tags: [meta]
 globs: "**/*"
 alwaysApply: true
 ---

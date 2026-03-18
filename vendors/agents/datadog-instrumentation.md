@@ -1,6 +1,7 @@
 ---
 name: datadog-instrumentation
 description: "Datadog instrumentation specialist. Configures Datadog agent, APM tracing, DogStatsD custom metrics, unified service tagging, Terraform-managed monitors and SLOs, and dashboard templates. Use for services targeting Datadog."
+tags: [observability]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

@@ -1,6 +1,7 @@
 ---
 name: scope-analyzer
 description: "Read-only codebase exploration agent for reverse engineering. Discovers functional scope by analyzing routing, tests, directory structure, interfaces, dependencies, and documentation. Outputs structured scope reports with confidence-scored functional units."
+tags: [review]
 tools: Read, Grep, Glob, LS
 model: sonnet
 ---

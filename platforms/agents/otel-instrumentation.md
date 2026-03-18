@@ -1,6 +1,7 @@
 ---
 name: otel-instrumentation
 description: "OpenTelemetry instrumentation specialist. Sets up OTel SDK, Collector configuration, trace/metric/log pipelines, Prometheus exposition, Grafana dashboard templates, and SLO definitions. Use for services instrumented with OTel."
+tags: [observability]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

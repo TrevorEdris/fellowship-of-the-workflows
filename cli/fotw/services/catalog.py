@@ -84,12 +84,16 @@ def scan_rules() -> list[Workflow]:
             if path.suffix not in (".mdc", ".md"):
                 continue
             meta = _parse_frontmatter(path)
+            tags = meta.get("tags", [])
+            if isinstance(tags, str):
+                tags = [t.strip() for t in tags.split(",")]
             results.append(
                 Workflow(
                     wtype=WorkflowType.RULE,
                     name=path.stem,
                     description=meta.get("description", ""),
                     path=path,
+                    tags=tags,
                     tier=tier,
                 )
             )
@@ -137,12 +141,16 @@ def scan_agents() -> list[Workflow]:
             if path.suffix != ".md":
                 continue
             meta = _parse_frontmatter(path)
+            tags = meta.get("tags", [])
+            if isinstance(tags, str):
+                tags = [t.strip() for t in tags.split(",")]
             results.append(
                 Workflow(
                     wtype=WorkflowType.AGENT,
                     name=path.stem,
                     description=meta.get("description", ""),
                     path=path,
+                    tags=tags,
                     tier=tier,
                 )
             )
@@ -351,6 +359,23 @@ def validate_hook(path: Path) -> ValidationResult:
 def scan_all() -> list[Workflow]:
     """Scan all workflow types."""
     return scan_rules() + scan_skills() + scan_agents()
+
+
+def filter_workflows(
+    workflows: list[Workflow],
+    type_filter: str | None = None,
+    tier_filter: str | None = None,
+    tags: list[str] | None = None,
+) -> list[Workflow]:
+    """Filter workflows by type, tier, and/or tags (AND logic)."""
+    result = workflows
+    if type_filter:
+        result = [wf for wf in result if wf.wtype.value == type_filter]
+    if tier_filter:
+        result = [wf for wf in result if wf.tier == tier_filter]
+    if tags:
+        result = [wf for wf in result if all(t in wf.tags for t in tags)]
+    return result
 
 
 def validate_rule(path: Path) -> ValidationResult:
