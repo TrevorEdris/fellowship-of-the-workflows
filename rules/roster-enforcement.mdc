@@ -1,5 +1,6 @@
 ---
 description: "When a roster.yaml exists, constrain available skills to those listed in the active role."
+tags: [meta]
 globs: "**/*"
 alwaysApply: true
 ---

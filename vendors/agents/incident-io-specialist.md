@@ -1,6 +1,7 @@
 ---
 name: incident-io-specialist
 description: incident.io specialist. Configures Slack-native incident response, alert routing, on-call schedules, automation workflows, catalog modeling, and structured postmortems. Generates Terraform (official incident.io provider v5+) and guides MCP server workflows for AI-driven incident operations.
+tags: [incident-response]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

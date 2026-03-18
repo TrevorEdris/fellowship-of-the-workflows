@@ -1,5 +1,6 @@
 ---
 description: Python idioms, type hints, and tooling conventions.
+tags: [python]
 globs: "**/*.py, **/pyproject.toml, **/requirements*.txt"
 alwaysApply: false
 ---

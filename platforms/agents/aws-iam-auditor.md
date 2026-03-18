@@ -1,6 +1,7 @@
 ---
 name: aws-iam-auditor
 description: Read-only IAM policy and CloudTrail audit agent. Analyzes IAM policies, roles, and trust relationships for least-privilege violations, privilege escalation paths, and compliance gaps. Produces structured findings with severity ratings. Use when reviewing IAM before deployment, auditing existing AWS accounts, or preparing for a security review.
+tags: [aws, security, review]
 tools: Bash, Glob, Grep, Read
 model: opus
 ---

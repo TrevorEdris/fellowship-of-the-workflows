@@ -1,5 +1,6 @@
 ---
 description: "Azure SDK and IaC patterns: prefer Managed Identity over connection strings, use DefaultAzureCredential correctly, apply RBAC at narrowest scope, and choose Bicep vs Terraform per context."
+tags: [azure, infrastructure]
 globs: "**/*.bicep,**/*.tf,**/go.mod,**/requirements.txt,**/pyproject.toml,**/package.json"
 alwaysApply: false
 ---

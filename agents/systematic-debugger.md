@@ -1,6 +1,7 @@
 ---
 name: systematic-debugger
 description: "Specialist debugging agent for root cause analysis. Delegate to when a bug requires focused investigation. Follows the four-phase systematic debugging methodology. Will not propose fixes until root cause is confirmed."
+tags: [review]
 tools: Bash, Glob, Grep, Read
 model: opus
 ---

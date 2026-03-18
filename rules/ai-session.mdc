@@ -1,5 +1,6 @@
 ---
 description: Maintain a session journal in ~/src/.ai/sessions/ for every AI coding session.
+tags: [meta, documentation]
 globs: "**/*"
 alwaysApply: true
 ---

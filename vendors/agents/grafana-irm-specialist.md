@@ -1,6 +1,7 @@
 ---
 name: grafana-irm-specialist
 description: Grafana Cloud IRM specialist. Configures on-call schedules, escalation chains, alert routing integrations, and incident management for teams on the Grafana + Prometheus + OTel stack. Generates Terraform (grafana_oncall_* resources) and guides MCP-driven incident operations via mcp-grafana.
+tags: [observability, incident-response]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

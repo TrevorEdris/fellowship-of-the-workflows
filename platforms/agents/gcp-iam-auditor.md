@@ -1,6 +1,7 @@
 ---
 name: gcp-iam-auditor
 description: Use this agent to audit GCP IAM policies for over-privilege, exposed service accounts, key files in production, and missing Workload Identity Federation. Produces a prioritized findings report with remediation commands. Invoke when the /gcp-iam skill needs audit or analysis execution.
+tags: [gcp, security, review]
 tools: Bash, Glob, Grep, Read, Write
 model: opus
 ---

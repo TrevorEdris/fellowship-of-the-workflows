@@ -1,6 +1,7 @@
 ---
 name: ascii-ui-mockup-generator
 description: "Use this agent when you need to visualize UI concepts through ASCII mockups before implementation."
+tags: [documentation]
 model: sonnet
 color: green
 ---

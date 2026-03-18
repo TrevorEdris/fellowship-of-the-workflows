@@ -1,6 +1,7 @@
 ---
 name: documentation-sync
 description: Documentation synchronization specialist. Analyzes code changes and generates accurate, current documentation. Ensures docs match reality.
+tags: [documentation]
 tools: Bash, Glob, Grep, Read, Write
 model: sonnet
 ---

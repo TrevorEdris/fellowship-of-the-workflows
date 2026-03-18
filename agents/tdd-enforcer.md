@@ -1,6 +1,7 @@
 ---
 name: tdd-enforcer
 description: Strict TDD enforcement agent. Guides the RED-GREEN-REFACTOR cycle, validates test-first compliance, and blocks implementation without failing tests.
+tags: [testing]
 tools: Bash, Glob, Grep, Read
 model: sonnet
 ---

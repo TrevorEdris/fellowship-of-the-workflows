@@ -1,6 +1,7 @@
 ---
 name: mermaid-diagram-specialist
 description: Mermaid diagram specialist for creating flowcharts, sequence diagrams, ERDs, and architecture visualizations
+tags: [documentation]
 tools: Bash, Glob, Grep, Read, Write
 model: sonnet
 ---

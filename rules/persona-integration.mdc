@@ -1,5 +1,6 @@
 ---
 description: Load and adopt persona voice from persona.yaml config file.
+tags: [meta]
 globs: "**/*"
 alwaysApply: false
 ---

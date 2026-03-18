@@ -1,6 +1,7 @@
 ---
 name: aws-iac-specialist
 description: "Specialist for AWS infrastructure-as-code using CloudFormation, CDK, and SAM. Use for authoring templates, reviewing IaC for correctness and security, migrating CloudFormation to CDK, and interpreting change sets or cdk diff output. Applies AWS Well-Architected principles and enforces security defaults."
+tags: [aws, infrastructure]
 tools: Bash, Glob, Grep, Read, Write
 model: sonnet
 ---

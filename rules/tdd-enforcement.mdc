@@ -1,5 +1,6 @@
 ---
 description: Enforce test-driven development — no production code without a failing test first.
+tags: [testing]
 globs: "**/*"
 alwaysApply: true
 ---

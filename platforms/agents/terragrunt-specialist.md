@@ -1,6 +1,7 @@
 ---
 name: terragrunt-specialist
 description: Terragrunt configuration specialist for designing DRY multi-module infrastructure with root inheritance, dependency DAGs, and run-all orchestration.
+tags: [infrastructure]
 tools: Bash, Glob, Grep, Read, Write, WebFetch
 model: sonnet
 ---

@@ -1,5 +1,6 @@
 ---
 description: "AWS CDK construct authoring conventions: L1/L2/L3 construct selection, security defaults, stack and stage structure, cdk-nag security scanning, and assertions testing. Apply when cdk.json is present in the project."
+tags: [aws, infrastructure]
 globs: "**/cdk.json,**/bin/*.ts,**/lib/*.ts,**/cdk/**/*.ts,**/cdk/**/*.py"
 alwaysApply: false
 ---

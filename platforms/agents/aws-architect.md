@@ -1,6 +1,7 @@
 ---
 name: aws-architect
 description: Reviews AWS architecture for cost efficiency, security posture, resilience, and operational excellence. Evaluates service selection, IaC design, networking topology, and cross-cutting concerns. Use when designing new AWS workloads, reviewing existing infrastructure code, or preparing for a Well-Architected Review.
+tags: [aws, architecture]
 tools: Bash, Glob, Grep, Read, WebFetch
 model: opus
 ---

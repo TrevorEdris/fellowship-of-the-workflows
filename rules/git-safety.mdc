@@ -1,5 +1,6 @@
 ---
 description: Enforce safe git practices — no direct pushes to main, no credential commits.
+tags: [git, security]
 globs: "**/*"
 alwaysApply: true
 ---

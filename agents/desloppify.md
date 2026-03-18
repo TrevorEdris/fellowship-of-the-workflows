@@ -1,6 +1,7 @@
 ---
 name: desloppify
 description: AI slop detection and removal specialist. Scans code comments, documentation, and prose for AI-generated noise and removes or rewrites them to maximize signal-to-noise ratio.
+tags: [review, documentation]
 tools: Bash, Glob, Grep, LS, Read, Write, Edit
 model: sonnet
 ---

@@ -1,5 +1,6 @@
 ---
 description: Rust idioms, ownership, error handling, and tooling conventions.
+tags: [rust]
 globs: "**/*.rs, **/Cargo.toml, **/Cargo.lock"
 alwaysApply: false
 ---

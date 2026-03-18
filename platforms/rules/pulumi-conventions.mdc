@@ -1,5 +1,6 @@
 ---
 description: "Pulumi IaC conventions: stack naming, state backend selection, Output/Input typing discipline, resource naming for drift detection, CrossGuard policy patterns, and configuration secrets handling."
+tags: [infrastructure]
 globs: "Pulumi.yaml,Pulumi.*.yaml,**/Pulumi.yaml"
 alwaysApply: false
 ---

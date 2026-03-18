@@ -1,5 +1,6 @@
 ---
 description: Enforce E2E and integration test conventions when writing or editing test files.
+tags: [testing]
 globs: "**/*.{test,spec}.{ts,tsx,js,jsx},**/e2e/**,**/integration/**,**/__tests__/**"
 alwaysApply: false
 ---

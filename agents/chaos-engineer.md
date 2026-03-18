@@ -1,6 +1,7 @@
 ---
 name: chaos-engineer
 description: "Adversarial code reviewer. Assumes the worst about every change. Identifies failure modes, security gaps, race conditions, and edge cases that optimistic reviewers miss. Read-only — critiques but never fixes."
+tags: [review, testing]
 tools: Bash, Glob, Grep, LS, Read, WebFetch
 model: opus
 ---

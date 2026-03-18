@@ -1,6 +1,7 @@
 ---
 name: codebase-pattern-finder
 description: Find similar implementations, usage examples, or existing patterns that can be modeled after. Provides concrete code examples with file locations and context.
+tags: [review]
 tools: Grep, Glob, Read, LS
 model: sonnet
 ---

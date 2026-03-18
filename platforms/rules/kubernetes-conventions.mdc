@@ -1,5 +1,6 @@
 ---
 description: "Enforce Kubernetes manifest standards: resource limits on every container, liveness/readiness probes, non-root securityContext, and PodDisruptionBudgets."
+tags: [infrastructure]
 globs: "**/*.yaml,**/*.yml"
 alwaysApply: false
 ---

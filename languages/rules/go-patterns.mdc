@@ -1,5 +1,6 @@
 ---
 description: Go idioms, error handling, and tooling conventions.
+tags: [go]
 globs: "**/*.go, **/go.mod, **/go.sum"
 alwaysApply: false
 ---

@@ -1,6 +1,7 @@
 ---
 name: e2e-test-reviewer
 description: Use this agent to review E2E and integration tests for quality, skeleton compliance, test isolation, and maintainability. Invoke after writing tests or during code review of test files. Focuses on structural correctness and test design, not application logic.
+tags: [testing, review]
 tools: Bash, Glob, Grep, Read
 model: sonnet
 ---
