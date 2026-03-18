@@ -16,10 +16,9 @@ from fotw.services.catalog import (
     _EXTRA_RULE_DIRS,
     _EXTRA_SKILL_DIRS,
 )
-from fotw.services.frontmatter_translator import translate_content, translate_to_target
 from fotw.services.settings_merger import merge_hooks, read_settings, write_settings
 from fotw.ui.console import console, err_console
-from fotw.ui.diff import dirs_are_identical, files_are_identical, show_diff, show_dir_diff
+from fotw.ui.diff import files_are_identical, show_diff
 
 # ---------------------------------------------------------------------------
 # Conflict resolution
@@ -141,41 +140,62 @@ def _resolve_conflict(
     return False
 
 
-def _resolve_dir_conflict(ctx: InstallContext, target_dir: Path, source_dir: Path) -> bool:
-    """Resolve a directory conflict. Returns True if directory should be written."""
+# ---------------------------------------------------------------------------
+# Symlink helpers
+# ---------------------------------------------------------------------------
+
+def _atomic_symlink(target: Path, link_target: Path) -> None:
+    """Create a symlink at target pointing to link_target, replacing any existing path."""
+    tmp = target.with_suffix(target.suffix + ".__fotw_tmp")
+    tmp.symlink_to(link_target)
+    tmp.replace(target)
+
+
+def _resolve_symlink_conflict(
+    ctx: InstallContext, target: Path, link_target: Path
+) -> bool:
+    """Resolve a conflict when the install strategy is a symlink.
+
+    Returns True if the symlink should be created, False to skip.
+    """
     if ctx.force:
         return True
 
-    if not target_dir.exists():
-        return True
-
-    # Identical directory — skip silently
-    if dirs_are_identical(target_dir, source_dir):
+    # Already the correct symlink — skip silently.
+    if target.is_symlink() and target.resolve() == link_target.resolve():
         if not ctx.quiet:
-            console.print(f"  [dim]identical: {target_dir.name}/ (skipped)[/dim]")
+            console.print(f"  [dim]identical symlink: {target.name} (skipped)[/dim]")
         return False
 
+    # Nothing at the target path — proceed.
+    if not target.exists() and not target.is_symlink():
+        return True
+
+    # Sticky action from a prior choice this session.
     if ctx.sticky_action == ConflictAction.OVERWRITE_ALL:
         return True
     if ctx.sticky_action == ConflictAction.SKIP_ALL:
         return False
 
     if not _is_interactive():
-        console.print(f"  [yellow]Non-interactive: skipping {target_dir.name}/[/yellow]")
+        console.print(f"  [yellow]Non-interactive: skipping {target.name}[/yellow]")
         return False
 
-    while True:
-        console.print(f"\n  [yellow]Conflict:[/yellow] {target_dir.name}/ already exists")
-        console.print(r"  \[o]verwrite  \[s]kip  \[d]iff  \[O]verwrite-all  \[S]kip-all  \[q]uit")
-        choice = console.input(r"  Choice \[s]: ").strip().lower() or "s"
+    if target.is_symlink():
+        current = target.resolve()
+        console.print(f"\n  [yellow]Conflict:[/yellow] {target.name} is a symlink to {current}")
+        console.print(f"  New target: {link_target}")
+    else:
+        console.print(f"\n  [yellow]Conflict:[/yellow] {target.name} exists as a regular file/directory")
+        console.print(f"  Would convert to symlink → {link_target}")
 
+    while True:
+        console.print(r"  \[o]verwrite  \[s]kip  \[O]verwrite-all  \[S]kip-all  \[q]uit")
+        choice = console.input(r"  Choice \[s]: ").strip().lower() or "s"
         if choice == "o":
             return True
         elif choice == "s":
             return False
-        elif choice == "d":
-            show_dir_diff(target_dir, source_dir, target_dir.name)
-            # Loop to ask again after showing diff
         elif choice in ("oa", "overwrite-all"):
             ctx.sticky_action = ConflictAction.OVERWRITE_ALL
             return True
@@ -186,6 +206,38 @@ def _resolve_dir_conflict(ctx: InstallContext, target_dir: Path, source_dir: Pat
             raise InstallQuit()
         else:
             console.print(f"  [red]Unknown choice: {choice}[/red]")
+
+
+def _install_as_symlink(
+    target: Path,
+    link_target: Path,
+    ctx: InstallContext,
+    label: str,
+) -> bool:
+    """Install link_target as a symlink at target. Returns True on success/skip."""
+    if not _resolve_symlink_conflict(ctx, target, link_target):
+        if not ctx.quiet:
+            console.print(f"  Skipped {label}")
+        return True  # skip is not failure
+
+    if ctx.dry_run:
+        if not ctx.quiet:
+            console.print(f"  [yellow][DRY RUN] Would symlink:[/yellow] {target} → {link_target}")
+        return True
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    # Remove any existing path safely — never rmtree through a symlink.
+    if target.is_symlink() or target.is_file():
+        target.unlink()
+    elif target.is_dir():
+        shutil.rmtree(target)
+
+    _atomic_symlink(target, link_target)
+
+    if not ctx.quiet:
+        console.print(f"[green]\u2713[/green] Symlinked {label} \u2192 {link_target}")
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -273,13 +325,6 @@ def _needs_translation(wtype: str, cfg: AgentConfig) -> bool:
     return wtype == "rules" and cfg.frontmatter_format != "cursor"
 
 
-def _get_new_content(source: Path, wtype: str, cfg: AgentConfig) -> str:
-    """Get the content that would be written to the target file."""
-    if _needs_translation(wtype, cfg):
-        return translate_content(source, cfg.frontmatter_format, cfg.rule_extension)
-    return source.read_text()
-
-
 _TIER_DIRS = {"languages", "platforms", "vendors"}
 
 
@@ -351,56 +396,22 @@ def install_single_workflow(
         console.print(f"Source:   {source}")
         console.print(f"Target:   {target_path}")
         if _needs_translation(install_as, cfg):
-            console.print(f"Note:     Frontmatter will be translated for {cfg.name}")
+            console.print(f"Note:     Frontmatter will be translated and cached for {cfg.name}")
         console.print()
 
-    # Dry run
-    if ctx.dry_run:
-        if not ctx.quiet:
-            console.print("[yellow][DRY RUN] Would copy:[/yellow]")
-            if is_dir:
-                console.print(f"  {source}/ -> {target_path}/")
-                for f in sorted(source.rglob("*")):
-                    if f.is_file():
-                        console.print(f"    {f.relative_to(source)}")
-            else:
-                console.print(f"  {source} -> {target_path}")
-        return True
-
-    # Directory install (skills)
+    # Directory install (skills) — symlink the whole directory.
     if is_dir:
-        if not _resolve_dir_conflict(ctx, target_path, source):
-            if not ctx.quiet:
-                console.print(f"  Skipped {wf_id}")
-            return True  # Skip is not a failure
+        return _install_as_symlink(target_path, source, ctx, f"{name}/")
 
-        target_dir.mkdir(parents=True, exist_ok=True)
-        if target_path.exists():
-            shutil.rmtree(target_path)
-        shutil.copytree(source, target_path)
-        if not ctx.quiet:
-            console.print(f"[green]\u2713[/green] Copied skill directory to {target_path}")
-        return True
-
-    # File install (rules, agents)
-    new_content = _get_new_content(source, wtype, cfg)
-
-    if not _resolve_conflict(ctx, target_path, new_content):
-        if not ctx.quiet:
-            console.print(f"  Skipped {wf_id}")
-        return True  # Skip is not a failure
-
-    target_dir.mkdir(parents=True, exist_ok=True)
-    if _needs_translation(wtype, cfg):
-        translate_to_target(source, target_path, cfg.frontmatter_format, cfg.rule_extension)
-        if not ctx.quiet:
-            console.print(f"[green]\u2713[/green] Translated and installed {source.name} -> {target_path}")
+    # File install (rules, agents).
+    if _needs_translation(install_as, cfg):
+        # Translate to cache, then symlink from target to cache.
+        from fotw.services.cache import build_cache_file
+        cache_path = build_cache_file(source, install_as, cfg)
+        return _install_as_symlink(target_path, cache_path, ctx, source.name)
     else:
-        shutil.copy2(source, target_path)
-        if not ctx.quiet:
-            console.print(f"[green]\u2713[/green] Installed {source.name} -> {target_path}")
-
-    return True
+        # Direct symlink to repo source.
+        return _install_as_symlink(target_path, source, ctx, source.name)
 
 
 # ---------------------------------------------------------------------------
@@ -432,8 +443,8 @@ def install_personas(ctx: InstallContext) -> bool:
 
     if ctx.dry_run:
         if not ctx.quiet:
-            console.print("[yellow][DRY RUN] Would copy:[/yellow]")
-            console.print(f"  {personas_source}/ -> {persona_target}/")
+            console.print("[yellow][DRY RUN] Would symlink:[/yellow]")
+            console.print(f"  {personas_source}/*.md -> {persona_target}/")
             for pfile in sorted(personas_source.glob("*.md")):
                 if pfile.name == "_template.md":
                     continue
@@ -441,17 +452,23 @@ def install_personas(ctx: InstallContext) -> bool:
             console.print(f"  {config_source} -> {config_target}")
         return True
 
-    # Copy persona files
+    # Symlink persona files — each file is a direct symlink to the repo source.
     persona_target.mkdir(parents=True, exist_ok=True)
     count = 0
     for pfile in sorted(personas_source.glob("*.md")):
         if pfile.name == "_template.md":
             continue
-        shutil.copy2(pfile, persona_target / pfile.name)
+        link = persona_target / pfile.name
+        if link.is_symlink() and link.resolve() == pfile.resolve():
+            count += 1
+            continue
+        if link.is_symlink() or link.is_file():
+            link.unlink()
+        _atomic_symlink(link, pfile)
         count += 1
 
     if not ctx.quiet:
-        console.print(f"[green]\u2713[/green] Copied {count} personas to {persona_target}/")
+        console.print(f"[green]\u2713[/green] Symlinked {count} personas to {persona_target}/")
 
     # Config
     if not config_target.exists():
@@ -778,25 +795,19 @@ def install_single_hook(
     target_dir = Path.home() / ".claude" / "hooks"
     target = target_dir / f"{hook.name}.js"
 
-    new_content = hook.path.read_text()
-
     if not ctx.quiet:
         console.print(f"  [yellow]\u2192[/yellow] {hook.name}.js ({hook.event}:{hook.matcher or '*'})", highlight=False)
 
     if ctx.dry_run:
         if not ctx.quiet:
-            console.print(f"    [yellow][DRY RUN] Would copy to {target}[/yellow]")
+            console.print(f"    [yellow][DRY RUN] Would symlink {target} \u2192 {hook.path}[/yellow]")
         return True
 
-    if not _resolve_conflict(ctx, target, new_content):
-        if not ctx.quiet:
-            console.print(f"    Skipped {hook.name}")
-        return True  # Skip is not a failure
-
     target_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(hook.path, target)
+    if not _install_as_symlink(target, hook.path, ctx, f"{hook.name}.js"):
+        return True  # skip is not failure
     if not ctx.quiet:
-        console.print(f"    [green]\u2713[/green] Copied {hook.name}.js")
+        console.print(f"    [green]\u2713[/green] Symlinked {hook.name}.js")
 
     # Optionally copy tests
     if include_tests and hook.has_tests:

@@ -19,6 +19,7 @@ class LockEntry:
     target_path: str       # e.g., ".claude/rules/git-safety.md"
     source_hash: str       # SHA256 of source file content
     installed_at: str      # ISO 8601 timestamp
+    link_type: str = "copy"  # "symlink" | "copy" — default preserves backward compat
 
 
 def compute_source_hash(path: Path) -> str:
