@@ -10,6 +10,18 @@ permissions:
   contents: read
 
 jobs:
+  version-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check plugin version bump
+        run: ./bin/check-version "${{ github.event.pull_request.base.sha }}"
+
   ci:
     runs-on: ubuntu-latest
 

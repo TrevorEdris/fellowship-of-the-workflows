@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Verify plugin version is bumped when plugin-included files change.
+# Usage:
+#   ./bin/check-version              # auto-detects base as origin/main
+#   ./bin/check-version <base-sha>   # explicit base commit
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+PLUGIN_JSON=".claude-plugin/plugin.json"
+PLUGIN_PATHS="^(agents/|hooks/|skills/|\.claude-plugin/)"
+
+BASE_SHA="${1:-origin/main}"
+
+cd "$REPO_ROOT"
+
+CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | grep -E "$PLUGIN_PATHS" || true)
+
+if [ -z "$CHANGED" ]; then
+  echo "No plugin-included files changed. Skipping version check."
+  exit 0
+fi
+
+echo "Plugin-included files changed:"
+echo "$CHANGED"
+echo ""
+
+BASE_VERSION=$(git show "$BASE_SHA":"$PLUGIN_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])")
+HEAD_VERSION=$(python3 -c "import json; print(json.load(open('$PLUGIN_JSON'))['version'])")
+
+echo "Base version: $BASE_VERSION"
+echo "HEAD version: $HEAD_VERSION"
+
+if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
+  echo ""
+  echo "ERROR: Plugin version not bumped. Update 'version' in $PLUGIN_JSON (current: $BASE_VERSION)."
+  echo "Semver guide: patch for fixes, minor for new skills/agents/hooks, major for breaking changes."
+  exit 1
+fi
+
+HIGHER=$(printf '%s\n%s\n' "$BASE_VERSION" "$HEAD_VERSION" | sort -V | tail -1)
+if [ "$HIGHER" != "$HEAD_VERSION" ]; then
+  echo ""
+  echo "ERROR: HEAD version ($HEAD_VERSION) is not greater than base version ($BASE_VERSION). Version must increase."
+  exit 1
+fi
+
+echo ""
+echo "Version bump OK: $BASE_VERSION -> $HEAD_VERSION"
