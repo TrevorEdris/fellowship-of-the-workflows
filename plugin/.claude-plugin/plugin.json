@@ -1,0 +1,63 @@
+{
+  "name": "fotw",
+  "description": "Fellowship of the Workflows — reusable skills, rules, agents, and hooks for AI coding tools",
+  "version": "1.0.0",
+  "author": {
+    "name": "TrevorEdris",
+    "url": "https://github.com/TrevorEdris/fellowship-of-the-workflows"
+  },
+  "homepage": "https://github.com/TrevorEdris/fellowship-of-the-workflows",
+  "repository": "https://github.com/TrevorEdris/fellowship-of-the-workflows",
+  "keywords": ["skills", "agents", "workflows", "multi-tool"],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/block-dangerous-commands.js"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/branch-guard.js"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/protect-secrets.js"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/context-snapshot.js"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-reminder.js"
+          }
+        ]
+      }
+    ]
+  }
+}

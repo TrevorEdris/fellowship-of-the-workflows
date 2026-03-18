@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "fotw",
-      "source": "./",
-      "description": "Fellowship of the Workflows — 55 skills, 34 agents, and 5 hooks for AI coding tools",
+      "source": "./plugin",
+      "description": "Fellowship of the Workflows — reusable skills, agents, and hooks for AI coding tools",
       "version": "1.0.0"
     }
   ]
