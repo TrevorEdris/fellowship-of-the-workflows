@@ -81,6 +81,8 @@ If the plan scores NEEDS WORK:
 | 12 | Step file specificity | Each step names a specific file path, not a vague area (e.g., "update cli/fotw/services/catalog.py" not "update the config") |
 | 13 | Per-step verification | Each step has an explicit verification action (run test, lint, build, or manual check) |
 | 14 | Structure section | Plan includes a phase breakdown or dependency ordering (not just a flat list of steps) |
+| 15 | Git branch | A branch name is specified (e.g., `feature/`, `fix/`, `refactor/`) |
+| 16 | Git commit plan | Commit checkpoints with messages and a PR title/description are included |
 
 ---
 

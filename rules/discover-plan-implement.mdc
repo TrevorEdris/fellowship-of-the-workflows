@@ -85,6 +85,7 @@ alwaysApply: true
   - **Risks and assumptions** — what could go wrong, what we're assuming
   - **Verification steps** — how to confirm each step is correct (test/lint/build/manual check)
   - **Traceability** — map each discovery finding to a plan step
+  - **Git strategy** — branch name, commit checkpoints with messages, anticipated PR title and description
 
 Include a traceability table:
 
@@ -163,6 +164,7 @@ After all steps are complete, before committing:
 - Wait for explicit approval before implementing
 - Run after-action reviews at phase boundaries
 - Suggest self-review before committing
+- Include a Git Strategy section in every PLAN.md (branch, commit checkpoints, PR description)
 
 ---
 *Do not push to main without approval.*

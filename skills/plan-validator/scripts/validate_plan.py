@@ -484,6 +484,66 @@ def check_structure_section(lines: list[str], report: ValidationReport) -> None:
         report.score -= 5
 
 
+def check_git_branch(lines: list[str], report: ValidationReport) -> None:
+    """Check 15: A branch name is specified."""
+    content = "\n".join(lines)
+    has_branch = bool(
+        re.search(r"\b(?:feature|fix|refactor|chore|docs|hotfix|release)/[\w\-/]+", content)
+        or re.search(r"branch[:\s]+`?[\w/\-]+`?", content, re.IGNORECASE)
+        or re.search(r"^#{1,3}\s+git\s+(?:strategy|branch|workflow)", content, re.IGNORECASE | re.MULTILINE)
+    )
+    if not has_branch:
+        report.issues.append(
+            Issue(
+                severity="warning",
+                category="git",
+                message=(
+                    "No branch name found. Plans must specify the branch to create "
+                    "(e.g., feature/my-feature, fix/bug-name)."
+                ),
+            )
+        )
+        report.score -= 5
+
+
+def check_git_commit_plan(lines: list[str], report: ValidationReport) -> None:
+    """Check 16: Commit checkpoints and a PR title/description are present."""
+    content = "\n".join(lines)
+    has_commits = bool(
+        re.search(r"\b(?:feat|fix|refactor|chore|docs|test|perf|ci)\(", content)
+        or re.search(r"commit\s+message", content, re.IGNORECASE)
+    )
+    has_pr = bool(
+        re.search(r"\bpr\s+(?:title|description|body)\b", content, re.IGNORECASE)
+        or re.search(r"pull\s+request", content, re.IGNORECASE)
+        or re.search(r"^#{1,4}\s+pr\b", content, re.IGNORECASE | re.MULTILINE)
+    )
+    if not has_commits:
+        report.issues.append(
+            Issue(
+                severity="warning",
+                category="git",
+                message=(
+                    "No commit messages found. Plans should include commit checkpoints "
+                    "with conventional commit messages."
+                ),
+            )
+        )
+        report.score -= 5
+    if not has_pr:
+        report.issues.append(
+            Issue(
+                severity="warning",
+                category="git",
+                message=(
+                    "No PR title or description found. Plans should include an anticipated "
+                    "PR title and description."
+                ),
+            )
+        )
+        report.score -= 3
+
+
 # ---------------------------------------------------------------------------
 # Report rendering
 # ---------------------------------------------------------------------------
@@ -592,6 +652,8 @@ def validate_plan(path: Path) -> ValidationReport:
     check_step_file_specificity(lines, report)
     check_per_step_verification(lines, report)
     check_structure_section(lines, report)
+    check_git_branch(lines, report)
+    check_git_commit_plan(lines, report)
 
     report.score = max(0, report.score)
     return report
