@@ -72,6 +72,70 @@ def update_cmd(
         current_hash = compute_source_hash(source)
         needs_update = force or current_hash != entry.source_hash
 
+        if entry.link_type == "symlink":
+            target = resolved / entry.target_path
+            # Verify symlink is still valid.
+            if target.is_symlink() and target.exists() and not needs_update:
+                console.print(f"  [dim]\u2022[/dim] {entry.workflow_id} (symlink current)")
+                unchanged += 1
+                updated_entries.append(entry)
+                continue
+
+            if needs_update:
+                # For translated rules: regenerate the cache file; symlink is unchanged.
+                from fotw.services.agents import get_agent_config
+                from fotw.services.cache import build_cache_file, get_cache_path
+                cfg = get_agent_config(entry.tool)
+                if cfg is not None and wtype == "rules" and cfg.frontmatter_format != "cursor":
+                    if dry_run:
+                        console.print(f"  [yellow][DRY RUN][/yellow] Would regenerate cache for {entry.workflow_id}")
+                    else:
+                        build_cache_file(source, wtype, cfg)
+                        console.print(f"  [green]\u2713[/green] {entry.workflow_id} (cache updated)")
+                    updated += 1
+                    updated_entries.append(
+                        LockEntry(
+                            workflow_id=entry.workflow_id,
+                            tool=entry.tool,
+                            target_path=entry.target_path,
+                            source_hash=current_hash,
+                            installed_at=now,
+                            link_type="symlink",
+                        )
+                    )
+                    continue
+            # Broken or missing symlink — re-install.
+            if dry_run:
+                console.print(f"  [yellow][DRY RUN][/yellow] Would re-symlink {entry.workflow_id}")
+                updated += 1
+                updated_entries.append(entry)
+                continue
+            ctx = InstallContext(
+                tool=entry.tool,
+                target_repo=resolved,
+                force=True,
+                quiet=True,
+            )
+            if install_single_workflow(entry.workflow_id, ctx):
+                console.print(f"  [green]\u2713[/green] {entry.workflow_id} (re-symlinked)")
+                updated += 1
+                updated_entries.append(
+                    LockEntry(
+                        workflow_id=entry.workflow_id,
+                        tool=entry.tool,
+                        target_path=entry.target_path,
+                        source_hash=current_hash,
+                        installed_at=now,
+                        link_type="symlink",
+                    )
+                )
+            else:
+                console.print(f"  [red]\u2717[/red] {entry.workflow_id} (failed)")
+                errors += 1
+                updated_entries.append(entry)
+            continue
+
+        # Legacy copy-based entry.
         if not needs_update:
             console.print(f"  [dim]\u2022[/dim] {entry.workflow_id} (unchanged)")
             unchanged += 1
@@ -87,7 +151,7 @@ def update_cmd(
         ctx = InstallContext(
             tool=entry.tool,
             target_repo=resolved,
-            force=True,  # Always overwrite when updating
+            force=True,
             quiet=True,
         )
 

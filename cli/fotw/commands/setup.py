@@ -98,6 +98,7 @@ def setup_cmd(
                     target_path=rel_target,
                     source_hash=compute_source_hash(source),
                     installed_at=now,
+                    link_type="symlink",
                 )
             )
             console.print(f"  [green]\u2713[/green] {wf_id}")
