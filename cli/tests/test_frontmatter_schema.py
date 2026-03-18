@@ -8,7 +8,7 @@ import frontmatter
 import pytest
 
 from fotw.models.workflow import VALID_TAGS
-from fotw.services.catalog import COMMUNITY_AGENTS_DIR, COMMUNITY_RULES_DIR, WORKFLOWS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_AGENT_DIRS, _EXTRA_RULE_DIRS
 
 # --- Allowed frontmatter keys per workflow type ---
 
@@ -42,8 +42,8 @@ def _parse(path):
 
 
 def _iter_rule_files():
-    """Yield all rule files from core and community dirs."""
-    for rules_dir in [WORKFLOWS_DIR / "rules", COMMUNITY_RULES_DIR]:
+    """Yield all rule files from core and language/platform/vendor dirs."""
+    for rules_dir, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
         if rules_dir.is_dir():
             for path in sorted(rules_dir.iterdir()):
                 if path.suffix in (".mdc", ".md") and path.name != ".gitkeep":
@@ -192,8 +192,8 @@ def test_skill_name_matches_directory():
 
 
 def _iter_agent_files():
-    """Yield all agent files from core and community dirs."""
-    for agents_dir in [WORKFLOWS_DIR / "agents", COMMUNITY_AGENTS_DIR]:
+    """Yield all agent files from core and platform/vendor dirs."""
+    for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
         if agents_dir.is_dir():
             for path in sorted(agents_dir.iterdir()):
                 if path.suffix == ".md" and path.name != ".gitkeep":

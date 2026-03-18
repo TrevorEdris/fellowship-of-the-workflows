@@ -1,8 +1,8 @@
 # Workflow Catalog
 
-Full listing of all workflows available in Fellowship of the Workflows. Items in the **community/** tier are vendor-specific and not auto-discovered in plugin mode.
+Full listing of all workflows available in Fellowship of the Workflows. Items in the **languages/**, **platforms/**, and **vendors/** tiers are not auto-discovered in plugin mode and require explicit install.
 
-Filter via CLI: `./bin/fotw list`, `./bin/fotw list --tag aws`, `./bin/fotw list --tier community`
+Filter via CLI: `./bin/fotw list`, `./bin/fotw list --tag aws`, `./bin/fotw list --tier platforms`
 
 ---
 
@@ -160,42 +160,72 @@ Specialist subagents auto-discovered in plugin mode.
 
 ---
 
-## Community Workflows
+## Language Workflows
 
-Vendor-specific. Not auto-discovered in plugin mode. Install explicitly.
+Language-specific. Not auto-discovered in plugin mode. Install explicitly.
 
-See [community/README.md](../community/README.md) for install instructions and the tier philosophy.
+See [languages/README.md](../languages/README.md) for install instructions.
 
-### Community Skills
+### Language Skills
 
 | Skill | Tags | Description |
 |-------|------|-------------|
+| `go-patterns` | `go` | Go patterns and idioms: error handling, interfaces, concurrency |
+| `python-patterns` | `python` | Python patterns and idioms: typing, dataclasses, async |
+| `rust-patterns` | `rust` | Rust patterns and idioms: ownership, error handling, concurrency |
+| `typescript-patterns` | `typescript` | TypeScript patterns and idioms: generics, utility types, strict mode |
+
+### Language Rules
+
+| Rule | Description |
+|------|-------------|
+| `go-patterns` | Go error handling, interfaces, concurrency patterns |
+| `python-patterns` | Python typing, dataclasses, async patterns, testing idioms |
+| `rust-patterns` | Rust error handling, ownership idioms, concurrency patterns |
+| `typescript-patterns` | TypeScript strict mode, utility types, async patterns |
+
+---
+
+## Platform Workflows
+
+Platform-specific. Not auto-discovered in plugin mode. Install explicitly.
+
+See [platforms/README.md](../platforms/README.md) for install instructions.
+
+### Platform Skills
+
+| Skill | Tags | Description |
+|-------|------|-------------|
+| `aws` | `aws` | AWS credential setup, SDK patterns, CLI workflows |
+| `aws-iac` | `aws`, `infrastructure` | CloudFormation, CDK, SAM authoring and review |
+| `aws-iam` | `aws`, `security` | IAM policies, least-privilege, Secrets Manager, KMS |
+| `aws-serverless` | `aws`, `architecture` | Lambda, Step Functions, EventBridge, SQS/SNS patterns |
 | `azure` | `azure` | Azure platform: authentication, SDKs, services |
 | `azure-functions` | `azure`, `architecture` | Azure Functions: triggers, bindings, deployment |
 | `azure-iac` | `azure`, `infrastructure` | Azure IaC with Bicep and Terraform |
-| `better-stack` | `observability`, `incident-response` | Better Stack uptime monitors, on-call, status pages |
 | `cloud-run` | `gcp`, `infrastructure` | Cloud Run services, jobs, Eventarc triggers |
+| `docker` | `infrastructure` | Dockerfiles, Docker Compose, container optimization |
+| `gcp` | `gcp` | GCP project setup, authentication, gcloud CLI |
 | `gcp-data` | `gcp`, `architecture` | GCP data stores: Cloud SQL, Firestore, BigQuery, Spanner |
-| `grafana-irm` | `observability`, `incident-response` | Grafana Cloud IRM on-call and alerting |
-| `incident-io` | `incident-response` | incident.io Slack-native incident response |
+| `gcp-iam` | `gcp`, `security` | GCP IAM roles, service accounts, Workload Identity |
+| `kubernetes` | `infrastructure` | Kubernetes manifests, Helm charts, Kustomize overlays |
 | `pulumi` | `infrastructure` | Pulumi multi-cloud infrastructure programs |
-| `rust-patterns` | `rust` | Rust patterns and idioms |
-| `velocity-forecast` | `meta` | Sprint velocity forecasting and capacity planning |
+| `terraform` | `infrastructure` | Terraform modules, state, providers, testing |
+| `terragrunt` | `infrastructure` | DRY Terragrunt configurations, dependency DAGs |
 
-### Community Rules
+### Platform Rules
 
 | Rule | Description |
 |------|-------------|
 | `azure-patterns` | Azure SDK patterns, Managed Identity, common service idioms |
 | `cdk-conventions` | AWS CDK L2 constructs, stack organization, cdk-nag patterns |
+| `cloudformation-conventions` | CloudFormation resource naming, deletion policies, change sets |
 | `dockerfile-conventions` | Multi-stage build patterns, layer optimization, security hardening |
 | `kubernetes-conventions` | Resource limits, probes, security contexts, RBAC patterns |
-| `pagerduty-conventions` | PagerDuty service design and escalation policy conventions |
 | `pulumi-conventions` | Pulumi Output/Input discipline, stack naming, no-local-backend |
-| `python-patterns` | Python typing, dataclasses, async patterns, testing idioms |
-| `rust-patterns` | Rust error handling, ownership idioms, concurrency patterns |
+| `terraform-conventions` | Terraform module structure, state, naming conventions |
 
-### Community Agents
+### Platform Agents
 
 | Agent | Domain |
 |-------|--------|
@@ -203,14 +233,42 @@ See [community/README.md](../community/README.md) for install instructions and t
 | `aws-iac-specialist` | CloudFormation, CDK, SAM authoring and CFN→CDK migration |
 | `aws-iam-auditor` | IAM policy analysis, privilege escalation, CIS compliance |
 | `azure-architect` | Azure service selection and WAF alignment |
-| `better-stack-specialist` | Better Stack monitors, on-call, status pages |
 | `cloud-run-specialist` | Cloud Run, Cloud Functions, Pub/Sub, Eventarc |
-| `datadog-instrumentation` | Datadog APM, DogStatsD, Terraform monitors/SLOs |
 | `gcp-iam-auditor` | GCP IAM audit and Workload Identity Federation |
-| `grafana-irm-specialist` | Grafana Cloud IRM on-call and alert routing |
-| `incident-io-specialist` | incident.io incident response and Terraform |
 | `otel-instrumentation` | OTel SDK, Collector, Prometheus, Grafana dashboards |
-| `pagerduty-config` | PagerDuty services, escalation policies, Terraform |
 | `pulumi-specialist` | Pulumi programs (TS/Python/Go/C#) and CrossGuard |
 | `terraform-specialist` | Terraform modules, state, security audit |
 | `terragrunt-specialist` | Terragrunt DRY configs, dependency DAGs, multi-account |
+
+---
+
+## Vendor Workflows
+
+Vendor-specific. Not auto-discovered in plugin mode. Install explicitly.
+
+See [vendors/README.md](../vendors/README.md) for install instructions.
+
+### Vendor Skills
+
+| Skill | Tags | Description |
+|-------|------|-------------|
+| `better-stack` | `observability`, `incident-response` | Better Stack uptime monitors, on-call, status pages |
+| `grafana-irm` | `observability`, `incident-response` | Grafana Cloud IRM on-call and alerting |
+| `incident-io` | `incident-response` | incident.io Slack-native incident response |
+| `pagerduty` | `incident-response` | PagerDuty services, escalation policies, on-call schedules |
+
+### Vendor Rules
+
+| Rule | Description |
+|------|-------------|
+| `pagerduty-conventions` | PagerDuty service design and escalation policy conventions |
+
+### Vendor Agents
+
+| Agent | Domain |
+|-------|--------|
+| `better-stack-specialist` | Better Stack monitors, on-call, status pages |
+| `datadog-instrumentation` | Datadog APM, DogStatsD, Terraform monitors/SLOs |
+| `grafana-irm-specialist` | Grafana Cloud IRM on-call and alert routing |
+| `incident-io-specialist` | incident.io incident response and Terraform |
+| `pagerduty-config` | PagerDuty services, escalation policies, Terraform |

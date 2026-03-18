@@ -8,7 +8,7 @@ import re
 
 import pytest
 
-from fotw.services.catalog import COMMUNITY_AGENTS_DIR, COMMUNITY_RULES_DIR, WORKFLOWS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_AGENT_DIRS, _EXTRA_RULE_DIRS
 
 # Persona character names — specific enough to avoid false positives.
 # Intentionally excludes generic words like "enterprise", "neighborhood"
@@ -89,7 +89,7 @@ def _format_violations(filepath, violations):
 def test_no_persona_terms_in_rules():
     """Rules must not contain persona-specific names or terms."""
     all_violations = []
-    for rules_dir in [WORKFLOWS_DIR / "rules", COMMUNITY_RULES_DIR]:
+    for rules_dir, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
         if not rules_dir.is_dir():
             continue
         for path in sorted(rules_dir.iterdir()):
@@ -135,7 +135,7 @@ def test_no_persona_terms_in_skills():
 def test_no_persona_terms_in_agents():
     """Agent definitions must not contain persona-specific names or terms."""
     all_violations = []
-    for agents_dir in [WORKFLOWS_DIR / "agents", COMMUNITY_AGENTS_DIR]:
+    for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
         if not agents_dir.is_dir():
             continue
         for path in sorted(agents_dir.iterdir()):

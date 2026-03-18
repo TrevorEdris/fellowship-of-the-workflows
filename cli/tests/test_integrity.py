@@ -14,7 +14,13 @@ import re
 import frontmatter
 import pytest
 
-from fotw.services.catalog import COMMUNITY_AGENTS_DIR, COMMUNITY_RULES_DIR, WORKFLOWS_DIR, STARTERS_DIR
+from fotw.services.catalog import (
+    WORKFLOWS_DIR,
+    STARTERS_DIR,
+    _EXTRA_AGENT_DIRS,
+    _EXTRA_RULE_DIRS,
+    _EXTRA_SKILL_DIRS,
+)
 from fotw.services.installer import TIER_RULES
 
 
@@ -40,9 +46,9 @@ def _catalog_agent_names():
 
 
 def _agent_file_names():
-    """Return set of agent names from agents/*.md and community/agents/*.md."""
+    """Return set of agent names from agents/ and platform/vendor agent dirs."""
     names = set()
-    for agents_dir in [WORKFLOWS_DIR / "agents", COMMUNITY_AGENTS_DIR]:
+    for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
         if agents_dir.is_dir():
             names.update(p.stem for p in agents_dir.glob("*.md") if p.name != ".gitkeep")
     return names
@@ -87,6 +93,7 @@ def test_skill_agent_references_exist():
     if not skills_dir.is_dir():
         pytest.skip("No skills directory")
 
+    all_agent_names = _agent_file_names()
     broken = []
     for skill_dir in sorted(skills_dir.iterdir()):
         if not skill_dir.is_dir():
@@ -96,11 +103,8 @@ def test_skill_agent_references_exist():
             continue
         meta = _parse(skill_file)
         agent_ref = meta.get("agent")
-        if agent_ref:
-            core_path = WORKFLOWS_DIR / "agents" / f"{agent_ref}.md"
-            community_path = COMMUNITY_AGENTS_DIR / f"{agent_ref}.md"
-            if not core_path.is_file() and not community_path.is_file():
-                broken.append(f"{skill_dir.name}: agent='{agent_ref}' -> file not found")
+        if agent_ref and agent_ref not in all_agent_names:
+            broken.append(f"{skill_dir.name}: agent='{agent_ref}' -> file not found")
 
     assert not broken, f"Broken skill-agent references:\n" + "\n".join(broken)
 
@@ -180,8 +184,8 @@ def test_all_workflow_files_end_with_newline():
     """All workflow markdown files should end with a newline (POSIX)."""
     violations = []
 
-    # Rules (core + community)
-    for rules_dir in [WORKFLOWS_DIR / "rules", COMMUNITY_RULES_DIR]:
+    # Rules (core + language/platform/vendor)
+    for rules_dir, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
         if rules_dir.is_dir():
             for path in sorted(rules_dir.iterdir()):
                 if path.suffix not in (".mdc", ".md") or path.name == ".gitkeep":
@@ -190,19 +194,19 @@ def test_all_workflow_files_end_with_newline():
                 if content and not content.endswith("\n"):
                     violations.append(str(path))
 
-    # Skills
-    skills_dir = WORKFLOWS_DIR / "skills"
-    if skills_dir.is_dir():
-        for skill_dir in sorted(skills_dir.iterdir()):
-            if not skill_dir.is_dir():
-                continue
-            for path in skill_dir.rglob("*.md"):
-                content = path.read_text()
-                if content and not content.endswith("\n"):
-                    violations.append(str(path))
+    # Skills (core + language/platform/vendor)
+    for skills_dir, _ in [(WORKFLOWS_DIR / "skills", "core")] + _EXTRA_SKILL_DIRS:
+        if skills_dir.is_dir():
+            for skill_dir in sorted(skills_dir.iterdir()):
+                if not skill_dir.is_dir():
+                    continue
+                for path in skill_dir.rglob("*.md"):
+                    content = path.read_text()
+                    if content and not content.endswith("\n"):
+                        violations.append(str(path))
 
-    # Agents (core + community)
-    for agents_dir in [WORKFLOWS_DIR / "agents", COMMUNITY_AGENTS_DIR]:
+    # Agents (core + platform/vendor)
+    for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
         if agents_dir.is_dir():
             for path in sorted(agents_dir.iterdir()):
                 if path.suffix != ".md" or path.name == ".gitkeep":
@@ -220,19 +224,21 @@ def test_no_empty_workflow_files():
     """No workflow file should be zero bytes."""
     empty = []
 
-    for rules_dir in [WORKFLOWS_DIR / "rules", COMMUNITY_RULES_DIR]:
+    for rules_dir, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
         if rules_dir.is_dir():
             for path in sorted(rules_dir.glob("*")):
                 if path.suffix in (".mdc", ".md") and path.stat().st_size == 0:
                     empty.append(str(path))
 
-    for skill_dir in sorted((WORKFLOWS_DIR / "skills").iterdir()):
-        if skill_dir.is_dir():
-            skill_file = skill_dir / "SKILL.md"
-            if skill_file.is_file() and skill_file.stat().st_size == 0:
-                empty.append(str(skill_file))
+    for skills_dir, _ in [(WORKFLOWS_DIR / "skills", "core")] + _EXTRA_SKILL_DIRS:
+        if skills_dir.is_dir():
+            for skill_dir in sorted(skills_dir.iterdir()):
+                if skill_dir.is_dir():
+                    skill_file = skill_dir / "SKILL.md"
+                    if skill_file.is_file() and skill_file.stat().st_size == 0:
+                        empty.append(str(skill_file))
 
-    for agents_dir in [WORKFLOWS_DIR / "agents", COMMUNITY_AGENTS_DIR]:
+    for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
         if agents_dir.is_dir():
             for path in sorted(agents_dir.glob("*.md")):
                 if path.stat().st_size == 0:

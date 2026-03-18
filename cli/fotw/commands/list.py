@@ -18,7 +18,7 @@ def _normalize_type(value: str) -> str:
     return _PLURAL_MAP.get(value, value)
 
 
-VALID_TIERS = ("core", "community", "all")
+VALID_TIERS = ("core", "languages", "platforms", "vendors", "all")
 
 
 def list_cmd(
@@ -29,7 +29,7 @@ def list_cmd(
         None, "--tag", "-t", help="Filter skills by tag (e.g., aws, infrastructure, review)"
     ),
     tier: Optional[str] = typer.Option(
-        None, "--tier", help="Filter skills by tier (core, community, all). Default: all"
+        None, "--tier", help="Filter by tier (core, languages, platforms, vendors, all). Default: all"
     ),
     as_json: bool = typer.Option(False, "--json", help="Output as JSON"),
     context_budget: bool = typer.Option(False, "--context-budget", help="Show estimated token budget per skill"),
@@ -72,11 +72,11 @@ def list_cmd(
     if context_budget:
         from rich.table import Table
 
-        from fotw.services.catalog import COMMUNITY_DIR, WORKFLOWS_DIR
+        from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_SKILL_DIRS
         from fotw.services.context_budget import estimate_skill
 
         skill_dirs_to_scan = []
-        for base_dir, t in [(WORKFLOWS_DIR / "skills", "core"), (COMMUNITY_DIR, "community")]:
+        for base_dir, t in [(WORKFLOWS_DIR / "skills", "core")] + _EXTRA_SKILL_DIRS:
             if base_dir.is_dir():
                 for skill_dir in sorted(base_dir.iterdir()):
                     if skill_dir.is_dir() and (skill_dir / "SKILL.md").is_file():

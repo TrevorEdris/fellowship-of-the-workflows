@@ -6,9 +6,9 @@ A centralized repository for sharing AI agent workflows across your team. Works 
 
 | Type | Count | Description |
 |------|-------|-------------|
-| **Skills** | 44 core + 11 community | Executable packages — code review, Terraform, AWS, security audits, and more |
-| **Rules** | 20 core + 8 community | Conditional context files — git safety, output style, model guidance, coding patterns |
-| **Agents** | 20 core + 15 community | Subagent definitions — specialist agents for focused tasks |
+| **Skills** | 34 core · 4 languages · 16 platforms · 4 vendors | Executable packages — code review, Terraform, AWS, security audits, and more |
+| **Rules** | 16 core · 4 languages · 7 platforms · 1 vendors | Conditional context files — git safety, output style, model guidance, coding patterns |
+| **Agents** | 20 core · 10 platforms · 5 vendors | Subagent definitions — specialist agents for focused tasks |
 | **Hooks** | 5 | Claude Code event hooks — block dangerous commands, guard branches |
 | **Personas** | 12 | AI personality overlays — Gandalf, Sauron, and friends |
 | **Starters** | 3 | Project templates — minimal, standard, full |
@@ -91,9 +91,9 @@ There are two ways to use this repo:
 claude --plugin-dir /path/to/fellowship-of-the-workflows
 ```
 
-All 44 core skills, 34 agents, and 5 hooks are auto-discovered. Use `/code-review`, `/terraform`, `/security-review`, etc. immediately.
+All 34 core skills, 20 core agents, and 5 hooks are auto-discovered. Use `/code-review`, `/security-review`, `/git-workflow`, etc. immediately.
 
-> **Community skills** are not auto-discovered. Install them explicitly: `fotw install community/azure ~/project --for claude-code`
+> **Language, platform, and vendor workflows** are not auto-discovered. Install explicitly: `fotw install platforms/skills/aws ~/project --for claude-code`
 
 > **Rules and starters** still need `fotw setup` or `fotw install` — they must live in your project directory. Use `fotw setup ~/my-project --for claude-code` to install all rules with lock file tracking. See [Option B](#option-b-install-mode-any-tool).
 
@@ -110,16 +110,18 @@ cd fellowship-of-the-workflows
 # 2. See what's available
 ./bin/fotw list                    # Everything
 ./bin/fotw list --type skill       # Just skills
-./bin/fotw list --tier core        # Core skills only
-./bin/fotw list --tier community   # Community (vendor-specific) skills
-./bin/fotw list --tag aws          # Skills tagged "aws"
+./bin/fotw list --tier core        # Core workflows only
+./bin/fotw list --tier platforms   # Platform-specific workflows
+./bin/fotw list --tier vendors     # Vendor-specific workflows
+./bin/fotw list --tag aws          # Workflows tagged "aws"
 
 # 3. Install a starter template to your project
 ./bin/fotw install starters/standard ~/my-project --for claude-code
 
 # 4. Install individual workflows
 ./bin/fotw install skills/code-review ~/my-project --for claude-code
-./bin/fotw install community/azure ~/my-project --for claude-code
+./bin/fotw install platforms/skills/aws ~/my-project --for claude-code
+./bin/fotw install languages/skills/go-patterns ~/my-project --for claude-code
 ./bin/fotw install rules/ai-session ~/my-project --for cursor
 ./bin/fotw install rules/git-safety --global --for claude-code   # Available in all projects
 ```
@@ -145,11 +147,13 @@ Run any command with `--help` for full options.
 ### Install Options
 
 ```bash
-./bin/fotw install skills/code-review ~/my-project --for claude-code          # To a project
-./bin/fotw install community/pulumi ~/my-project --for claude-code             # Community skill
-./bin/fotw install rules/ai-session --global --for cursor                     # Global (all projects)
-./bin/fotw install --all ~/my-project --for claude-code --force               # Everything at once
-./bin/fotw install skills/code-review ~/my-project --for claude-code --dry-run  # Preview only
+./bin/fotw install skills/code-review ~/my-project --for claude-code                    # Core skill
+./bin/fotw install platforms/skills/terraform ~/my-project --for claude-code            # Platform skill
+./bin/fotw install languages/skills/go-patterns ~/my-project --for claude-code          # Language skill
+./bin/fotw install vendors/skills/pagerduty ~/my-project --for claude-code              # Vendor skill
+./bin/fotw install rules/ai-session --global --for cursor                               # Global rule
+./bin/fotw install --all ~/my-project --for claude-code --force                         # Everything
+./bin/fotw install skills/code-review ~/my-project --for claude-code --dry-run          # Preview only
 ```
 
 | Flag | Description |
@@ -159,7 +163,7 @@ Run any command with `--help` for full options.
 | `--all` / `-a` | Install all workflows at once |
 | `--force` / `-f` | Overwrite without prompting |
 | `--dry-run` / `-n` | Preview what would be installed |
-| `--tier core\|community\|all` | Filter skill listing by tier |
+| `--tier core\|languages\|platforms\|vendors\|all` | Filter workflow listing by tier |
 
 Without `--force`, the installer prompts before overwriting: `[o]verwrite / [s]kip / [d]iff / [b]ackup / [O]verwrite-all / [S]kip-all / [q]uit`.
 
@@ -203,16 +207,20 @@ See [starters/README.md](starters/README.md) for details and modular snippets.
 
 ---
 
-## Skill Tiers
+## Workflow Tiers
 
-Skills are organized into two tiers:
+Workflows are organized into four tiers:
 
 | Tier | Location | Audience | Plugin Auto-Discovery |
 |------|----------|----------|-----------------------|
-| **Core** | `skills/` | Universal (any stack) | Yes |
-| **Community** | `community/` | Specific vendor or niche | No — explicit install only |
+| **Core** | `skills/`, `rules/`, `agents/` | Universal (any stack) | Yes |
+| **Languages** | `languages/` | Specific programming language | No — explicit install only |
+| **Platforms** | `platforms/` | Specific cloud or infra platform | No — explicit install only |
+| **Vendors** | `vendors/` | Specific commercial vendor | No — explicit install only |
 
-Community skills follow the same quality bar as core skills — the distinction is audience, not quality. See [community/README.md](community/README.md) for the full list and installation instructions.
+All tiers follow the same quality bar — the distinction is audience, not quality. Install only what your team uses.
+
+See [languages/README.md](languages/README.md), [platforms/README.md](platforms/README.md), and [vendors/README.md](vendors/README.md) for the full listings and install instructions.
 
 ### Skill Tags
 
@@ -283,9 +291,9 @@ This repo is structured as a [Claude Code plugin](https://code.claude.com/docs/e
 | Hooks | `hooks/hooks.json` | Auto — registered as event handlers |
 | Rules | `rules/*.mdc` | **Manual** — requires `fotw install` to copy to project |
 | Starters | `starters/*.md` | **Manual** — requires `fotw install` to copy to project |
-| Community skills | `community/*/SKILL.md` | **Manual** — excluded from auto-discovery |
-| Community rules | `community/rules/*.mdc` | **Manual** — excluded from auto-discovery |
-| Community agents | `community/agents/*.md` | **Manual** — excluded from auto-discovery |
+| Language skills/rules | `languages/` | **Manual** — excluded from auto-discovery |
+| Platform skills/rules/agents | `platforms/` | **Manual** — excluded from auto-discovery |
+| Vendor skills/rules/agents | `vendors/` | **Manual** — excluded from auto-discovery |
 
 The `.claude-plugin/plugin.json` manifest declares the plugin metadata. Hook scripts use `${CLAUDE_PLUGIN_ROOT}` to resolve paths relative to the plugin directory.
 

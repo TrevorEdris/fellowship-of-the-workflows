@@ -10,13 +10,13 @@ Source rules are in Cursor format (.mdc). Translation produces:
 import frontmatter
 import pytest
 
-from fotw.services.catalog import COMMUNITY_RULES_DIR, WORKFLOWS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_RULE_DIRS
 from fotw.services.frontmatter_translator import translate_content
 
 
 def _all_rules():
-    """Yield (name, path) for every rule file (core + community)."""
-    for rules_dir in [WORKFLOWS_DIR / "rules", COMMUNITY_RULES_DIR]:
+    """Yield (name, path) for every rule file (core + language/platform/vendor)."""
+    for rules_dir, _ in [(WORKFLOWS_DIR / "rules", "core")] + _EXTRA_RULE_DIRS:
         if not rules_dir.is_dir():
             continue
         for path in sorted(rules_dir.iterdir()):

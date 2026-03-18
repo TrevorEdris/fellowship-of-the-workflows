@@ -66,17 +66,17 @@ def print_workflows(
     if not type_filter or type_filter == "rule":
         rules = type_groups.get(WorkflowType.RULE, [])
         if rules:
-            has_community_rules = any(wf.tier == "community" for wf in rules)
-            table = Table(title="rules", title_style="bold", show_header=has_community_rules, box=None, padding=(0, 2))
+            has_non_core = any(wf.tier != "core" for wf in rules)
+            table = Table(title="rules", title_style="bold", show_header=has_non_core, box=None, padding=(0, 2))
             table.add_column("ID", style="green", min_width=30)
-            if has_community_rules:
-                table.add_column("Tier", style="dim", min_width=10)
+            if has_non_core:
+                table.add_column("Tier", style="dim", min_width=12)
             table.add_column("Description")
             for wf in rules:
                 row = [wf.workflow_id]
-                if has_community_rules:
-                    tier_label = "[dim]community[/dim]" if wf.tier == "community" else "core"
-                    row.append(tier_label)
+                if has_non_core:
+                    tier_label = wf.tier if wf.tier != "core" else ""
+                    row.append(f"[dim]{tier_label}[/dim]" if tier_label else "")
                 row.append(_truncate(wf.description))
                 table.add_row(*row)
             console.print(table)
@@ -87,19 +87,19 @@ def print_workflows(
         skills = type_groups.get(WorkflowType.SKILL, [])
         if skills:
             has_tags = any(wf.tags for wf in skills)
-            has_community = any(wf.tier == "community" for wf in skills)
+            has_non_core = any(wf.tier != "core" for wf in skills)
             table = Table(title="skills", title_style="bold", show_header=True, box=None, padding=(0, 2))
             table.add_column("ID", style="green", min_width=30)
-            if has_community:
-                table.add_column("Tier", style="dim", min_width=10)
+            if has_non_core:
+                table.add_column("Tier", style="dim", min_width=12)
             if has_tags:
                 table.add_column("Tags", style="cyan", min_width=20)
             table.add_column("Description")
             for wf in skills:
                 row = [wf.workflow_id]
-                if has_community:
-                    tier_label = "[dim]community[/dim]" if wf.tier == "community" else "core"
-                    row.append(tier_label)
+                if has_non_core:
+                    tier_label = wf.tier if wf.tier != "core" else ""
+                    row.append(f"[dim]{tier_label}[/dim]" if tier_label else "")
                 if has_tags:
                     row.append(", ".join(wf.tags))
                 row.append(_truncate(wf.description))
@@ -111,17 +111,17 @@ def print_workflows(
     if not type_filter or type_filter == "agent":
         agents = type_groups.get(WorkflowType.AGENT, [])
         if agents:
-            has_community_agents = any(wf.tier == "community" for wf in agents)
-            table = Table(title="agents", title_style="bold", show_header=has_community_agents, box=None, padding=(0, 2))
+            has_non_core = any(wf.tier != "core" for wf in agents)
+            table = Table(title="agents", title_style="bold", show_header=has_non_core, box=None, padding=(0, 2))
             table.add_column("ID", style="green", min_width=30)
-            if has_community_agents:
-                table.add_column("Tier", style="dim", min_width=10)
+            if has_non_core:
+                table.add_column("Tier", style="dim", min_width=12)
             table.add_column("Description")
             for wf in agents:
                 row = [wf.workflow_id]
-                if has_community_agents:
-                    tier_label = "[dim]community[/dim]" if wf.tier == "community" else "core"
-                    row.append(tier_label)
+                if has_non_core:
+                    tier_label = wf.tier if wf.tier != "core" else ""
+                    row.append(f"[dim]{tier_label}[/dim]" if tier_label else "")
                 row.append(_truncate(wf.description))
                 table.add_row(*row)
             console.print(table)
