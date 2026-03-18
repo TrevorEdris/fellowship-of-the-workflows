@@ -2,7 +2,7 @@
 
 from rich.table import Table
 
-from fotw.models.workflow import Hook, Persona, Starter, Workflow, WorkflowType
+from fotw.models.workflow import Hook, Persona, Role, Starter, Workflow, WorkflowType
 from fotw.ui.console import console
 
 
@@ -17,6 +17,7 @@ def print_workflows(
     starters: list[Starter],
     personas: list[Persona],
     hooks: list[Hook] | None = None,
+    roles: list[Role] | None = None,
     type_filter: str | None = None,
 ) -> None:
     """Print workflows in Rich tables."""
@@ -116,4 +117,24 @@ def print_workflows(
             console.print(table)
             console.print()
             console.print("  [cyan]Install hooks:[/cyan] ./bin/fotw install hooks --global --for claude-code")
+            console.print()
+
+    # Roles
+    if not type_filter or type_filter == "role":
+        if roles:
+            table = Table(title="roles (roster)", title_style="bold", show_header=True, box=None, padding=(0, 2))
+            table.add_column("ID", style="green", min_width=30)
+            table.add_column("Tags", style="cyan", min_width=15)
+            table.add_column("Skills", style="dim", min_width=10)
+            table.add_column("Description")
+            for r in roles:
+                table.add_row(
+                    r.workflow_id,
+                    ", ".join(r.tags) if r.tags else "",
+                    str(len(r.allowed_skills)),
+                    _truncate(r.description),
+                )
+            console.print(table)
+            console.print()
+            console.print("  [cyan]Install role:[/cyan] ./bin/fotw install rosters/<name> <target-repo> --for <tool>")
             console.print()

@@ -27,6 +27,7 @@ def _normalize_workflow_id(wf_id: str) -> str:
         "agent/": "agents/",
         "starter/": "starters/",
         "hook/": "hooks/",
+        "roster/": "rosters/",
     }
     for singular, plural in mapping.items():
         if wf_id.startswith(singular):
@@ -62,12 +63,15 @@ def install_cmd(
     include_tests: bool = typer.Option(
         False, "--include-tests", help="Also install hook test files"
     ),
+    phase: Optional[str] = typer.Option(
+        None, "--phase", help="Install phase-scoped context only (discover/plan/implement)"
+    ),
 ) -> None:
     """Install workflows, starters, or personas to a target project."""
     try:
         _install_cmd_inner(
             workflow_id, target_repo, for_tool, all_workflows,
-            force, global_install, dry_run, to_claude_dir, include_tests,
+            force, global_install, dry_run, to_claude_dir, include_tests, phase,
         )
     except InstallQuit:
         console.print("\nQuit.")
@@ -84,6 +88,7 @@ def _install_cmd_inner(
     dry_run: bool,
     to_claude_dir: bool,
     include_tests: bool = False,
+    phase: str | None = None,
 ) -> None:
     # When --all is used, the first positional arg is the target repo, not workflow_id.
     # Same for paths that look like directories (start with /, ~, .).
@@ -153,6 +158,35 @@ def _install_cmd_inner(
         if install_starter(tier, ctx):
             console.print()
             console.print("[green]Installation complete![/green]")
+        else:
+            raise typer.Exit(1)
+        return
+
+    # --- Rosters (roles) ---
+    if workflow_id and workflow_id.startswith("rosters/"):
+        role_name = workflow_id.split("/", 1)[1]
+
+        if not target_repo and not global_install:
+            err_console.print("[red]Error: target-repo is required for roles (or use --global)[/red]")
+            raise typer.Exit(1)
+
+        if target_repo and not resolved_target.is_dir():
+            err_console.print(f"[red]Error: Target does not exist: {resolved_target}[/red]")
+            raise typer.Exit(1)
+
+        if not is_valid_tool(for_tool):
+            err_console.print(f"[red]Error: Invalid tool: {for_tool}[/red]")
+            err_console.print(f"Supported: {', '.join(list_tools())}, both")
+            raise typer.Exit(1)
+
+        from fotw.services.installer import install_role
+        ctx = InstallContext(
+            tool=for_tool, target_repo=resolved_target,
+            is_global=global_install, dry_run=dry_run, force=force,
+        )
+        if install_role(role_name, ctx):
+            console.print()
+            console.print("[green]Role installation complete![/green]")
         else:
             raise typer.Exit(1)
         return
@@ -252,6 +286,21 @@ def _install_cmd_inner(
             tool=t, target_repo=resolved_target,
             is_global=global_install, dry_run=dry_run, force=force,
         )
+
+        # Phase-scoped install for skills
+        if phase and workflow_id.startswith("skills/"):
+            from fotw.services.installer import install_skill_phased
+            result = install_skill_phased(workflow_id, phase, ctx)
+            if result is None:
+                # No manifest — fall through to normal install
+                pass
+            elif result:
+                console.print()
+                console.print("[green]Installation complete![/green]")
+                continue
+            else:
+                raise typer.Exit(1)
+
         if install_single_workflow(workflow_id, ctx):
             console.print()
             console.print("[green]Installation complete![/green]")

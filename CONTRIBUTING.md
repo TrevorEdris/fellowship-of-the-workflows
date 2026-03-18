@@ -149,3 +149,36 @@ This checks:
 - Use concrete examples, not abstract guidance
 - Avoid duplicating what AI already knows (common patterns, popular frameworks)
 - Use Cursor frontmatter format (`globs`, `alwaysApply`) - translation is automatic
+
+### Tool Scoping Guidelines
+
+Use the principle of least privilege when setting `allowed-tools` in SKILL.md frontmatter.
+
+**Never use broad wildcards:**
+```yaml
+# BAD — grants access to git push --force, git reset --hard, etc.
+allowed-tools: Bash(git:*), Bash(gh:*)
+```
+
+**Use specific subcommands:**
+```yaml
+# GOOD — read-only git access for review skills
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*)
+
+# GOOD — read-only GitHub CLI for review skills
+allowed-tools: Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr list:*)
+
+# GOOD — analytics access for velocity/stats skills
+allowed-tools: Bash(git shortlog:*), Bash(git rev-list:*), Bash(gh api:*), Bash(gh repo view:*)
+
+# GOOD — write access for implementation skills (explicit)
+allowed-tools: Bash(git add:*), Bash(git commit:*), Bash(git stash:*)
+```
+
+**Decision tree:**
+1. Does the skill only read code/PRs? → Read-only git + gh scoping
+2. Does the skill modify files? → Use `Write`/`Edit` tools, keep git read-only
+3. Does the skill need to commit? → Add `Bash(git add:*), Bash(git commit:*)` explicitly
+4. Does the skill need to push? → Don't scope it. Let the user's permission system handle it.
+
+`fotw validate` will warn on `Bash(git:*)` and `Bash(gh:*)` patterns.

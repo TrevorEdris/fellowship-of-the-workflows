@@ -3,7 +3,7 @@ name: performance-optimization
 description: Analyze code for performance bottlenecks including N+1 queries, algorithmic complexity, memory leaks, caching gaps, bundle size issues, and database query optimization. Produces a prioritized performance report. Use when reviewing PRs for performance impact or auditing existing code.
 context: fork
 agent: performance-optimization
-allowed-tools: Bash(git:*), Bash(gh:*), Read, Glob, Grep, LS, Task
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Read, Glob, Grep, LS, Task
 tags: [review]
 ---
 

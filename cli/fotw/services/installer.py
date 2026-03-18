@@ -420,6 +420,181 @@ def install_personas(ctx: InstallContext) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Role install
+# ---------------------------------------------------------------------------
+
+def install_role(role_name: str, ctx: InstallContext) -> bool:
+    """Install a role from the roster. Installs all referenced skills and rules."""
+    from fotw.services.catalog import scan_roles
+
+    roles = scan_roles()
+    role = next((r for r in roles if r.name == role_name), None)
+    if role is None:
+        err_console.print(f"[red]Error: Role not found: {role_name}[/red]")
+        available = [r.name for r in roles]
+        if available:
+            err_console.print(f"Available roles: {', '.join(available)}")
+        return False
+
+    if not ctx.quiet:
+        console.print()
+        console.print(f"Role:     {role.name}")
+        console.print(f"Tool:     {ctx.tool}")
+        scope = "Global" if ctx.is_global else f"Project ({ctx.target_repo})"
+        console.print(f"Scope:    {scope}")
+        console.print(f"Skills:   {', '.join(role.allowed_skills)}")
+        if role.rules:
+            console.print(f"Rules:    {', '.join(role.rules)}")
+        if role.persona:
+            console.print(f"Persona:  {role.persona}")
+        console.print()
+
+    if ctx.dry_run:
+        console.print("[yellow][DRY RUN] Would install:[/yellow]")
+        for skill in role.allowed_skills:
+            console.print(f"  skill: {skill}")
+        for rule in role.rules:
+            console.print(f"  rule:  {rule}")
+        console.print(f"  config: roster.yaml")
+        return True
+
+    tools_to_install = expand_tools(ctx.tool)
+    succeeded = []
+    failed = []
+
+    for t in tools_to_install:
+        skill_ctx = InstallContext(
+            tool=t,
+            target_repo=ctx.target_repo,
+            is_global=ctx.is_global,
+            dry_run=ctx.dry_run,
+            force=ctx.force,
+            quiet=True,
+            sticky_action=ctx.sticky_action,
+        )
+
+        # Install skills
+        for skill_name in role.allowed_skills:
+            wf_id = f"skills/{skill_name}"
+            if install_single_workflow(wf_id, skill_ctx):
+                succeeded.append(wf_id)
+            else:
+                failed.append(wf_id)
+
+        # Install rules
+        for rule_name in role.rules:
+            wf_id = f"rules/{rule_name}"
+            if install_single_workflow(wf_id, skill_ctx):
+                succeeded.append(wf_id)
+            else:
+                failed.append(wf_id)
+
+        # Write roster.yaml config
+        cfg = get_agent_config(t)
+        if cfg:
+            base = ctx.target_repo / cfg.config_dir if not ctx.is_global else Path.home() / cfg.config_dir
+            roster_config = base / "roster.yaml"
+            base.mkdir(parents=True, exist_ok=True)
+            config_content = (
+                f"# Active role — installed by fotw\n"
+                f"role: {role.name}\n"
+            )
+            if role.persona:
+                config_content += f"persona: {role.persona}\n"
+            roster_config.write_text(config_content)
+            if not ctx.quiet:
+                console.print(f"[green]\u2713[/green] Created {roster_config}")
+
+    # Summary
+    if not ctx.quiet:
+        console.print()
+        console.print(f"[green]Installed role '{role.name}': {len(succeeded)} workflows[/green]")
+        if failed:
+            console.print(f"[red]Failed: {', '.join(failed)}[/red]")
+
+    return len(failed) == 0
+
+
+# ---------------------------------------------------------------------------
+# Phase-scoped skill install
+# ---------------------------------------------------------------------------
+
+def install_skill_phased(
+    wf_id: str, phase: str, ctx: InstallContext
+) -> bool | None:
+    """Install a skill with only phase-relevant context files.
+
+    Returns:
+        True: success
+        False: error
+        None: no context-manifest found, caller should fall back to normal install
+    """
+    from fotw.services.context_resolver import VALID_PHASES, resolve_context
+
+    if phase not in VALID_PHASES:
+        err_console.print(f"[red]Error: Invalid phase '{phase}'. Must be one of: {', '.join(sorted(VALID_PHASES))}[/red]")
+        return False
+
+    parts = wf_id.split("/", 1)
+    if len(parts) != 2 or parts[0] != "skills":
+        err_console.print(f"[red]Error: --phase only works with skills, got: {wf_id}[/red]")
+        return False
+
+    skill_name = parts[1]
+    skill_dir = WORKFLOWS_DIR / "skills" / skill_name
+    if not skill_dir.is_dir():
+        err_console.print(f"[red]Error: Skill not found: {skill_name}[/red]")
+        return False
+
+    files = resolve_context(skill_dir, phase=phase)
+
+    # Check if there's actually a manifest — if resolve_context returned all files,
+    # that means no manifest exists
+    import frontmatter as fm
+    skill_file = skill_dir / "SKILL.md"
+    post = fm.load(str(skill_file))
+    if post.metadata.get("context-manifest") is None:
+        if not ctx.quiet:
+            console.print(f"[yellow]No context-manifest in {skill_name} — installing full skill.[/yellow]")
+        return None  # Signal: fall through to normal install
+
+    if not files:
+        err_console.print(f"[yellow]No files resolved for {skill_name} ({phase} phase)[/yellow]")
+        return None
+
+    cfg = _get_agent_cfg(ctx)
+    target_dir = _target_dir_for_type(ctx, "skills")
+    target_skill = target_dir / skill_name
+
+    if not ctx.quiet:
+        console.print()
+        console.print(f"Skill:    {skill_name} ({phase} phase)")
+        console.print(f"Tool:     {ctx.tool}")
+        scope = "Global" if ctx.is_global else f"Project ({ctx.target_repo})"
+        console.print(f"Scope:    {scope}")
+        console.print(f"Files:    {len(files)}")
+        console.print()
+
+    if ctx.dry_run:
+        console.print("[yellow][DRY RUN] Would copy:[/yellow]")
+        for f in files:
+            rel = f.relative_to(skill_dir)
+            console.print(f"  {rel}")
+        return True
+
+    target_skill.mkdir(parents=True, exist_ok=True)
+    for src_file in files:
+        rel = src_file.relative_to(skill_dir)
+        dst = target_skill / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src_file, dst)
+
+    if not ctx.quiet:
+        console.print(f"[green]\u2713[/green] Installed {skill_name} ({phase} phase): {len(files)} files")
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Starter install
 # ---------------------------------------------------------------------------
 

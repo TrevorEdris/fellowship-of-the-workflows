@@ -44,6 +44,7 @@ Maps each available FotW agent to its capabilities, domain, and routing guidance
 | `terragrunt-specialist` | Infrastructure-as-code | DRY Terragrunt root configs, dependency DAG design, run-all orchestration, multi-account patterns | sonnet | Bash, Glob, Grep, Read, Write, WebFetch |
 | `aws-iac-specialist` | Infrastructure | CloudFormation, CDK, SAM authoring and review; IAM least-privilege; cdk-nag/cfn-lint security scanning; CFN→CDK migration | sonnet | Bash, Glob, Grep, Read, Write |
 | `pulumi-specialist` | Infrastructure | Pulumi program authoring (TS/Python/Go/C#), CrossGuard policy packs, state backend config, Terraform/CFN migration, multi-cloud patterns | sonnet | Bash, Glob, Grep, Read, Write |
+| `chaos-engineer` | Adversarial review | Failure mode analysis, race conditions, security gaps, edge cases, pessimistic code review (read-only) | opus | Bash, Glob, Grep, LS, Read, WebFetch |
 
 ---
 
@@ -301,6 +302,12 @@ Best invoked with specific IAM JSON documents or IaC files; `aws iam get-account
 Operates GCP serverless compute and async messaging: Cloud Run service deployments (image, traffic splits, min-instances, secrets, VPC egress), Cloud Run Jobs for batch workloads, Cloud Functions 2nd gen (HTTP and event-triggered), Pub/Sub topic/subscription design (push vs pull, dead-letter topics, flow control), Eventarc trigger configuration (GCS, Audit Logs, Pub/Sub), Cloud Tasks queues, and Cloud Scheduler cron jobs. Enforces security defaults: dedicated service accounts, `--no-allow-unauthenticated` for internal services, secrets injected from Secret Manager, and dead-letter topics on all production Pub/Sub subscriptions. Uses a safe traffic-migration protocol (deploy with `--no-traffic`, verify, then promote). Does not cover IAM role bindings beyond minimum service wiring (defer to `gcp-iam-auditor`), observability instrumentation (defer to `otel-instrumentation` or `datadog-instrumentation`), or CI/CD pipeline configuration (defer to `/cicd-pipeline`).
 
 Best invoked with the Cloud Run service name, region, and container image URL; providing the current service config via `gcloud run services describe` lets it detect drift from secure defaults without guessing.
+
+### `chaos-engineer`
+
+Adversarial code reviewer that assumes the worst about every change. Applies a six-category attack surface methodology: Failure Modes (unhandled errors, partial failures, timeout cascading), Concurrency (race conditions, deadlocks, stale reads), Input Boundaries (overflow, malformed data, encoding edge cases), Error Path Coverage (uncaught exceptions, swallowed errors, misleading messages), Dependency Failures (upstream outages, version drift, transitive vulnerabilities), and State Corruption (inconsistent state, missing rollback, orphaned resources). Read-only — critiques but never fixes. Use over `security-review` when the concern is operational resilience and failure scenarios rather than OWASP-style vulnerability patterns; use alongside `pragmatic-code-review` for a pessimistic counterbalance to standard review.
+
+Best invoked with a specific diff or set of files to review; providing context about the production environment (traffic volume, SLAs, deployment topology) helps it prioritize findings by blast radius.
 
 ### `gcp-iam-auditor`
 

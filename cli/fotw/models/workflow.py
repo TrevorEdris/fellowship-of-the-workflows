@@ -35,6 +35,7 @@ class WorkflowType(str, Enum):
     STARTER = "starter"
     PERSONA = "persona"
     HOOK = "hook"
+    ROLE = "role"
 
     @classmethod
     def from_str(cls, value: str) -> "WorkflowType":
@@ -50,6 +51,8 @@ _PLURAL_MAP: dict[str, str] = {
     "starters": "starter",
     "personas": "persona",
     "hooks": "hook",
+    "roles": "role",
+    "rosters": "role",
 }
 
 
@@ -84,6 +87,25 @@ class Persona:
     name: str
     tagline: str = ""
     path: Path = field(default_factory=lambda: Path("."))
+
+
+@dataclass
+class Role:
+    """A role definition from the roster."""
+
+    name: str
+    description: str = ""
+    tags: list[str] = field(default_factory=list)
+    allowed_skills: list[str] = field(default_factory=list)
+    denied_skills: list[str] = field(default_factory=list)
+    preferred_model: str = ""
+    rules: list[str] = field(default_factory=list)
+    persona: str = ""
+    path: Path = field(default_factory=lambda: Path("."))
+
+    @property
+    def workflow_id(self) -> str:
+        return f"rosters/{self.name}"
 
 
 @dataclass
