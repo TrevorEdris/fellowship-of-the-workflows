@@ -12,7 +12,7 @@ from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_AGENT_DIRS, _EXTRA_RULE_
 
 # --- Allowed frontmatter keys per workflow type ---
 
-RULE_ALLOWED_KEYS = {"description", "globs", "alwaysApply"}
+RULE_ALLOWED_KEYS = {"description", "globs", "alwaysApply", "tags"}
 
 SKILL_ALLOWED_KEYS = {
     "name",
@@ -27,7 +27,7 @@ SKILL_ALLOWED_KEYS = {
     "tags",
 }
 
-AGENT_ALLOWED_KEYS = {"name", "description", "tools", "model", "color"}
+AGENT_ALLOWED_KEYS = {"name", "description", "tools", "model", "color", "tags"}
 
 VALID_MODEL_VALUES = {"opus", "sonnet", "haiku", "default"}
 
