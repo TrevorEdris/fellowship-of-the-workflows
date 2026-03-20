@@ -1,0 +1,30 @@
+name: design-team
+description: "Architecture design debate. An architect proposes, an adversary attacks, and a code-quality reviewer evaluates maintainability. Use after discovery and before writing PLAN.md to converge on a design approach."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  The architect proposes an approach with trade-offs.
+  The adversary attacks it — what breaks, what's fragile, what's over-engineered.
+  The code-quality reviewer evaluates whether the proposal will be maintainable, testable, and consistent with codebase conventions.
+  All three challenge each other's positions until they converge or explicitly document disagreements.
+  Lead synthesizes the debate into a design decision with rationale and dissenting opinions noted.
+
+teammates:
+  - name: architect
+    agent: system-design-reviewer
+    model: opus
+    focus: "Propose an architectural approach for the given problem. Evaluate trade-offs between competing designs. Consider resilience patterns, scalability, data consistency, and migration strategy. Defend your proposal against challenges from other teammates."
+    plan_approval: false
+
+  - name: adversary
+    agent: chaos-engineer
+    model: opus
+    focus: "Attack every design proposal. What breaks under load? What fails at 3 AM? What happens when a dependency is down? What edge cases are unhandled? Push back on over-engineering too — complexity is its own failure mode. Challenge the architect and the code-quality reviewer."
+    plan_approval: false
+
+  - name: code-quality-reviewer
+    agent: pragmatic-code-review
+    model: sonnet
+    focus: "Evaluate design proposals for maintainability, testability, and consistency with codebase conventions. Will this be easy to review? Easy to extend? Easy to debug? Flag designs that are technically correct but practically unmaintainable. Challenge both the architect and the adversary."
+    plan_approval: false

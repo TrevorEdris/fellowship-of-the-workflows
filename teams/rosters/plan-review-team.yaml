@@ -1,0 +1,31 @@
+name: plan-review-team
+description: "Adversarial plan stress-test. Three reviewers independently analyze an existing PLAN.md from different angles, then challenge each other's findings to surface blind spots before the approval gate."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  Each reviewer independently analyzes the plan from their specific lens.
+  After initial review, reviewers challenge each other's findings.
+  If the architecture-reviewer says a step is sound but the risk-analyst flags a failure mode,
+  they debate until they converge or explicitly disagree.
+  The scope-auditor cross-checks plan steps against actual codebase state.
+  Lead synthesizes into a unified plan assessment with a GO / REVISE / REJECT recommendation.
+
+teammates:
+  - name: architecture-reviewer
+    agent: system-design-reviewer
+    model: sonnet
+    focus: "Review the plan for architectural soundness. Check for missing resilience patterns, scalability risks, dependency hazards, and anti-patterns. Evaluate whether the proposed structure and sequencing will produce a maintainable result."
+    plan_approval: false
+
+  - name: risk-analyst
+    agent: chaos-engineer
+    model: opus
+    focus: "Attack the plan. For each step, identify what can go wrong — failure modes, blast radius, missing rollback strategy, untested edge cases, race conditions. Flag steps that lack verification or assume happy-path execution. Challenge findings from other reviewers if you disagree."
+    plan_approval: false
+
+  - name: scope-auditor
+    agent: scope-analyzer
+    model: sonnet
+    focus: "Audit the plan's scope against the actual codebase. Check that all referenced files exist, find undiscovered dependencies the plan misses, identify code paths that will be affected but aren't accounted for. Flag scope gaps and scope creep."
+    plan_approval: false

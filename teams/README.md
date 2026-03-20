@@ -44,6 +44,8 @@ Claude reads the review-team roster, shows you the team composition (3 reviewers
 | Review | `/team review <context>` | security-review, pragmatic-code-review, chaos-engineer | PR reviews, pre-merge audits |
 | Implementation | `/team implementation <context>` | tdd-enforcer, refactoring-specialist, documentation-sync | Feature work, large refactors |
 | Investigation | `/team investigation <context>` | 3x systematic-debugger | Bug hunting, root cause analysis |
+| Design | `/team design <problem>` | system-design-reviewer, chaos-engineer, pragmatic-code-review | Architecture debates before planning |
+| Plan Review | `/team plan-review <path>` | system-design-reviewer, chaos-engineer, scope-analyzer | Stress-test an existing PLAN.md |
 
 ### Examples
 
@@ -52,7 +54,11 @@ Claude reads the review-team roster, shows you the team composition (3 reviewers
 /team review "the auth module changes in src/auth/"
 /team implementation "add OAuth2 support to the auth module"
 /team investigation "app exits after one message instead of staying connected"
+/team design "we need to add multi-tenancy to the auth module"
+/team plan-review .ai/sessions/2026-03-19_Add-OAuth2/PLAN.md
 ```
+
+For detailed scenarios including multi-team sequences, see [EXAMPLES.md](EXAMPLES.md).
 
 ## Working With Your Team
 

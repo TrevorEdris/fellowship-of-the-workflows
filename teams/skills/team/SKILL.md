@@ -18,6 +18,8 @@ AVAILABLE ROSTERS:
 - review-team (security-review + pragmatic-code-review + chaos-engineer)
 - implementation-team (tdd-enforcer + refactoring-specialist + documentation-sync)
 - investigation-team (3x systematic-debugger)
+- design-team (system-design-reviewer + chaos-engineer + pragmatic-code-review)
+- plan-review-team (system-design-reviewer + chaos-engineer + scope-analyzer)
 
 GIT STATUS:
 ```
@@ -35,6 +37,8 @@ CURRENT BRANCH:
 /team review PR#142
 /team implementation "add OAuth2 support to the auth module"
 /team investigation "app exits after one message instead of staying connected"
+/team design "we need to add multi-tenancy to the auth module"
+/team plan-review .ai/sessions/2026-03-19_whatever/PLAN.md
 ```
 
 ## Process
@@ -47,6 +51,8 @@ Available presets:
 - `review` — security + code quality + chaos engineer (PR reviews, pre-merge audits)
 - `implementation` — TDD + refactoring + docs sync (feature work, large refactors)
 - `investigation` — 3x systematic debugger with competing hypotheses (bug hunting)
+- `design` — architect + adversary + code-quality reviewer (architecture debates before planning)
+- `plan-review` — architecture + risk + scope auditor (stress-test an existing PLAN.md)
 
 If the preset is ambiguous or not specified, ask the user to choose.
 
