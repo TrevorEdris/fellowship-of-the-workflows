@@ -1,7 +1,7 @@
 ---
 name: code-pattern-advisor
 description: "Detects misapplied, unnecessary, or missing design patterns in code. Proactively identifies over-engineering (pattern soup, speculative generality), under-engineering (God objects, anemic models), and language-idiomatic replacements for ceremonial patterns. Use during code review or when structural concerns are the primary focus."
-tags: [review, architecture, patterns]
+tags: [review, architecture]
 tools: Bash, Glob, Grep, LS, Read
 model: sonnet
 ---

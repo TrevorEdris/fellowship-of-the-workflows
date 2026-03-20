@@ -16,7 +16,7 @@ user-invocable: true
 argument-hint: "[design problem, pattern question, or file/directory to review]"
 agent: code-pattern-advisor
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Read, Grep, Glob, LS
-tags: [architecture, patterns]
+tags: [architecture, review]
 ---
 
 # Code Pattern Advisor
