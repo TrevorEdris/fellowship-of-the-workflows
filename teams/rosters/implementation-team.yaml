@@ -1,0 +1,30 @@
+name: implementation-team
+description: "Coordinated feature implementation. TDD enforcer writes tests first, refactoring specialist implements, and documentation sync keeps docs current. All teammates require plan approval before making changes."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  Teammates coordinate on file ownership to avoid conflicts.
+  TDD enforcer writes failing tests first (RED phase).
+  Refactoring specialist implements to make tests pass (GREEN) and cleans up (REFACTOR).
+  Documentation sync updates docs after implementation is verified.
+  Lead enforces sequencing: tests before implementation, implementation before docs.
+
+teammates:
+  - name: test-writer
+    agent: tdd-enforcer
+    model: sonnet
+    focus: "Write failing tests for the requested feature. Follow RED-GREEN-REFACTOR — you own the RED phase. Do not write production code. Coordinate with the implementer on file ownership."
+    plan_approval: true
+
+  - name: implementer
+    agent: refactoring-specialist
+    model: sonnet
+    focus: "Implement the feature to make tests pass. You own the GREEN and REFACTOR phases. Coordinate with the test-writer on file ownership. Do not modify test files."
+    plan_approval: true
+
+  - name: docs-writer
+    agent: documentation-sync
+    model: sonnet
+    focus: "Update documentation to reflect the new feature. Wait for implementation to stabilize before writing. Reference actual code, not assumptions."
+    plan_approval: true

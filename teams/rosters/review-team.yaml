@@ -1,0 +1,29 @@
+name: review-team
+description: "Multi-perspective code review. Security, code quality, and adversarial reviewers work in parallel, challenge each other's findings, and the lead synthesizes a unified review."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  Each reviewer works independently on their domain, then shares findings.
+  Reviewers message each other to challenge or reinforce findings.
+  Lead cross-pollinates relevant discoveries between reviewers.
+  Lead synthesizes into a single unified review at the end.
+
+teammates:
+  - name: security-reviewer
+    agent: security-review
+    model: opus
+    focus: "Security vulnerabilities — authentication, authorization, input validation, injection, data exposure. Flag only high-confidence (>80%) exploitable issues."
+    plan_approval: false
+
+  - name: code-quality-reviewer
+    agent: pragmatic-code-review
+    model: opus
+    focus: "Code quality — architecture, correctness, maintainability, test coverage, performance. Balance engineering excellence with development velocity."
+    plan_approval: false
+
+  - name: adversarial-reviewer
+    agent: chaos-engineer
+    model: opus
+    focus: "Failure modes — race conditions, error path coverage, blast radius, dependency failures, state corruption. Assume the worst about every change."
+    plan_approval: false

@@ -50,6 +50,7 @@ Maps each available FotW agent to its capabilities, domain, and routing guidance
 | `aws-iac-specialist` | Infrastructure | CloudFormation, CDK, SAM authoring and review; IAM least-privilege; cdk-nag/cfn-lint security scanning; CFN→CDK migration | sonnet | Bash, Glob, Grep, Read, Write |
 | `pulumi-specialist` | Infrastructure | Pulumi program authoring (TS/Python/Go/C#), CrossGuard policy packs, state backend config, Terraform/CFN migration, multi-cloud patterns | sonnet | Bash, Glob, Grep, Read, Write |
 | `chaos-engineer` | Adversarial review | Failure mode analysis, race conditions, security gaps, edge cases, pessimistic code review (read-only) | opus | Bash, Glob, Grep, LS, Read, WebFetch |
+| `team-lead` | Agent Teams coordination | Creates and manages Agent Teams, spawns teammates, coordinates via shared task list and messaging. Claude Code only. | opus | Bash, Glob, Grep, Read, Write, Task, SendMessage |
 
 ---
 
@@ -313,6 +314,12 @@ Best invoked with the Cloud Run service name, region, and container image URL; p
 Adversarial code reviewer that assumes the worst about every change. Applies a six-category attack surface methodology: Failure Modes (unhandled errors, partial failures, timeout cascading), Concurrency (race conditions, deadlocks, stale reads), Input Boundaries (overflow, malformed data, encoding edge cases), Error Path Coverage (uncaught exceptions, swallowed errors, misleading messages), Dependency Failures (upstream outages, version drift, transitive vulnerabilities), and State Corruption (inconsistent state, missing rollback, orphaned resources). Read-only — critiques but never fixes. Use over `security-review` when the concern is operational resilience and failure scenarios rather than OWASP-style vulnerability patterns; use alongside `pragmatic-code-review` for a pessimistic counterbalance to standard review.
 
 Best invoked with a specific diff or set of files to review; providing context about the production environment (traffic volume, SLAs, deployment topology) helps it prioritize findings by blast radius.
+
+### `team-lead`
+
+Agent Teams coordinator (Claude Code only). Creates teams via Agent Teams primitives, spawns teammates from predefined rosters, manages a shared task list, and synthesizes results. Unlike `multi-agent-orchestrator` (which uses subagents), teammates communicate directly with each other via peer-to-peer messaging. Requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` to be enabled.
+
+Best invoked via the `/team` skill with a predefined roster (review, implementation, investigation). Not a general-purpose coordinator — use `multi-agent-orchestrator` for subagent-based orchestration.
 
 ### `gcp-iam-auditor`
 

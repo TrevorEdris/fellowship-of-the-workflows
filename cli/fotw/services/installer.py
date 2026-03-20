@@ -16,7 +16,7 @@ from fotw.services.catalog import (
     _EXTRA_RULE_DIRS,
     _EXTRA_SKILL_DIRS,
 )
-from fotw.services.settings_merger import merge_hooks, read_settings, write_settings
+from fotw.services.settings_merger import merge_env, merge_hooks, read_settings, write_settings
 from fotw.ui.console import console, err_console
 from fotw.ui.diff import files_are_identical, show_diff
 
@@ -325,7 +325,7 @@ def _needs_translation(wtype: str, cfg: AgentConfig) -> bool:
     return wtype == "rules" and cfg.frontmatter_format != "cursor"
 
 
-_TIER_DIRS = {"languages", "platforms", "vendors"}
+_TIER_DIRS = {"languages", "platforms", "vendors", "teams"}
 
 
 def install_single_workflow(
@@ -886,6 +886,119 @@ def install_hooks(ctx: InstallContext, include_tests: bool = False) -> bool:
         console.print(f"[green]Installed {len(hooks)} hooks[/green]")
 
     return True
+
+
+# ---------------------------------------------------------------------------
+# Agent Teams install
+# ---------------------------------------------------------------------------
+
+def install_teams(ctx: InstallContext) -> bool:
+    """Install Agent Teams bundle (claude-code only, global only)."""
+    teams_dir = REPO_ROOT / "teams"
+    if not teams_dir.is_dir():
+        err_console.print("[red]Error: teams/ directory not found[/red]")
+        return False
+
+    base = Path.home() / ".claude"
+    settings_path = base / "settings.json"
+
+    if not ctx.quiet:
+        console.print()
+        console.print("Installing Agent Teams...")
+        console.print("Tool:   claude-code")
+        console.print(f"Scope:  Global ({base}/)")
+        console.print()
+
+    if ctx.dry_run:
+        console.print("[yellow][DRY RUN] Would install:[/yellow]")
+        console.print(f"  Skill:   teams/skills/team/ → {base / 'skills' / 'team'}/")
+        console.print(f"  Agent:   teams/agents/team-lead.md → {base / 'agents' / 'team-lead.md'}")
+        console.print(f"  Rule:    teams/rules/team-conventions.md → {base / 'rules' / 'team-conventions.md'}")
+        hooks_dir = teams_dir / "hooks"
+        if hooks_dir.is_dir():
+            for hook_file in sorted(hooks_dir.glob("*.js")):
+                console.print(f"  Hook:    {hook_file.name} → {base / 'hooks' / hook_file.name}")
+        console.print(f"  Rosters: teams/rosters/ → {base / 'teams' / 'rosters'}/")
+        console.print(f"  Env:     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 → {settings_path}")
+        return True
+
+    succeeded = []
+    failed = []
+
+    # 1. Skill directory
+    skill_source = teams_dir / "skills" / "team"
+    skill_target = base / "skills" / "team"
+    if _install_as_symlink(skill_target, skill_source, ctx, "teams/skills/team/"):
+        succeeded.append("skill: team")
+    else:
+        failed.append("skill: team")
+
+    # 2. Agent
+    agent_source = teams_dir / "agents" / "team-lead.md"
+    agent_target = base / "agents" / "team-lead.md"
+    if _install_as_symlink(agent_target, agent_source, ctx, "team-lead.md"):
+        succeeded.append("agent: team-lead")
+    else:
+        failed.append("agent: team-lead")
+
+    # 3. Rule
+    rule_source = teams_dir / "rules" / "team-conventions.md"
+    rule_target = base / "rules" / "team-conventions.md"
+    if _install_as_symlink(rule_target, rule_source, ctx, "team-conventions.md"):
+        succeeded.append("rule: team-conventions")
+    else:
+        failed.append("rule: team-conventions")
+
+    # 4. Hooks — symlink scripts
+    from fotw.services.catalog import scan_team_hooks
+    team_hooks = scan_team_hooks()
+    for hook in team_hooks:
+        hook_target = base / "hooks" / f"{hook.name}.js"
+        if _install_as_symlink(hook_target, hook.path, ctx, f"{hook.name}.js"):
+            succeeded.append(f"hook: {hook.name}")
+        else:
+            failed.append(f"hook: {hook.name}")
+
+    # 5. Merge hooks + env var into settings.json (single read-modify-write)
+    if settings_path.is_file():
+        backup = settings_path.with_suffix(".json.bak")
+        shutil.copy2(settings_path, backup)
+        if not ctx.quiet:
+            console.print(f"[cyan]Backed up settings to {backup.name}[/cyan]")
+
+    settings = read_settings(settings_path)
+    if team_hooks:
+        settings = merge_hooks(settings, team_hooks)
+    settings = merge_env(settings, {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"})
+    write_settings(settings, settings_path)
+    if not ctx.quiet:
+        if team_hooks:
+            console.print(f"[green]\u2713[/green] Merged {len(team_hooks)} hook(s) into settings.json")
+        console.print(f"[green]\u2713[/green] Enabled CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS in settings.json")
+
+    # 6. Symlink rosters
+    rosters_source = teams_dir / "rosters"
+    rosters_target = base / "teams" / "rosters"
+    rosters_target.mkdir(parents=True, exist_ok=True)
+    roster_count = 0
+    for roster_file in sorted(rosters_source.glob("*.yaml")):
+        dest = rosters_target / roster_file.name
+        if _install_as_symlink(dest, roster_file, ctx, roster_file.name):
+            roster_count += 1
+    roster_readme = rosters_source / "README.md"
+    if roster_readme.is_file():
+        _install_as_symlink(rosters_target / "README.md", roster_readme, ctx, "rosters/README.md")
+    if not ctx.quiet:
+        console.print(f"[green]\u2713[/green] Installed {roster_count} roster(s) to {rosters_target}/")
+
+    # Summary
+    if not ctx.quiet:
+        console.print()
+        console.print(f"[green]Agent Teams installed: {len(succeeded)} components[/green]")
+        if failed:
+            console.print(f"[red]Failed: {', '.join(failed)}[/red]")
+
+    return len(failed) == 0
 
 
 # ---------------------------------------------------------------------------

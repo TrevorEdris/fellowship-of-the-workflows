@@ -16,6 +16,7 @@ from fotw.services.installer import (
     install_single_hook,
     install_single_workflow,
     install_starter,
+    install_teams,
 )
 from fotw.ui.console import console, err_console
 
@@ -204,6 +205,26 @@ def _install_cmd_inner(
         if install_role(role_name, ctx):
             console.print()
             console.print("[green]Role installation complete![/green]")
+        else:
+            raise typer.Exit(1)
+        return
+
+    # --- Agent Teams ---
+    if workflow_id == "teams":
+        if for_tool != "claude-code":
+            err_console.print("[red]Error: Agent Teams are only available for Claude Code (--for claude-code)[/red]")
+            raise typer.Exit(1)
+        if not global_install:
+            err_console.print("[red]Error: Agent Teams must be installed globally (--global)[/red]")
+            raise typer.Exit(1)
+
+        ctx = InstallContext(
+            tool="claude-code", target_repo=Path.home(),
+            is_global=True, dry_run=dry_run, force=force,
+        )
+        if install_teams(ctx):
+            console.print()
+            console.print("[green]Agent Teams installed![/green]")
         else:
             raise typer.Exit(1)
         return
