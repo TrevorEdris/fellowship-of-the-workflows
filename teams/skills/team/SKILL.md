@@ -15,14 +15,9 @@ Spawn a coordinated team of Claude Code sessions from a predefined roster. Each 
 ## Context
 
 AVAILABLE ROSTERS:
-```
-!`ls teams/rosters/*.yaml 2>/dev/null | xargs -I{} basename {} .yaml | sort || echo "No rosters found"`
-```
-
-AVAILABLE AGENTS (for reference):
-```
-!`ls agents/ 2>/dev/null | sed 's/\.md$//' | sort || echo "No agents found"`
-```
+- review-team (security-review + pragmatic-code-review + chaos-engineer)
+- implementation-team (tdd-enforcer + refactoring-specialist + documentation-sync)
+- investigation-team (3x systematic-debugger)
 
 GIT STATUS:
 ```
