@@ -8,7 +8,7 @@ Agent Teams are Claude Code only. They require Claude Code v2.1.32+ and are expe
 
 - Claude Code v2.1.32 or later (`claude --version`)
 - FOTW plugin or install-mode already set up
-- tmux recommended for split-pane mode (not required — in-process mode works in any terminal)
+- tmux or iTerm2 for split-pane mode (optional — in-process mode works in any terminal)
 
 ## Install
 
@@ -93,10 +93,23 @@ Clean up the team.
 
 ## Display Modes
 
-| Mode | Terminal | Navigation |
-|------|----------|------------|
-| In-process (default) | Single terminal | Shift+Down to cycle teammates, Ctrl+T for task list |
-| Split panes | One pane per teammate | Click pane to interact; requires tmux or iTerm2 |
+### In-process (default)
+
+All teammates run inside your main terminal. Navigate with keyboard shortcuts:
+- **Shift+Down** — cycle through teammates (wraps back to lead after the last one)
+- **Enter** — view a teammate's session
+- **Escape** — interrupt a teammate's current turn
+- **Ctrl+T** — toggle the shared task list
+
+Works in any terminal. No extra dependencies.
+
+### Split panes
+
+Each teammate gets its own pane. Claude Code automatically creates a pane per teammate when spawning — you don't manually assign panes. Interact by clicking into a teammate's pane or using your multiplexer's navigation keybinds.
+
+**Requirements:** tmux or iTerm2 only. Not supported in zellij, VS Code terminal, Windows Terminal, or Ghostty. Zellij support is tracked upstream ([anthropics/claude-code#24122](https://github.com/anthropics/claude-code/issues/24122)).
+
+If you use zellij, stick with in-process mode — it works fine in any terminal.
 
 To force a mode:
 
@@ -112,6 +125,8 @@ Or set permanently in `~/.claude/settings.json`:
   "teammateMode": "in-process"
 }
 ```
+
+The default is `"auto"` — uses split panes if already inside a tmux session, in-process otherwise.
 
 ## Cost Guidance
 
@@ -146,5 +161,5 @@ Use `/orchestrate` when tasks are independent. Use `/team` when teammates need t
 - One team per session (clean up before starting a new team)
 - No nested teams (teammates cannot spawn their own teams)
 - No session resumption for in-process teammates
-- Split panes require tmux or iTerm2 (not supported in VS Code terminal or Ghostty)
+- Split panes require tmux or iTerm2 (not supported in zellij, VS Code terminal, Ghostty, or Windows Terminal)
 - Claude Code only — not available for Cursor, Copilot, or other tools
