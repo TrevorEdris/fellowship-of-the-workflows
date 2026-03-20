@@ -105,7 +105,21 @@ Works in any terminal. No extra dependencies.
 
 ### Split panes
 
-Each teammate gets its own pane. Claude Code automatically creates a pane per teammate when spawning — you don't manually assign panes. Interact by clicking into a teammate's pane or using your multiplexer's navigation keybinds.
+Each teammate gets its own pane. Claude Code automatically creates a pane per teammate when spawning — you don't manually assign panes.
+
+```
+┌─────────────────────┬─────────────────────┐
+│ Lead                │ security-reviewer   │
+│ (coordinating)      │ (working on T1)     │
+│                     │                     │
+├─────────────────────┼─────────────────────┤
+│ code-quality-       │ adversarial-        │
+│ reviewer            │ reviewer            │
+│ (working on T2)     │ (idle)              │
+└─────────────────────┴─────────────────────┘
+```
+
+Interact by clicking into a teammate's pane or using your multiplexer's navigation keybinds.
 
 **Requirements:** tmux or iTerm2 only. Not supported in zellij, VS Code terminal, Windows Terminal, or Ghostty. Zellij support is tracked upstream ([anthropics/claude-code#24122](https://github.com/anthropics/claude-code/issues/24122)).
 
@@ -128,21 +142,6 @@ Or set permanently in `~/.claude/settings.json`:
 
 The default is `"auto"` — uses split panes if already inside a tmux session, in-process otherwise.
 
-## Cost Guidance
-
-Each teammate is a full Claude Code session with its own context window. Token usage scales linearly.
-
-| Preset | Teammates | Approximate Tokens | Notes |
-|--------|-----------|-------------------|-------|
-| Review | 3 | ~800k | Cheapest — read-only analysis, shorter sessions |
-| Implementation | 3 | ~1M+ | Most expensive — full code generation per teammate |
-| Investigation | 3 | ~800k | Medium — read-heavy with some experimentation |
-
-**Tips:**
-- Review preset uses Opus for all teammates (high-judgment work). Consider Sonnet for lower-stakes reviews.
-- Implementation preset uses Sonnet teammates by default. This is intentional — standard tasks don't need Opus.
-- The lead always runs on Opus regardless of preset.
-
 ## How It Differs From /orchestrate
 
 | | `/orchestrate` | `/team` |
@@ -150,7 +149,6 @@ Each teammate is a full Claude Code session with its own context window. Token u
 | Architecture | Subagents report back to orchestrator | Teammates talk to each other directly |
 | Communication | One-way (agent → orchestrator) | Peer-to-peer messaging |
 | Coordination | Orchestrator manages everything | Shared task list, self-claiming |
-| Token cost | Lower (~440k for 3 agents) | Higher (~800k for 3 teammates) |
 | Best for | Independent tasks where only results matter | Tasks needing discussion and cross-examination |
 
 Use `/orchestrate` when tasks are independent. Use `/team` when teammates need to share findings, challenge each other, or coordinate on shared concerns.
