@@ -61,11 +61,44 @@ class ValidationReport:
 # Section detection helpers
 # ---------------------------------------------------------------------------
 
+_FILE_EXTENSIONS = (
+    # C / C++
+    "c|cc|cpp|cxx|h|hh|hpp|hxx"
+    # JVM
+    "|kt|java|gradle|scala|clj"
+    # Python
+    "|py|pyi|pyx"
+    # JavaScript / TypeScript
+    "|ts|tsx|js|jsx|mjs|cjs"
+    # Go / Rust
+    "|go|rs"
+    # Ruby / PHP / Perl
+    "|rb|php|pl|pm"
+    # Swift / Objective-C
+    "|swift|m|mm"
+    # C# / F#
+    "|cs|fs|fsx"
+    # Shell / scripting
+    "|sh|bash|zsh|fish|ps1"
+    # Data / config
+    "|sql|yaml|yml|json|jsonc|xml|toml|ini|cfg|conf|env"
+    # Markup / docs
+    "|md|mdc|mdx|rst|txt|tex|adoc"
+    # Web
+    "|html|htm|css|scss|sass|less|svelte|vue"
+    # IaC / DevOps
+    "|tf|tfvars|hcl"
+    # Build / project
+    "|cmake|meson|ninja|bazel"
+    # Misc
+    "|proto|graphql|gql|wasm|zig|nim|dart|ex|exs|erl|hrl|hs|lua|r|jl"
+)
+
 FILE_PATH_PATTERN = re.compile(
     r"(?:"
-    r"[`\"][\w./\-]+(?:\.(?:kt|java|py|ts|js|go|rs|sql|yaml|yml|json|xml|md|mdc|sh|tf|toml|gradle))[`\"]"
+    rf"[`\"][\w./\-]+(?:\.(?:{_FILE_EXTENSIONS}))[`\"]"
     r"|"
-    r"(?:^|\s)[\w./\-]+(?:\.(?:kt|java|py|ts|js|go|rs|sql|yaml|yml|json|xml|md|mdc|sh|tf|toml|gradle))(?:\s|$|[,;:\)])"
+    rf"(?:^|\s)[\w./\-]+(?:\.(?:{_FILE_EXTENSIONS}))(?:\s|$|[,;:\)])"
     r")"
 )
 
@@ -206,7 +239,7 @@ def check_steps_reference_files(lines: list[str], report: ValidationReport) -> N
                 if not FILE_PATH_PATTERN.search(step_body):
                     steps_without_files.append(current_step)
             current_step = match.group(1)
-            step_start = i + 1
+            step_start = i  # include the heading line (file paths often appear there)
 
     # Check last step
     if current_step is not None:
@@ -432,7 +465,7 @@ def check_per_step_verification(lines: list[str], report: ValidationReport) -> N
             if current_step is not None:
                 step_sections.append((current_step, step_start, i))
             current_step = m.group(1)
-            step_start = i + 1
+            step_start = i  # include heading line
 
     if current_step is not None:
         step_sections.append((current_step, step_start, len(lines)))
