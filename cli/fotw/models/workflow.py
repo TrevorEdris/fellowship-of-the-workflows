@@ -144,6 +144,23 @@ class Hook:
 
 
 @dataclass
+class TeamRoster:
+    """A predefined Agent Team composition."""
+
+    name: str
+    description: str = ""
+    teammates: list[dict] = field(default_factory=list)
+    lead_model: str = "opus"
+    team_size: int = 0
+    coordination: str = ""
+    path: Path = field(default_factory=lambda: Path("."))
+
+    @property
+    def workflow_id(self) -> str:
+        return f"teams/rosters/{self.name}"
+
+
+@dataclass
 class ValidationResult:
     """Result of validating a single workflow."""
 

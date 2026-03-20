@@ -1,0 +1,30 @@
+name: investigation-team
+description: "Competing-hypothesis bug investigation. Three debuggers pursue independent theories in parallel, actively challenge each other's findings, and converge on the root cause."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  Each debugger pursues an independent hypothesis about the root cause.
+  Debuggers must actively try to disprove each other's theories.
+  Lead assigns initial hypotheses based on the bug description.
+  Lead relays findings between debuggers to enable cross-examination.
+  When two or more debuggers converge on the same root cause, lead calls consensus.
+
+teammates:
+  - name: debugger-alpha
+    agent: systematic-debugger
+    model: opus
+    focus: "Pursue hypothesis A (assigned by lead). Follow systematic debugging methodology. Actively challenge findings from other debuggers. Report evidence for and against your hypothesis."
+    plan_approval: false
+
+  - name: debugger-beta
+    agent: systematic-debugger
+    model: opus
+    focus: "Pursue hypothesis B (assigned by lead). Follow systematic debugging methodology. Actively challenge findings from other debuggers. Report evidence for and against your hypothesis."
+    plan_approval: false
+
+  - name: debugger-gamma
+    agent: systematic-debugger
+    model: opus
+    focus: "Pursue hypothesis C (assigned by lead). Follow systematic debugging methodology. Actively challenge findings from other debuggers. Report evidence for and against your hypothesis."
+    plan_approval: false

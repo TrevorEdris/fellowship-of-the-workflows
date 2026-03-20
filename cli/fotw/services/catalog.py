@@ -6,12 +6,14 @@ import re
 from pathlib import Path
 
 import frontmatter
+import yaml
 
 from fotw.models.workflow import (
     Hook,
     Persona,
     Role,
     Starter,
+    TeamRoster,
     ValidationResult,
     Workflow,
     WorkflowType,
@@ -42,12 +44,14 @@ WORKFLOWS_DIR = REPO_ROOT
 LANGUAGES_DIR = REPO_ROOT / "languages"
 PLATFORMS_DIR = REPO_ROOT / "platforms"
 VENDORS_DIR = REPO_ROOT / "vendors"
+TEAMS_DIR = REPO_ROOT / "teams"
 
 # Ordered lists of (dir, tier) for each workflow type
 _EXTRA_SKILL_DIRS: list[tuple] = [
     (LANGUAGES_DIR / "skills", "languages"),
     (PLATFORMS_DIR / "skills", "platforms"),
     (VENDORS_DIR / "skills", "vendors"),
+    (TEAMS_DIR / "skills", "teams"),
 ]
 _EXTRA_RULE_DIRS: list[tuple] = [
     (LANGUAGES_DIR / "rules", "languages"),
@@ -57,6 +61,7 @@ _EXTRA_RULE_DIRS: list[tuple] = [
 _EXTRA_AGENT_DIRS: list[tuple] = [
     (PLATFORMS_DIR / "agents", "platforms"),
     (VENDORS_DIR / "agents", "vendors"),
+    (TEAMS_DIR / "agents", "teams"),
 ]
 
 STARTERS_DIR = REPO_ROOT / "starters"
@@ -324,6 +329,117 @@ def scan_hooks() -> list[Hook]:
     return results
 
 
+def scan_team_hooks() -> list[Hook]:
+    """Scan teams/hooks/ for hook scripts with @fotw-hook metadata."""
+    hooks_dir = REPO_ROOT / "teams" / "hooks"
+    if not hooks_dir.is_dir():
+        return []
+
+    results = []
+    for path in sorted(hooks_dir.iterdir()):
+        if path.suffix != ".js":
+            continue
+        meta = _parse_hook_meta(path)
+        if not meta:
+            continue
+        results.append(
+            Hook(
+                name=path.stem,
+                description=meta.get("description", ""),
+                event=meta.get("event", ""),
+                matcher=meta.get("matcher", ""),
+                path=path,
+                has_tests=False,
+            )
+        )
+    return results
+
+
+def scan_team_rosters() -> list[TeamRoster]:
+    """Scan teams/rosters/ for .yaml team roster files."""
+
+    rosters_dir = REPO_ROOT / "teams" / "rosters"
+    if not rosters_dir.is_dir():
+        return []
+
+    results = []
+    for path in sorted(rosters_dir.glob("*.yaml")):
+        try:
+            data = yaml.safe_load(path.read_text()) or {}
+        except Exception:
+            continue
+        results.append(
+            TeamRoster(
+                name=data.get("name", path.stem),
+                description=data.get("description", ""),
+                teammates=data.get("teammates", []),
+                lead_model=data.get("lead_model", "opus"),
+                team_size=data.get("team_size", 0),
+                coordination=data.get("coordination", ""),
+                path=path,
+            )
+        )
+    return results
+
+
+def validate_team_roster(path: Path) -> ValidationResult:
+    """Validate a team roster YAML file."""
+
+    errors = []
+    warnings = []
+    wf_id = f"teams/rosters/{path.stem}"
+
+    try:
+        data = yaml.safe_load(path.read_text()) or {}
+    except Exception as exc:
+        return ValidationResult(workflow_id=wf_id, ok=False, errors=[f"YAML parse error: {exc}"])
+
+    if not data.get("name"):
+        warnings.append("Missing 'name'")
+    if not data.get("description"):
+        warnings.append("Missing 'description'")
+
+    teammates = data.get("teammates", [])
+    if not isinstance(teammates, list) or len(teammates) < 2:
+        errors.append("'teammates' must be a list with at least 2 entries")
+    else:
+        # Collect all known agent names
+        agent_names = set()
+        for agents_dir, _ in [(WORKFLOWS_DIR / "agents", "core")] + _EXTRA_AGENT_DIRS:
+            if agents_dir.is_dir():
+                for agent_path in agents_dir.iterdir():
+                    if agent_path.suffix == ".md":
+                        agent_names.add(agent_path.stem)
+
+        seen_names = set()
+        for i, teammate in enumerate(teammates):
+            if not isinstance(teammate, dict):
+                errors.append(f"Teammate {i} is not a mapping")
+                continue
+            name = teammate.get("name")
+            if not name:
+                errors.append(f"Teammate {i} missing 'name'")
+            elif name in seen_names:
+                errors.append(f"Duplicate teammate name: {name}")
+            else:
+                seen_names.add(name)
+
+            agent = teammate.get("agent")
+            if not agent:
+                errors.append(f"Teammate {i} missing 'agent'")
+            elif agent not in agent_names:
+                warnings.append(f"Teammate '{name or i}' references unknown agent: {agent}")
+
+            if not teammate.get("focus"):
+                warnings.append(f"Teammate '{name or i}' missing 'focus'")
+
+    team_size = data.get("team_size", 0)
+    if team_size and isinstance(teammates, list) and team_size != len(teammates):
+        warnings.append(f"team_size ({team_size}) does not match teammates count ({len(teammates)})")
+
+    return ValidationResult(workflow_id=wf_id, ok=len(errors) == 0, errors=errors, warnings=warnings)
+
+
 def validate_hook(path: Path) -> ValidationResult:
     """Validate a single hook script."""
     name = f"hooks/{path.stem}"
@@ -551,5 +667,32 @@ def validate_all(target_path: str | None = None) -> list[ValidationResult]:
             if path.suffix != ".md" or path.name == "README.md":
                 continue
             results.append(validate_role(path))
+
+    # Validate team rosters
+    teams_rosters_dir = REPO_ROOT / "teams" / "rosters"
+    if teams_rosters_dir.is_dir():
+        for path in sorted(teams_rosters_dir.glob("*.yaml")):
+            results.append(validate_team_roster(path))
+
+    # Validate team hooks
+    teams_hooks_dir = REPO_ROOT / "teams" / "hooks"
+    if teams_hooks_dir.is_dir():
+        for path in sorted(teams_hooks_dir.iterdir()):
+            if path.suffix == ".js":
+                results.append(validate_hook(path))
+
+    # Validate team agents
+    teams_agents_dir = REPO_ROOT / "teams" / "agents"
+    if teams_agents_dir.is_dir():
+        for path in sorted(teams_agents_dir.iterdir()):
+            if path.suffix == ".md":
+                results.append(validate_agent(path))
+
+    # Validate team skills
+    teams_skills_dir = REPO_ROOT / "teams" / "skills"
+    if teams_skills_dir.is_dir():
+        for skill_dir in sorted(teams_skills_dir.iterdir()):
+            if skill_dir.is_dir():
+                results.append(validate_skill(skill_dir))
 
     return results

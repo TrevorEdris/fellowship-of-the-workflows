@@ -77,6 +77,14 @@ def merge_hooks(existing_settings: dict, new_hooks: list[Hook]) -> dict:
     return settings
 
 
+def merge_env(existing_settings: dict, env_vars: dict[str, str]) -> dict:
+    """Merge environment variables into settings.json env block."""
+    merged = dict(existing_settings)
+    merged.setdefault("env", {})
+    merged["env"].update(env_vars)
+    return merged
+
+
 def write_settings(settings: dict, path: Path) -> None:
     """Write settings dict as formatted JSON."""
     path.parent.mkdir(parents=True, exist_ok=True)
