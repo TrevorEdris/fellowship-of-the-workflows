@@ -25,6 +25,7 @@ Maps each available FotW agent to its capabilities, domain, and routing guidance
 | `mermaid-diagram-specialist` | Documentation | Architecture diagrams, sequence diagrams, flowcharts, system topology | (check file) | Read, Write |
 | `ascii-ui-mockup-generator` | UI prototyping | Text-based UI wireframes, terminal UI mockups, layout sketching | (check file) | Read, Write |
 | `codebase-pattern-finder` | Code analysis | Pattern detection, consistency checking, convention auditing across large codebases | (check file) | Glob, Grep, Read |
+| `code-pattern-advisor` | Architecture/review | Design pattern misapplication, over-engineering, missing structure, language idiom violations | sonnet | Bash, Glob, Grep, LS, Read |
 | `ui-ux-designer` | Design | Design system specs, component design, UX flow documentation | (check file) | (check file) |
 | `tdd-enforcer` | Testing | TDD enforcement, RED-GREEN-REFACTOR cycle gating, test-first compliance | sonnet | Bash, Glob, Grep, Read |
 | `systematic-debugger` | Debugging | Root cause analysis, hypothesis-driven debugging, read-only investigation | opus | Bash, Glob, Grep, Read |
@@ -145,6 +146,12 @@ Analyzes code at scale to identify:
 - Cross-cutting concerns that may benefit from refactoring
 
 Best for large codebases where manual pattern detection is impractical.
+
+### `code-pattern-advisor`
+
+Detects misapplied, unnecessary, or missing design patterns in code. Applies a four-category detection framework: over-engineering (pattern soup, speculative generality, factories creating one type, builders for 3-field objects), under-engineering (God objects, anemic domain models, missing value objects), language idiom violations (GoF ceremony where language provides native equivalent — Strategy→lambda, Visitor→pattern matching, Builder→named params), and misapplication (wrong pattern for the problem — Adapter between owned interfaces, leaky Repository, Mediator with business logic). Read-only — diagnoses but does not fix. Use over `pragmatic-code-review` when the primary concern is structural pattern correctness rather than general code quality; use over `codebase-pattern-finder` when the goal is evaluating pattern appropriateness rather than finding repeated code structures; use alongside `refactoring-specialist` when pattern findings should be acted on immediately.
+
+Best invoked with specific files or a diff to review, plus context about the language and architectural style in use; providing the team size and codebase scale helps calibrate recommendations (patterns justified for a 50-person team may be over-engineering for a solo developer).
 
 ### `ui-ux-designer`
 
