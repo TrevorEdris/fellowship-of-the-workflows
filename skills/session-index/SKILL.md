@@ -5,7 +5,7 @@ user-invocable: true
 argument-hint: "[generate|link <from> <relationship> <to>]"
 allowed-tools: Bash(python:*), Bash(git log:*), Bash(git status), Bash(ls:*), Read, Write, Glob, Grep
 model: sonnet
-tags: [workflow]
+tags: [meta]
 ---
 
 # Session Index
