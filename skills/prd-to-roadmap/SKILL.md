@@ -2,9 +2,11 @@
 name: prd-to-roadmap
 description: >
   Translates an approved PRD into a unified ROADMAP.md with phased feature
-  descriptions and implementation checklists. Engineer-facing skill that bridges
-  Product requirements to engineering execution. Gates on PRD validation — refuses
-  to proceed if the PRD hasn't passed /prd-validator.
+  descriptions and implementation checklists. Use this skill whenever an engineer
+  receives a PRD and needs to break it into phases, when the user asks "how do I
+  turn this PRD into a plan", "create a roadmap from requirements", or "decompose
+  this into milestones". Gates on PRD validation — refuses to proceed if the PRD
+  hasn't passed /prd-validator.
 user-invocable: true
 argument-hint: "[path/to/PRD.md]"
 allowed-tools: Read, Grep, Glob, Write

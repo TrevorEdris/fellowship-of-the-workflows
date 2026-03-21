@@ -2,9 +2,11 @@
 name: prd-validator
 description: >
   Validates PRD.md files for structural completeness, specificity, and actionability
-  before handoff to engineering. Checks for required sections, acceptance criteria,
-  scope boundaries, vague language, and requirement ID consistency. Supports --draft
-  mode for work-in-progress PRDs with a relaxed threshold.
+  before handoff to engineering. Use this skill whenever a PRD exists and needs quality
+  review, before handing requirements to engineers, when the user asks "is this PRD
+  ready" or "validate my requirements", or automatically after /prd-author completes.
+  Checks for required sections, acceptance criteria, scope boundaries, vague language,
+  and requirement ID consistency. Supports --draft mode for work-in-progress PRDs.
 user-invocable: true
 argument-hint: "[path/to/PRD.md] [--draft]"
 allowed-tools: Read, Grep, Glob

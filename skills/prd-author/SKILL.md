@@ -1,10 +1,13 @@
 ---
 name: prd-author
 description: >
-  Interactive PRD creation and iteration for non-technical users. Guides through
-  structured requirement definition using plain-language facilitation prompts.
-  Supports two modes: create (new PRD from scratch) and iterate (update existing PRD
-  based on feedback). Auto-validates with /prd-validator after completion.
+  Interactive PRD creation and iteration for non-technical users. Use this skill
+  whenever the user wants to define product requirements, write a PRD, spec out a
+  feature, describe what to build, or says "what should we build", "write requirements",
+  "create a PRD", "define the product". Also use when updating an existing PRD based
+  on stakeholder or engineering feedback. Guides through structured requirement
+  definition using plain-language facilitation prompts with discovery questions upfront.
+  Auto-validates with /prd-validator after completion.
 user-invocable: true
 argument-hint: "[create | iterate [path/to/PRD.md]]"
 allowed-tools: Read, Grep, Glob, Write
@@ -53,7 +56,7 @@ Ask the 8 core questions:
 7. **Non-Goals** — What are we explicitly not trying to achieve?
 8. **Existing Context** — Is there existing code to reverse-engineer first?
 
-Do NOT skip this phase. The answers feed directly into PRD sections (see the mapping table in the reference file). If the user has already documented answers elsewhere, reference those rather than re-asking.
+This phase is essential — skipping it produces PRDs that answer the wrong question. The answers feed directly into PRD sections (see the mapping table in the reference file). If the user has already documented answers elsewhere, reference those rather than re-asking.
 
 If question 8 reveals existing code, suggest running `/reverse-engineer discover` before proceeding.
 
