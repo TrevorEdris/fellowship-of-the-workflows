@@ -2,7 +2,7 @@
 name: incident-management
 description: Cross-platform incident management router. Detects the alerting/on-call platform in use (Grafana IRM, incident.io, Better Stack, Datadog, PagerDuty) and routes to the appropriate specialist skill. Handles platform-agnostic tasks — alert design, on-call setup, runbook authoring, and blameless postmortems — without requiring platform knowledge.
 context: fork
-allowed-tools: Bash, Glob, Grep, Read, WebFetch
+allowed-tools: Bash(grep:*), Bash(cat:*), Bash(ls:*), Bash(git diff:*), Bash(git log:*), Bash(git status), Glob, Grep, Read, WebFetch
 tags: [incident-response]
 ---
 

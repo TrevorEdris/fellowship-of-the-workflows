@@ -1,6 +1,6 @@
 ---
 name: work-review
-description: Review work accomplished over a time period by correlating Jira tickets with git commits. Use for self-reviews, peer reviews, sprint retrospectives, or performance discussions.
+description: "Review work accomplished over a time period by correlating Jira tickets with git commits. Triggered by: what did I do this sprint, prepare for standup, self-review, peer review, sprint retro, summarize my work, performance review prep, what have I been working on, status update. Use for self-reviews, peer reviews, sprint retrospectives, or performance discussions."
 tags: [review]
 ---
 
