@@ -3,7 +3,7 @@ name: systematic-debugging
 description: "Structured root-cause analysis for bugs, test failures, and unexpected behavior. Four-phase methodology: investigate, analyze patterns, hypothesize, implement fix. Use when encountering any technical issue before proposing fixes. Prevents brute-force retry loops."
 context: fork
 agent: systematic-debugger
-allowed-tools: Bash, Grep, Glob, Read, Write, Edit
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(cargo:*), Bash(go:*), Bash(python:*), Bash(pytest:*), Bash(make:*), Bash(task:*), Grep, Glob, Read, Write, Edit
 tags: [testing]
 ---
 

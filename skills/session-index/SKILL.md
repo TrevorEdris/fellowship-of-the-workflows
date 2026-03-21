@@ -3,7 +3,7 @@ name: session-index
 description: "Generate and maintain a session index with cross-session dependencies. Scans .ai/sessions/ directories and produces INDEX.md."
 user-invocable: true
 argument-hint: "[generate|link <from> <relationship> <to>]"
-allowed-tools: Bash, Read, Write, Glob, Grep
+allowed-tools: Bash(python:*), Bash(git log:*), Bash(git status), Bash(ls:*), Read, Write, Glob, Grep
 model: sonnet
 tags: [meta]
 ---

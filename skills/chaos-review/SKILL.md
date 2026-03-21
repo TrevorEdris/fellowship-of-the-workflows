@@ -3,6 +3,7 @@ name: chaos-review
 description: "Adversarial code review that assumes the worst. Finds failure modes, race conditions, blast radius, and edge cases that optimistic reviewers miss. Use when you want brutal honesty about code resilience."
 context: fork
 agent: chaos-engineer
+model: sonnet
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Grep, Glob, LS, Read, WebFetch
 tags: [review, security]
 ---

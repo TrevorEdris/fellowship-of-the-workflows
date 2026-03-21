@@ -4,6 +4,7 @@ description: Identify and remove AI slop from code comments, documentation, and 
 context: fork
 agent: desloppify
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status), Grep, Glob, LS, Read, Write, Edit
+user-invocable: true
 argument-hint: "[code|docs|prose|review]"
 tags: [documentation]
 ---

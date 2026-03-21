@@ -5,7 +5,7 @@ user-invocable: true
 argument-hint: "[design problem or question]"
 allowed-tools: Read, Grep, Glob, LS, WebSearch, WebFetch
 model: sonnet
-tags: [meta]
+tags: [meta, architecture]
 ---
 
 # Brainstorm

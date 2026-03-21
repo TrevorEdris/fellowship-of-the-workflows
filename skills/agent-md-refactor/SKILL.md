@@ -10,18 +10,6 @@ Refactor bloated agent instruction files (AGENTS.md, CLAUDE.md, COPILOT.md, etc.
 
 ---
 
-## Triggers
-
-Use this skill when:
-- "refactor my AGENTS.md" / "refactor my CLAUDE.md"
-- "split my agent instructions"
-- "organize my CLAUDE.md file"
-- "my AGENTS.md is too long"
-- "progressive disclosure for my instructions"
-- "clean up my agent config"
-
----
-
 ## Quick Reference
 
 | Phase | Action | Output |

@@ -1,6 +1,6 @@
 ---
 name: refactoring
-description: Systematic code refactoring with smell detection, safe transformation patterns, and test-verified execution. Analyzes code structure, produces a prioritized refactoring plan, and executes changes with test verification at every step.
+description: "Systematic code refactoring with smell detection, safe transformation patterns, and test-verified execution. Triggered by: refactor this, clean up this code, code smells, extract method, dead code, reduce complexity, this code is messy, too much coupling, simplify this. Analyzes code structure, produces a prioritized refactoring plan, and executes changes with test verification at every step."
 context: fork
 agent: refactoring-specialist
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(cargo:*), Bash(go:*), Bash(python:*), Bash(pytest:*), Bash(make:*), Bash(task:*), Grep, Glob, LS, Read, Write, Edit
@@ -10,20 +10,6 @@ tags: [review]
 # Refactoring
 
 Systematically detect code smells, produce a prioritized refactoring plan, and execute changes with test verification at every step.
-
----
-
-## Triggers
-
-| Trigger | Example |
-|---------|---------|
-| `refactor this code` | "refactor this file" / "refactor src/auth/" |
-| `find code smells` | "find code smells in the payments module" |
-| `clean up` | "clean up this class" |
-| `extract method` | "extract a method from calculateTotal" |
-| `remove dead code` | "remove unused code" / "find unused exports" |
-| `reduce coupling` | "reduce coupling in the order service" |
-| `this code is too complex` | "this function is too long, help me break it down" |
 
 ---
 

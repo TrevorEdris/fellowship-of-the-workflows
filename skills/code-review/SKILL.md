@@ -3,6 +3,7 @@ name: code-review
 description: Perform thorough code review on a PR using the Pragmatic Quality framework. Integrates with Jira to validate implementation matches ticket requirements. Use when reviewing pull requests or providing PR feedback.
 context: fork
 agent: pragmatic-code-review
+model: sonnet
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Grep, Glob, LS, Read, WebFetch, TodoWrite
 tags: [review]
 ---

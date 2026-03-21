@@ -1,6 +1,8 @@
 ---
 name: writing-clearly-and-concisely
-description: Use when writing prose humans will read—documentation, commit messages, error messages, explanations, reports, or UI text. Applies Strunk's timeless rules for clearer, stronger, more professional writing.
+description: "Use when writing prose humans will read — documentation, commit messages, error messages, explanations, reports, or UI text. Applies Strunk's timeless rules for clearer, stronger, more professional writing. Triggered by: clean up this text, rewrite this, make this clearer, fix this README, improve this error message, edit for clarity, tighten this up, too wordy, writing quality."
+user-invocable: true
+argument-hint: "[text or file to improve]"
 tags: [documentation]
 ---
 

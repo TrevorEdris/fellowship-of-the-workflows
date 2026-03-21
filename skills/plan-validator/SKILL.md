@@ -3,7 +3,7 @@ name: plan-validator
 description: "Validate implementation plans for completeness, specificity, and actionability. Catches vague language, missing sections, and untestable outcomes."
 user-invocable: true
 argument-hint: "[path-to-plan.md]"
-allowed-tools: Bash, Read, Glob
+allowed-tools: Bash(python:*), Bash(git status), Read, Glob
 model: sonnet
 tags: [meta]
 ---
