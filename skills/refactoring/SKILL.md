@@ -5,6 +5,7 @@ context: fork
 agent: refactoring-specialist
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(cargo:*), Bash(go:*), Bash(python:*), Bash(pytest:*), Bash(make:*), Bash(task:*), Grep, Glob, LS, Read, Write, Edit
 tags: [review]
+tier: core
 ---
 
 # Refactoring

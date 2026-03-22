@@ -6,6 +6,7 @@ agent: pragmatic-code-review
 model: opus
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Grep, Glob, LS, Read, WebFetch, TodoWrite
 tags: [review]
+tier: core
 ---
 
 # Code Review

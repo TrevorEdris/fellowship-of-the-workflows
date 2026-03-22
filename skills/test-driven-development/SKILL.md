@@ -4,6 +4,7 @@ description: "Enforce RED-GREEN-REFACTOR cycle for any implementation task. Writ
 agent: tdd-enforcer
 allowed-tools: Bash(npm:*), Bash(npx:*), Bash(pytest:*), Bash(go:*), Bash(cargo:*), Bash(make:*), Bash(task:*), Grep, Glob, Read
 tags: [testing]
+tier: core
 ---
 
 # Test-Driven Development

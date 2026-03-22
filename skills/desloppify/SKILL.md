@@ -7,6 +7,7 @@ allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status), Grep, Glob, 
 user-invocable: true
 argument-hint: "[code|docs|prose|review]"
 tags: [documentation]
+tier: core
 ---
 
 # Desloppify
