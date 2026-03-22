@@ -46,11 +46,15 @@ jobs:
 
       - name: Run eval (deterministic)
         id: eval
-        continue-on-error: true
-        run: ./bin/fotw eval --all 2>&1 | tee eval-output.txt
+        run: |
+          set +e
+          ./bin/fotw eval --all 2>&1 | tee eval-output.txt
+          EVAL_EXIT=${PIPESTATUS[0]}
+          echo "eval_failed=$( [ $EVAL_EXIT -ne 0 ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Comment eval failures on PR
-        if: steps.eval.outcome == 'failure' && github.event_name == 'pull_request'
+        if: steps.eval.outputs.eval_failed == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -64,5 +68,5 @@ jobs:
             });
 
       - name: Fail if eval failed
-        if: steps.eval.outcome == 'failure'
+        if: steps.eval.outputs.eval_failed == 'true'
         run: exit 1
