@@ -4,7 +4,6 @@ description: "Validate implementation plans for completeness, specificity, and a
 user-invocable: true
 argument-hint: "[path-to-plan.md]"
 allowed-tools: Bash(python:*), Bash(git status), Read, Glob
-model: sonnet
 tags: [meta]
 ---
 
