@@ -25,6 +25,7 @@ SKILL_ALLOWED_KEYS = {
     "disable-model-invocation",
     "user-invocable",
     "tags",
+    "tier",
 }
 
 AGENT_ALLOWED_KEYS = {"name", "description", "tools", "model", "color", "tags"}
