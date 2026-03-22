@@ -34,6 +34,7 @@ jobs:
 
             After making changes, commit them with conventional commit messages.
           claude_args: "--max-turns 50 --model sonnet"
+          show_full_output: true
 
       - name: Push and create PR
         env:
