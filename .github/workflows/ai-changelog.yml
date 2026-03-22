@@ -33,7 +33,7 @@ jobs:
             Today's date is $(date +%Y-%m-%d).
 
             After making changes, commit them with conventional commit messages.
-          claude_args: "--max-turns 15 --model sonnet"
+          claude_args: "--max-turns 50 --model sonnet"
 
       - name: Push and create PR
         env:
