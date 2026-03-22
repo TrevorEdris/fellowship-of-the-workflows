@@ -11,6 +11,8 @@ Predefined team compositions for the `/team` skill. Each roster defines a set of
 | `investigation-team` | 3x systematic-debugger | Bug hunting, root cause analysis |
 | `design-team` | system-design-reviewer, chaos-engineer, pragmatic-code-review | Architecture debates before planning |
 | `plan-review-team` | system-design-reviewer, chaos-engineer, scope-analyzer | Stress-test an existing PLAN.md |
+| `ui-validation-team` | design-review, accessibility-audit, ui-ux-designer | Evaluate an existing UI for quality, accessibility, distinctiveness |
+| `ui-creation-team` | ui-ux-designer, ascii-ui-mockup-generator, frontend-builder, accessibility-audit | Guided UI creation from discovery through implementation |
 
 ## Schema
 

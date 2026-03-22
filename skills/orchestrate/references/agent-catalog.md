@@ -22,6 +22,7 @@ Maps each available FotW agent to its capabilities, domain, and routing guidance
 | `aws-iam-auditor` | AWS IAM security | IAM policy analysis, privilege escalation detection, trust policy review, CIS compliance | opus | Bash, Glob, Grep, Read |
 | `azure-architect` | Azure architecture | Azure service selection, resource sizing, region strategy, redundancy, WAF alignment, cost optimization | opus | Bash, Glob, Grep, Read, Write, WebFetch |
 | `design-review` | UI/UX | Visual design review, accessibility audit, responsiveness evaluation | sonnet | Bash + Playwright MCP tools |
+| `frontend-builder` | UI implementation | Distinctive frontend creation, anti-AI-slop aesthetics, accessible production-grade code with self-verification | opus | Bash, Glob, Grep, Read, Write, Edit, WebFetch + Playwright MCP tools |
 | `mermaid-diagram-specialist` | Documentation | Architecture diagrams, sequence diagrams, flowcharts, system topology | (check file) | Read, Write |
 | `ascii-ui-mockup-generator` | UI prototyping | Text-based UI wireframes, terminal UI mockups, layout sketching | (check file) | Read, Write |
 | `codebase-pattern-finder` | Code analysis | Pattern detection, consistency checking, convention auditing across large codebases | (check file) | Glob, Grep, Read |
@@ -327,6 +328,12 @@ Best invoked with a specific diff or set of files to review; providing context a
 Agent Teams coordinator (Claude Code only). Creates teams via Agent Teams primitives, spawns teammates from predefined rosters, manages a shared task list, and synthesizes results. Unlike `multi-agent-orchestrator` (which uses subagents), teammates communicate directly with each other via peer-to-peer messaging. Requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` to be enabled.
 
 Best invoked via the `/team` skill with a predefined roster (review, implementation, investigation). Not a general-purpose coordinator — use `multi-agent-orchestrator` for subagent-based orchestration.
+
+### `frontend-builder`
+
+Creates distinctive, production-grade frontend interfaces that avoid generic AI aesthetics. Follows a design thinking phase (purpose, tone, constraints, differentiation) before writing code, then implements with bold typography, color, motion, and layout choices. Bakes in WCAG 2.1 AA accessibility from the start (semantic HTML, keyboard navigation, contrast, ARIA). Self-verifies output using Playwright (screenshots at 3 viewports, keyboard navigation check, console error check).
+
+Best used as part of the `ui-creation-team` roster where a `ui-ux-designer` provides aesthetic direction and an `accessibility-audit` agent validates the output. Can also be invoked standalone for UI implementation tasks where the design direction is already established. Use over `ascii-ui-mockup-generator` when real code (not wireframes) is needed; use over `general-purpose` when the task is frontend creation requiring distinctive aesthetics.
 
 ### `gcp-iam-auditor`
 
