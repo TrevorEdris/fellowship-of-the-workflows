@@ -2,6 +2,7 @@
 name: security-review
 description: Perform security-focused code review to identify HIGH-CONFIDENCE vulnerabilities with real exploitation potential. Based on Anthropic's claude-code-security-review. Minimizes false positives with >80% confidence threshold. Use when reviewing PRs for security issues.
 context: fork
+effort: medium
 agent: security-review
 model: opus
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Read, Glob, Grep, LS, Task

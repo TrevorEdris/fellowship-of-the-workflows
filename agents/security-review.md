@@ -3,6 +3,7 @@ name: security-review
 description: Use this agent for security-focused code review to identify HIGH-CONFIDENCE vulnerabilities with real exploitation potential. Minimizes false positives with >80% confidence threshold. Based on Anthropic's claude-code-security-review methodology.
 tags: [security, review]
 tools: Bash, Glob, Grep, LS, Read, Task
+disallowedTools: Write, Edit
 model: opus
 ---
 
