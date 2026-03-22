@@ -4,6 +4,7 @@ description: "Generate, optimize, and manage CI/CD pipelines for GitHub Actions 
 user-invocable: true
 argument-hint: "[generate|optimize|deploy|secrets|matrix|audit]"
 tags: [ci-cd]
+tier: core
 ---
 
 # CI/CD Pipeline

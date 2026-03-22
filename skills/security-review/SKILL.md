@@ -6,6 +6,7 @@ agent: security-review
 model: opus
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Read, Glob, Grep, LS, Task
 tags: [security, review]
+tier: core
 ---
 
 # Security Review

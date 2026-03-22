@@ -5,6 +5,7 @@ context: fork
 agent: multi-agent-orchestrator
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr list:*), Glob, Grep, Read, Write, Task
 tags: [meta]
+tier: core
 ---
 
 # Orchestrate

@@ -7,6 +7,7 @@ context: fork
 agent: documentation-sync
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status), Bash(python:*), Grep, Glob, LS, Read, Write
 tags: [documentation]
+tier: core
 ---
 
 # Update Docs

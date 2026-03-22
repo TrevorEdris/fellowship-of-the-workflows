@@ -4,6 +4,7 @@ description: "Interactive git workflow assistant. Generates conventional commits
 user-invocable: true
 argument-hint: "[commit|pr|branch|conflict|worktree|finish]"
 tags: [git]
+tier: core
 ---
 
 # Git Workflow Assistant

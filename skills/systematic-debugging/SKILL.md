@@ -5,6 +5,7 @@ context: fork
 agent: systematic-debugger
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(cargo:*), Bash(go:*), Bash(python:*), Bash(pytest:*), Bash(make:*), Bash(task:*), Grep, Glob, Read, Write, Edit
 tags: [testing]
+tier: core
 ---
 
 # Systematic Debugging

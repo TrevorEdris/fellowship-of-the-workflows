@@ -109,6 +109,37 @@ class TestLoadGoldenTests:
         assert cases[0].id == "t-001"
         assert len(cases[0].assertions) == 1
 
+    def test_load_with_output_field(self, tmp_path):
+        skill_dir = tmp_path / "test-skill"
+        tests_dir = skill_dir / "tests"
+        tests_dir.mkdir(parents=True)
+        golden = tests_dir / "golden.jsonl"
+        golden.write_text(json.dumps({
+            "id": "t-001",
+            "name": "test-with-output",
+            "input": "test input",
+            "output": "recorded skill response",
+            "assertions": [{"type": "contains", "value": "response"}],
+        }) + "\n")
+        cases = load_golden_tests(skill_dir)
+        assert len(cases) == 1
+        assert cases[0].output == "recorded skill response"
+
+    def test_load_without_output_field(self, tmp_path):
+        skill_dir = tmp_path / "test-skill"
+        tests_dir = skill_dir / "tests"
+        tests_dir.mkdir(parents=True)
+        golden = tests_dir / "golden.jsonl"
+        golden.write_text(json.dumps({
+            "id": "t-001",
+            "name": "test-no-output",
+            "input": "test input",
+            "assertions": [{"type": "contains", "value": "expected"}],
+        }) + "\n")
+        cases = load_golden_tests(skill_dir)
+        assert len(cases) == 1
+        assert cases[0].output == ""
+
     def test_tag_filter(self, tmp_path):
         skill_dir = tmp_path / "test-skill"
         tests_dir = skill_dir / "tests"
