@@ -1,0 +1,37 @@
+name: Test PR Creation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup branch and make dummy change
+        run: |
+          source .github/scripts/manage-improvement-pr.sh
+          setup_branch
+
+          echo "Test run $(date +%Y-%m-%dT%H:%M:%S)" >> skills/ai-changelog/briefings/test.md
+          git add -A
+          git commit -m "test: dummy change for PR creation test"
+
+      - name: Push and create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          source .github/scripts/manage-improvement-pr.sh
+          DATE=$(date +%Y-%m-%d)
+          CHANGES="- test: dummy change"
+          push_and_pr "Test" "$DATE" "$CHANGES"
