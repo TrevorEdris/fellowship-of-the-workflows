@@ -10,6 +10,8 @@ Only scan the **Claude / Anthropic** and **Cursor** sections. For each source:
 - If scan method is `WebSearch`: run a WebSearch with the specified query, scoped to the last 30 days
 - If scan method is `WebFetch`: fetch the URL directly with WebFetch
 
+When scanning GitHub Releases API URLs, entries with `"prerelease": true` are experimental. Tag these as `[EXP]` in findings.
+
 Collect all findings into a list grouped by tool.
 
 ## Step 2: Fetch details
@@ -24,7 +26,7 @@ For each significant finding:
 1. Read the project's `CLAUDE.md` for context on what this project does
 2. Identify which skills in `skills/` are affected by the finding
 3. Read affected skill SKILL.md files
-4. Assess impact using the template
+4. Assess impact using the template. Include the release stage (stable/experimental/beta) in each assessment. Experimental features should recommend "prepare/monitor" rather than "adopt now"
 
 ## Step 4: Save briefing
 

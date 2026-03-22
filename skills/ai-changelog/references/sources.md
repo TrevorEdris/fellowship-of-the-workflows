@@ -8,7 +8,9 @@ Curated list of sources to scan for AI coding tool updates. Organized by categor
 |--------|-----|-------------|
 | Anthropic Blog | https://www.anthropic.com/news | WebSearch: `site:anthropic.com/news` |
 | Claude Code Changelog | https://docs.anthropic.com/en/docs/claude-code/changelog | WebFetch |
-| Claude Code GitHub | https://github.com/anthropics/claude-code/releases | WebFetch |
+| Claude Code Releases (API) | https://api.github.com/repos/anthropics/claude-code/releases | WebFetch |
+
+> The GitHub Releases API returns JSON. Entries with `"prerelease": true` are experimental releases — include these in scans.
 
 ## Cursor
 

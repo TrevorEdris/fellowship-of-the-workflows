@@ -27,6 +27,25 @@ If no `--tools` flag is provided, auto-detect from the project: look for `.claud
 
 ---
 
+## Release Maturity
+
+When scanning sources that distinguish release stages, classify each finding:
+
+| Stage | Meaning | Tag |
+|-------|---------|-----|
+| **Stable** | GA release, available to all users | (none) |
+| **Experimental** | Pre-release or experimental flag, opt-in only | `[EXP]` |
+| **Beta/Preview** | Public beta or preview program | `[BETA]` |
+
+How this affects each mode:
+- **Scan:** Tag pre-release findings with `[EXP]` or `[BETA]` in the bullet list
+- **Briefing:** Include a "Release Stage" line in each per-tool finding
+- **Impact:** Adjust recommendation language — experimental features use "prepare for / monitor" rather than "adopt now"
+
+GitHub Releases API entries with `"prerelease": true` are **Experimental**. Blog posts announcing "beta" or "preview" programs are **Beta/Preview**. Everything else is **Stable**.
+
+---
+
 ## Mode Selection
 
 Determine mode from the argument:
