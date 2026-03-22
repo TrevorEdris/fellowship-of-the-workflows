@@ -114,10 +114,10 @@ jobs:
             Today's date is $(date +%Y-%m-%d).
 
             After making changes, commit them with conventional commit messages.
-          claude_args: "--max-turns 10 --model sonnet"
+          claude_args: '--allowedTools "Read,Write,Edit,Bash,Glob,Grep" --max-turns 25 --model sonnet'
 
       - name: Push and create PR
-        if: steps.eval.outputs.eval_failed == 'true'
+        if: always() && steps.eval.outputs.eval_failed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
