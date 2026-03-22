@@ -1,6 +1,6 @@
 ---
 name: ai-changelog
-description: "Scan for new AI coding tool features and assess FOTW impact. Covers Claude Code, Cursor, Copilot, Windsurf, Codex, Roo, and Goose. Use to track AI tooling changes and identify skill/rule/agent improvements."
+description: "Scan for new AI coding tool features and assess impact on your project. Covers Claude Code, Cursor, Copilot, Windsurf, Codex, Roo, and Goose. Use to track AI tooling changes and identify workflow improvements."
 user-invocable: true
 argument-hint: "[scan|briefing|impact <feature>]"
 allowed-tools: WebSearch, WebFetch, Read, Write, Grep, Glob
@@ -9,7 +9,7 @@ tags: [meta]
 
 # AI Changelog
 
-Scan AI coding tool changelogs and blogs, synthesize findings, and assess impact on FOTW workflows.
+Scan AI coding tool changelogs and blogs, synthesize findings, and assess impact on your project's workflows.
 
 ---
 
@@ -31,22 +31,25 @@ Full research with structured synthesis.
 
 1. Run scan (step 1 above)
 2. WebFetch the most relevant results for detail
-3. For each significant finding, assess FOTW impact using the template in `references/impact-template.md`
-4. Read `references/fotw-inventory.md` to cross-reference current capabilities
+3. Understand the project context:
+   - Read the project's CLAUDE.md, README, or equivalent for an overview
+   - Scan for AI workflow files (skills, rules, agents, hooks, .cursorrules, copilot instructions)
+   - Identify the AI tools the project targets
+4. For each significant finding, assess project impact using `references/impact-template.md`
 5. Synthesize into a structured briefing:
    - **Per-tool sections** — What changed, when, significance
-   - **Impact assessment** — Which FOTW skills/rules/agents are affected
-   - **Recommendations** — Concrete next steps (new skill, update existing, no action)
+   - **Impact assessment** — Which project workflows are affected
+   - **Recommendations** — Concrete next steps (new workflow, update existing, no action)
 6. Save briefing to `briefings/YYYY-MM-DD.md`
 7. Present summary to user
 
 ### 3. Impact (`/ai-changelog impact <feature>`)
 
-Analyze a specific feature or change against FOTW inventory.
+Analyze a specific feature or change against the current project.
 
-1. Read `references/fotw-inventory.md`
+1. Scan the project for AI workflow files and configuration
 2. WebSearch for details about the specified feature
-3. Assess which FOTW workflows are affected
+3. Assess which project workflows are affected
 4. Output using the impact template
 
 ---
@@ -66,5 +69,4 @@ When invoked with `--agent` flag (for GHA automation):
 | File | Purpose |
 |------|---------|
 | `references/sources.md` | Curated list of changelog URLs and blogs to scan |
-| `references/impact-template.md` | Template for FOTW impact assessment |
-| `references/fotw-inventory.md` | Current FOTW capabilities summary |
+| `references/impact-template.md` | Template for project impact assessment |
