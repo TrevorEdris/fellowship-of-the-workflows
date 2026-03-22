@@ -3,6 +3,7 @@ name: ai-changelog
 description: "Scan for new AI coding tool features and assess impact on your project. Covers Claude Code, Cursor, Copilot, Windsurf, Codex, Roo, and Goose. Use to track AI tooling changes and identify workflow improvements."
 user-invocable: true
 argument-hint: "[scan|briefing|impact <feature>] [--tools claude,cursor]"
+effort: medium
 allowed-tools: WebSearch, WebFetch, Read, Write, Grep, Glob
 tags: [meta]
 ---
