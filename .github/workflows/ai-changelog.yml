@@ -1,0 +1,54 @@
+name: Monthly AI Changelog
+
+on:
+  schedule:
+    - cron: '0 4 1 * *'  # 1st of each month, 4am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ai-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup improvement branch
+        run: |
+          source .github/scripts/manage-improvement-pr.sh
+          setup_branch
+
+      - name: Run ai-changelog with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Read the prompt in .github/prompts/ai-changelog-improvements.md and follow its instructions.
+            Today's date is $(date +%Y-%m-%d).
+
+            After making changes, commit them with conventional commit messages.
+          use_claude_code: true
+          claude_code_args: "--max-turns 15"
+
+      - name: Push and create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet origin/main..HEAD 2>/dev/null && git diff --quiet; then
+            echo "No changes to push"
+            exit 0
+          fi
+
+          # Commit any unstaged changes Claude left
+          git add -A
+          git diff --cached --quiet || git commit -m "docs(skills): save ai-changelog briefing"
+
+          source .github/scripts/manage-improvement-pr.sh
+          DATE=$(date +%Y-%m-%d)
+          CHANGES=$(git log --oneline origin/main..HEAD | sed 's/^/- /')
+          push_and_pr "AI Changelog" "$DATE" "$CHANGES"
