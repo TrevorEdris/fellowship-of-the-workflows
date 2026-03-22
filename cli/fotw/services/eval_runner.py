@@ -24,6 +24,7 @@ class TestCase:
     description: str = ""
     tags: list[str] = field(default_factory=list)
     config: dict = field(default_factory=dict)
+    output: str = ""  # Pre-recorded output for deterministic testing
 
 
 @dataclass
@@ -89,6 +90,7 @@ def load_golden_tests(skill_dir: Path, tag_filter: str | None = None) -> list[Te
             description=data.get("description", ""),
             tags=data.get("tags", []),
             config=data.get("config", {}),
+            output=data.get("output", ""),
         )
         if tag_filter and tag_filter not in case.tags:
             continue

@@ -121,6 +121,8 @@ def scan_skills() -> list[Workflow]:
             tags = meta.get("tags", [])
             if isinstance(tags, str):
                 tags = [t.strip() for t in tags.split(",")]
+            # Frontmatter tier overrides directory-based default
+            effective_tier = meta.get("tier", tier)
             results.append(
                 Workflow(
                     wtype=WorkflowType.SKILL,
@@ -128,7 +130,7 @@ def scan_skills() -> list[Workflow]:
                     description=meta.get("description", ""),
                     path=skill_dir,
                     tags=tags,
-                    tier=tier,
+                    tier=effective_tier,
                 )
             )
     return results

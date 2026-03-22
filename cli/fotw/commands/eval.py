@@ -6,7 +6,7 @@ from typing import Optional
 
 import typer
 
-from fotw.services.catalog import WORKFLOWS_DIR
+from fotw.services.catalog import WORKFLOWS_DIR, scan_skills
 from fotw.services.eval_runner import (
     EvalReport,
     format_report,
@@ -22,6 +22,7 @@ def eval_cmd(
         help="Skill to evaluate (e.g., 'code-review' or 'skills/code-review')",
     ),
     all_skills: bool = typer.Option(False, "--all", "-a", help="Evaluate all skills with golden tests"),
+    tier: Optional[str] = typer.Option(None, "--tier", help="Filter skills by tier (e.g., 'core')"),
     tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Filter test cases by tag"),
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Write results to JSON file"),
     deterministic_only: bool = typer.Option(
@@ -36,14 +37,24 @@ def eval_cmd(
     In deterministic mode (default), only contains/regex assertions are checked.
     Use --full --provider anthropic for LLM-rubric evaluation.
     """
-    if not skill and not all_skills:
-        err_console.print("[red]Error: Specify a skill name or use --all[/red]")
+    if not skill and not all_skills and not tier:
+        err_console.print("[red]Error: Specify a skill name, use --all, or use --tier[/red]")
         raise typer.Exit(1)
 
     skills_dir = WORKFLOWS_DIR / "skills"
     skill_dirs: list[Path] = []
 
-    if all_skills:
+    if tier:
+        # Filter by tier using catalog metadata
+        all_catalog_skills = scan_skills()
+        tier_skills = {s.name for s in all_catalog_skills if s.tier == tier}
+        for d in sorted(skills_dir.iterdir()):
+            if d.is_dir() and d.name in tier_skills and (d / "tests" / "golden.jsonl").is_file():
+                skill_dirs.append(d)
+        if not skill_dirs:
+            console.print(f"[yellow]No skills with tier '{tier}' have golden tests.[/yellow]")
+            return
+    elif all_skills:
         for d in sorted(skills_dir.iterdir()):
             if d.is_dir() and (d / "tests" / "golden.jsonl").is_file():
                 skill_dirs.append(d)
@@ -85,8 +96,21 @@ def eval_cmd(
         for case in cases:
             console.print(f"  [dim]{case.id}[/dim] {case.name} ", end="")
             if deterministic_only:
-                console.print("[yellow]\u2298 needs --full mode to run[/yellow]")
-                deferred_count += 1
+                if case.output:
+                    result = run_test_deterministic(case, case.output)
+                    results.append(result)
+                    if result.passed:
+                        console.print("[green]\u2713 passed[/green]")
+                        passed_count += 1
+                    else:
+                        console.print("[red]\u2717 failed[/red]")
+                        failed_count += 1
+                        for a in result.assertions:
+                            if a.passed is False:
+                                console.print(f"    [red]{a.type}: {a.reason}[/red]")
+                else:
+                    console.print("[yellow]\u2298 no recorded output (add 'output' field or use --full)[/yellow]")
+                    deferred_count += 1
             else:
                 console.print("[yellow]\u2298 --full mode not yet implemented[/yellow]")
                 deferred_count += 1

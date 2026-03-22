@@ -33,6 +33,7 @@ Golden tests live at `skills/<name>/tests/golden.jsonl`. Each line is a JSON obj
 | `name` | string | Yes | Human-readable test name (kebab-case) |
 | `description` | string | No | Why this test exists, what regression it prevents |
 | `input` | string | Yes | The prompt sent to the skill (simulates user input) |
+| `output` | string | No | Pre-recorded skill output for deterministic testing. When present, assertions check against this recorded output without invoking the skill. |
 | `assertions` | array | Yes | List of assertions to check against the skill's output |
 | `tags` | array | No | For filtering: `regression`, `security`, `edge-case`, etc. |
 | `config` | object | No | Per-test overrides for model, max_tokens, temperature |
