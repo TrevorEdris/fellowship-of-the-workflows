@@ -121,6 +121,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Re-authenticate after claude-code-action cleanup revokes git credentials
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
           # Check if Claude made any changes
           if git diff --quiet origin/main..HEAD 2>/dev/null && git diff --quiet; then
             echo "No changes to push"
