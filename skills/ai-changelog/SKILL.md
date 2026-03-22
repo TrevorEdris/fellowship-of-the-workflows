@@ -2,7 +2,7 @@
 name: ai-changelog
 description: "Scan for new AI coding tool features and assess impact on your project. Covers Claude Code, Cursor, Copilot, Windsurf, Codex, Roo, and Goose. Use to track AI tooling changes and identify workflow improvements."
 user-invocable: true
-argument-hint: "[scan|briefing|impact <feature>]"
+argument-hint: "[scan|briefing|impact <feature>] [--tools claude,cursor]"
 allowed-tools: WebSearch, WebFetch, Read, Write, Grep, Glob
 tags: [meta]
 ---
@@ -10,6 +10,20 @@ tags: [meta]
 # AI Changelog
 
 Scan AI coding tool changelogs and blogs, synthesize findings, and assess impact on your project's workflows.
+
+---
+
+## Tool Filtering
+
+If the user specifies `--tools`, only scan and report on those tools. Accepts comma-separated names.
+
+**Valid tool names:** `claude`, `cursor`, `copilot`, `windsurf`, `codex`, `roo`, `goose`
+
+Examples:
+- `/ai-changelog scan --tools claude,cursor` — only Claude Code and Cursor
+- `/ai-changelog briefing --tools claude` — only Claude Code
+
+If no `--tools` flag is provided, auto-detect from the project: look for `.claude/`, `.cursor/`, `.github/copilot-instructions.md`, etc. If nothing is detected, scan all tools.
 
 ---
 
@@ -22,8 +36,9 @@ Determine mode from the argument:
 Quick scan for recent AI tooling news.
 
 1. Read `references/sources.md` for the curated source list
-2. WebSearch each source category for posts from the last 30 days
-3. Output raw findings as a bullet list, grouped by tool
+2. Filter to selected tools only (from `--tools` flag or auto-detected)
+3. WebSearch each matching source category for posts from the last 30 days
+4. Output raw findings as a bullet list, grouped by tool
 
 ### 2. Briefing (`/ai-changelog briefing`)
 
