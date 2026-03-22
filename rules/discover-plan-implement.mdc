@@ -86,7 +86,7 @@ alwaysApply: true
   - **Risks and assumptions** — what could go wrong, what we're assuming
   - **Verification steps** — how to confirm each step is correct (test/lint/build/manual check)
   - **Traceability** — map each discovery finding to a plan step
-  - **Git strategy** — branch name, commit checkpoints with messages, anticipated PR title and description
+  - **Git strategy** — branch name, commit checkpoints with messages, anticipated PR title and description. Check for `.github/PULL_REQUEST_TEMPLATE.md` and structure the PR description to match it.
 
 Each step that introduces new behavior must be structured as RED-GREEN:
 1. Write failing test for the desired behavior
