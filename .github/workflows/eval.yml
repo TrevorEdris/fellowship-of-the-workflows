@@ -9,6 +9,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
   eval:
@@ -113,8 +114,7 @@ jobs:
             Today's date is $(date +%Y-%m-%d).
 
             After making changes, commit them with conventional commit messages.
-          use_claude_code: true
-          claude_code_args: "--max-turns 10"
+          claude_args: "--max-turns 10"
 
       - name: Push and create PR
         if: steps.eval.outputs.eval_failed == 'true'
