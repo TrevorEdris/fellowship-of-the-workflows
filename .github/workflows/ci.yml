@@ -46,10 +46,8 @@ jobs:
 
       - name: Run eval (deterministic)
         id: eval
-        run: |
-          set +e
-          ./bin/fotw eval --all 2>&1 | tee eval-output.txt
-          exit ${PIPESTATUS[0]}
+        continue-on-error: true
+        run: ./bin/fotw eval --all 2>&1 | tee eval-output.txt
 
       - name: Comment eval failures on PR
         if: steps.eval.outcome == 'failure' && github.event_name == 'pull_request'
@@ -64,3 +62,7 @@ jobs:
               issue_number: context.issue.number,
               body: `## Eval Failures\n\n\`\`\`\n${output}\n\`\`\``,
             });
+
+      - name: Fail if eval failed
+        if: steps.eval.outcome == 'failure'
+        run: exit 1
