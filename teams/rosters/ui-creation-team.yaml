@@ -1,0 +1,39 @@
+name: ui-creation-team
+description: "Guided UI creation for non-frontend developers. A UX advisor leads discovery questions, a mockup artist visualizes concepts, a builder implements distinctive production-grade code, and an accessibility advisor validates compliance. Use when designing and building a new UI from scratch."
+
+lead_model: opus
+team_size: 4
+coordination: >
+  This team follows a sequential workflow with defined phases.
+  Phase 1 — Discovery: The ux-advisor asks the user guiding questions about purpose, audience, tone, and constraints. No code is written yet.
+  Phase 2 — Direction: The ux-advisor proposes an aesthetic direction with research backing. The lead confirms with the user before proceeding.
+  Phase 3 — Mockup: The mockup-artist creates 3-5 ASCII mockup variations based on the agreed direction. The user selects one.
+  Phase 4 — Build: The builder implements the selected mockup with distinctive aesthetics following the ux-advisor's direction. The a11y-advisor reviews the implementation in parallel and messages the builder with any accessibility issues found.
+  Phase 5 — Polish: The ux-advisor does a final design critique. The builder refines based on feedback. The a11y-advisor confirms all issues are resolved.
+  The lead enforces sequencing: discovery before direction, direction before mockup, mockup approval before build.
+  The lead relays the user's answers from discovery to all teammates so everyone shares context.
+
+teammates:
+  - name: ux-advisor
+    agent: ui-ux-designer
+    model: opus
+    focus: "Lead the discovery phase by asking the user specific, guiding questions: What is this interface for? Who will use it? What tone should it convey? What are the technical constraints? What similar interfaces do they like or dislike? After discovery, propose a bold aesthetic direction with research backing (cite NN Group studies, reference specific font and color choices). During the polish phase, critique the builder's output for UX quality, distinctiveness, and research-backed principles. Push back on generic choices."
+    plan_approval: false
+
+  - name: mockup-artist
+    agent: ascii-ui-mockup-generator
+    model: sonnet
+    focus: "After the ux-advisor establishes an aesthetic direction, create 3-5 ASCII mockup variations that explore different layout approaches for the agreed concept. Each mockup should show component placement, information hierarchy, and responsive considerations. Provide design rationale for each variation. Wait for the user to select a mockup before the builder begins implementation."
+    plan_approval: false
+
+  - name: builder
+    agent: frontend-builder
+    model: opus
+    focus: "Implement the user-selected mockup as production-grade frontend code. Follow the aesthetic direction established by the ux-advisor. Make bold typography, color, and motion choices — never fall back on generic defaults. Use semantic HTML, CSS variables for design tokens, and mobile-first responsive design. Verify your own work with Playwright (screenshots at 3 viewports, keyboard navigation check). When the a11y-advisor reports issues, fix them promptly."
+    plan_approval: false
+
+  - name: a11y-advisor
+    agent: accessibility-audit
+    model: sonnet
+    focus: "Once the builder starts implementation, audit the output for WCAG 2.1 AA compliance. Focus on keyboard navigation, color contrast, semantic HTML, ARIA patterns, touch targets, and focus indicators. Message the builder directly with specific issues and code-level fixes. Confirm all critical and high issues are resolved before the polish phase begins."
+    plan_approval: false
