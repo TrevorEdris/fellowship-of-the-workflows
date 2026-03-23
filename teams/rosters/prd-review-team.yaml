@@ -1,0 +1,35 @@
+name: prd-review-team
+description: "Multi-perspective PRD evaluation. Three reviewers independently analyze an existing PRD for codebase alignment, architectural feasibility, and scope risks, then the lead synthesizes a unified report with a GO / REVISE / REJECT recommendation and a 'Biggest Scope Risk' callout. Use when evaluating an existing PRD before handoff to engineering."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  The lead first runs prd-validator to establish a structural baseline score.
+  All three reviewers then work in parallel against the same PRD.
+  The scope-auditor checks PRD requirements against the actual codebase — what exists, what's missing, what the PRD assumes but isn't true.
+  The architecture-reviewer evaluates whether proposed requirements are architecturally feasible and identifies anti-patterns.
+  The scope-risk-analyst hunts for scope bombs, disproportionate requirements, and hidden dependencies.
+  Reviewers message each other when findings overlap (e.g., a requirement that is both architecturally risky and a scope bomb).
+  Lead cross-pollinates relevant discoveries between reviewers.
+  Lead synthesizes all findings into a single unified report prioritized as Critical > High > Medium > Low.
+  Report includes the prd-validator score, all reviewer findings, and ends with "Biggest Scope Risk" — the single requirement most likely to blow up in implementation.
+  Final verdict: GO (proceed to roadmap), REVISE (fix specific issues first), or REJECT (fundamental rethink needed).
+
+teammates:
+  - name: scope-auditor
+    agent: scope-analyzer
+    model: sonnet
+    focus: "Audit the PRD against the actual codebase. For each functional requirement, check whether the codebase already has relevant implementations, partial work, or infrastructure that the PRD should reference. Identify requirements that assume capabilities the codebase doesn't have. Flag scope gaps — areas the PRD doesn't cover but the codebase will need changed. Flag scope creep — requirements that touch far more code than the PRD suggests. Message the architecture-reviewer if you find structural concerns."
+    plan_approval: false
+
+  - name: architecture-reviewer
+    agent: system-design-reviewer
+    model: sonnet
+    focus: "Review the PRD for architectural feasibility and consistency. Evaluate whether proposed requirements can coexist without creating distributed system hazards — data consistency issues, missing resilience patterns, implicit coupling between requirements. Check that non-functional requirements (performance, scalability, security) are realistic given the proposed functional requirements. Flag requirements that will force architectural changes the PRD doesn't acknowledge. Message the scope-risk-analyst if you find requirements with hidden architectural complexity."
+    plan_approval: false
+
+  - name: scope-risk-analyst
+    agent: chaos-engineer
+    model: opus
+    focus: "Hunt for scope bombs in the PRD. Compare every requirement's apparent complexity against its actual implementation cost — flag any requirement that is disproportionately larger than others but presented as equal priority or effort. Identify hidden dependencies between requirements that the PRD doesn't make explicit. Find requirements with vague acceptance criteria that will expand during implementation. Check milestone/phase boundaries for unrealistic groupings. For each finding, estimate blast radius: how many other requirements or milestones are affected if this one blows up. Message the scope-auditor if you need codebase context to confirm a risk."
+    plan_approval: false
