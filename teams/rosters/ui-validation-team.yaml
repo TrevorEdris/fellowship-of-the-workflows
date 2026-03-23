@@ -1,0 +1,33 @@
+name: ui-validation-team
+description: "Multi-perspective UI validation. Design reviewer, accessibility auditor, and UX critic evaluate a running interface in parallel, then the lead synthesizes a unified report with prioritized fixes and a single 'One Big Win' recommendation. Use when reviewing an existing UI for quality, accessibility, and distinctiveness."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  All three reviewers work in parallel against the same running URL.
+  The design-reviewer focuses on visual quality, responsiveness, and interaction states.
+  The a11y-auditor focuses on WCAG 2.1/2.2 compliance, keyboard navigation, and contrast.
+  The ux-critic evaluates research-backed UX principles and whether the design is distinctive or generic.
+  Reviewers message each other when findings overlap (e.g., a design choice that creates an accessibility barrier).
+  Lead cross-pollinates relevant discoveries between reviewers.
+  Lead synthesizes all findings into a single unified report prioritized as Critical > High > Medium > Low.
+  Report ends with "One Big Win" — the single most impactful change if time is limited.
+
+teammates:
+  - name: design-reviewer
+    agent: design-review
+    model: sonnet
+    focus: "Execute the 7-phase design review process against the running UI. Focus on visual quality, responsiveness across desktop/tablet/mobile viewpoints, interaction states (hover, active, disabled), visual polish, and code health. Take screenshots as evidence. Message the a11y-auditor if you find contrast or focus issues, and message the ux-critic if you find layout or typography concerns."
+    plan_approval: false
+
+  - name: a11y-auditor
+    agent: accessibility-audit
+    model: sonnet
+    focus: "Execute the full POUR accessibility audit against the running UI. Focus on keyboard navigation, color contrast, ARIA patterns, semantic HTML, touch targets, and screen reader compatibility. Take screenshots for visual findings. Message the design-reviewer if you find visual issues that are also accessibility barriers."
+    plan_approval: false
+
+  - name: ux-critic
+    agent: ui-ux-designer
+    model: opus
+    focus: "Evaluate the UI against research-backed UX principles: F-pattern reading, left-side bias, Fitts's Law, Hick's Law, mobile thumb zones. Assess whether the design is distinctive or falls into generic AI-slop aesthetics (Inter font, purple gradients, cookie-cutter layouts). Cite NN Group studies. Provide specific, implementable fixes with code examples. Message the design-reviewer with aesthetic findings that need visual verification."
+    plan_approval: false
