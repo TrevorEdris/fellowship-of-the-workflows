@@ -38,6 +38,14 @@ Use these prompts to guide non-technical users through each section of a PRD. Th
 > - What does "done" look like? If you were demoing this to a customer, what would you show them? What would make them say "yes, that's what I need"?
 >
 > Don't worry about technical details. "Users can search by name and see results within 2 seconds" is better than "implement Elasticsearch with fuzzy matching."
+>
+> **Do NOT include:**
+> - File paths or directory structures (`src/components/...`)
+> - Line numbers or code references
+> - Implementation patterns (hook names, event handlers, state management)
+> - "Files to change" or "Files to modify" sections
+>
+> These belong in PLAN.md. The PRD describes behavior the user sees, not code the engineer writes.
 
 ---
 
