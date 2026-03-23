@@ -561,6 +561,75 @@ def check_requirement_id_consistency(lines: list[str], report: ValidationReport)
         report.score -= 3
 
 
+def check_implementation_leakage(lines: list[str], report: ValidationReport) -> None:
+    """Check 17: Detect implementation details that belong in PLAN.md."""
+    hits = 0
+    in_code_block = False
+
+    # Detect "Files to change/modify" headings
+    files_heading_re = re.compile(
+        r"^\*{0,2}files?\s+to\s+(?:change|modify|update|edit)\*{0,2}\s*:?\s*$",
+        re.IGNORECASE,
+    )
+
+    # Detect source code file paths (src/, apps/, packages/, components/, internal/, cmd/)
+    source_path_re = re.compile(
+        r"(?:^|\s)(?:`)?(?:src|apps|packages|components|internal|cmd|lib|libs|services)/\S+\.\w{1,4}(?:`)?",
+    )
+
+    # Detect line number references
+    line_ref_re = re.compile(
+        r"\(lines?\s+\d+|:\s*line\s+\d+|\(lines?\s+\d+[\s,\-]+\d+",
+        re.IGNORECASE,
+    )
+
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+
+        if files_heading_re.match(stripped):
+            report.issues.append(
+                Issue(
+                    severity="warning",
+                    category="abstraction",
+                    message='"Files to change" section belongs in PLAN.md, not the PRD. PRDs describe what to build, not which files to modify.',
+                    line=i,
+                )
+            )
+            hits += 1
+
+        elif source_path_re.search(line):
+            if hits < 5:
+                report.issues.append(
+                    Issue(
+                        severity="warning",
+                        category="abstraction",
+                        message="Source code file path detected. Implementation file references belong in PLAN.md.",
+                        line=i,
+                    )
+                )
+            hits += 1
+
+        elif line_ref_re.search(line):
+            if hits < 5:
+                report.issues.append(
+                    Issue(
+                        severity="warning",
+                        category="abstraction",
+                        message="Line number reference detected. Code-level references belong in PLAN.md.",
+                        line=i,
+                    )
+                )
+            hits += 1
+
+    if hits > 0:
+        report.score -= min(hits * 3, 10)
+
+
 # ---------------------------------------------------------------------------
 # Report rendering
 # ---------------------------------------------------------------------------
@@ -674,6 +743,7 @@ def validate_prd(path: Path, draft: bool = False) -> ValidationReport:
     check_success_metrics(lines, report)
     check_open_questions(lines, report)
     check_requirement_id_consistency(lines, report)
+    check_implementation_leakage(lines, report)
 
     report.score = max(0, report.score)
     return report

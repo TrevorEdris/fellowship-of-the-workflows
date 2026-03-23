@@ -19,7 +19,7 @@ teammates:
   - name: scope-auditor
     agent: scope-analyzer
     model: sonnet
-    focus: "Audit the PRD against the actual codebase. For each functional requirement, check whether the codebase already has relevant implementations, partial work, or infrastructure that the PRD should reference. Identify requirements that assume capabilities the codebase doesn't have. Flag scope gaps — areas the PRD doesn't cover but the codebase will need changed. Flag scope creep — requirements that touch far more code than the PRD suggests. Message the architecture-reviewer if you find structural concerns."
+    focus: "Audit the PRD against the actual codebase. For each functional requirement, check whether the codebase already has relevant implementations, partial work, or infrastructure that the PRD should reference. Identify requirements that assume capabilities the codebase doesn't have. Flag scope gaps — areas the PRD doesn't cover but the codebase will need changed. Flag scope creep — requirements that touch far more code than the PRD suggests. Flag abstraction violations — requirements that have leaked into implementation territory (file paths, line numbers, code patterns, or 'Files to change' sections belong in PLAN.md, not the PRD). Message the architecture-reviewer if you find structural concerns."
     plan_approval: false
 
   - name: architecture-reviewer

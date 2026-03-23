@@ -50,6 +50,19 @@ List each thing the product must do. Use FR-001 format for traceability.
 **Acceptance Criteria:**
 - [ ] ...
 
+> **Abstraction boundary:** PRDs describe *what* the product must do, not *how* to build it.
+>
+> Do NOT include in requirements:
+> - **File paths** — `src/components/foo.tsx` belongs in PLAN.md
+> - **Line numbers** — `(lines 8, 22)` belongs in PLAN.md
+> - **"Files to change" sections** — that's implementation planning
+> - **Code patterns** — hook names, event handlers, state management, type definitions
+> - **Implementation instructions** — "call X before Y", "use stopPropagation()"
+>
+> Instead, describe observable behavior: "Tapping the heart icon on a target card toggles its favorite state without navigating away."
+>
+> Codebase context from discovery *informs* requirements but stays in DISCOVERY.md.
+
 ---
 
 ## Non-Functional Requirements
