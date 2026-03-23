@@ -1,0 +1,31 @@
+name: prd-creation-team
+description: "Guided PRD creation with codebase awareness. A scope scout maps the existing codebase before discovery begins, the lead drives structured discovery questions and authoring with the user, then a feasibility advisor and risk advisor review the draft for architectural soundness and scope bombs. Use when creating a new PRD from scratch and you want multi-perspective input beyond single-agent authoring."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  This team follows a sequential workflow with defined phases.
+  Phase 1 — Landscape: The scope-scout analyzes the existing codebase to identify functional scope, tech stack, existing patterns, and constraints. The lead shares these findings with the user during discovery.
+  Phase 2 — Discovery & Authoring: The lead drives the 8 discovery questions (Problem, Stakes, Prior Art, Stakeholders, Constraints, Success Definition, Non-Goals, Existing Context) and walks the user through structured PRD authoring section by section. Use the prd-author skill's reference materials (discovery-questions.md, facilitation-prompts.md, prd-template.md) for structure. The scope-scout's codebase findings inform answers to questions about constraints and existing context.
+  Phase 3 — Review: The feasibility-advisor and risk-advisor review the draft PRD in parallel. The feasibility-advisor checks for architectural soundness and technical feasibility. The risk-advisor identifies scope bombs, hidden complexity, and edge cases. Both message the lead with findings.
+  Phase 4 — Finalize: The lead incorporates feedback, updates the PRD, and runs prd-validator (score >= 70 required). If NEEDS WORK, the lead addresses findings and re-validates.
+  The lead enforces sequencing: landscape before discovery, discovery before authoring, authoring before review.
+
+teammates:
+  - name: scope-scout
+    agent: scope-analyzer
+    model: sonnet
+    focus: "Map the existing codebase before PRD authoring begins. Identify functional scope, tech stack, module boundaries, existing patterns, and constraints that should inform the PRD. Output a structured scope report the lead can reference during discovery. Flag areas where the codebase already has partial implementations relevant to the PRD's goals."
+    plan_approval: false
+
+  - name: feasibility-advisor
+    agent: system-design-reviewer
+    model: sonnet
+    focus: "Review the draft PRD for architectural feasibility. Check that proposed requirements are technically sound given the existing codebase and tech stack. Identify missing resilience patterns, scalability risks, and dependency hazards in the requirements. Flag requirements that assume capabilities the current architecture doesn't support. Message the lead with specific findings and suggested requirement revisions."
+    plan_approval: false
+
+  - name: risk-advisor
+    agent: chaos-engineer
+    model: opus
+    focus: "Attack the draft PRD for hidden risks. Identify scope bombs — requirements that appear simple but hide significant complexity. Flag requirements with unclear boundaries that will expand during implementation. Find missing failure modes, edge cases, and cross-cutting concerns the PRD should address. Compare requirements against each other: if one FR is 10x larger than the others, call it out explicitly. Message the lead with prioritized risk findings."
+    plan_approval: false

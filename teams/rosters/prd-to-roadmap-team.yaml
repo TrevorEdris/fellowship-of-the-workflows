@@ -1,0 +1,32 @@
+name: prd-to-roadmap-team
+description: "Translate an approved PRD into a phased ROADMAP.md with codebase-aware phasing, dependency ordering, and per-phase risk assessment. Gates on PRD validation before proceeding. Use when turning a finalized PRD into an actionable development roadmap."
+
+lead_model: opus
+team_size: 3
+coordination: >
+  This team follows a gated sequential workflow.
+  Gate — Validation: The lead runs prd-validator on the PRD. If the score is below 70, the team stops and reports that the PRD must pass validation first. Suggest running /team with prd-review-team to fix issues.
+  Phase 1 — Inventory: The scope-mapper analyzes the codebase to identify existing implementations, module boundaries, and infrastructure relevant to the PRD's requirements. This informs what can be built on vs. built from scratch.
+  Phase 2 — Phasing: The phasing-advisor proposes phase boundaries using the scope-mapper's findings and the PRD's requirements. Groups requirements into phases following: priority first, dependencies respected, vertical slices (each phase delivers something user-visible), and cross-cutting concerns addressed early. Assigns feature IDs (P0-A, P0-B, P1-A, etc.).
+  Phase 3 — Risk Assessment: The risk-assessor evaluates each proposed phase for risk. Identifies the riskiest phase, estimates blast radius if a phase slips, and flags phases with too many dependencies. Messages the phasing-advisor if a phase needs restructuring.
+  Phase 4 — Synthesis: The lead produces the ROADMAP.md using prd-to-roadmap reference materials (roadmap-template.md). Incorporates scope-mapper's codebase context, phasing-advisor's structure, and risk-assessor's findings. Includes: current status, philosophy, per-phase sections with entry/exit criteria, cross-cutting concerns, dependency summary, and spec index.
+  The lead presents the roadmap to the user with: phase count, feature distribution, critical path, and any requirements that didn't map cleanly.
+
+teammates:
+  - name: scope-mapper
+    agent: scope-analyzer
+    model: sonnet
+    focus: "Inventory the codebase to inform roadmap phasing. For each PRD requirement, identify whether existing code partially or fully covers it, what modules and files would need modification, and what infrastructure already exists to build on. Output a structured mapping of PRD requirements to codebase locations. Flag requirements that will need entirely new subsystems vs. those that extend existing code — this distinction drives phasing decisions."
+    plan_approval: false
+
+  - name: phasing-advisor
+    agent: system-design-reviewer
+    model: sonnet
+    focus: "Propose phase boundaries for the roadmap based on the scope-mapper's codebase inventory and the PRD's requirements. Group requirements into phases that respect dependency ordering, deliver vertical slices, and address cross-cutting concerns (auth, observability, error handling) early. For each phase, define entry criteria (what must be done before), exit criteria (what's deliverable), and the dependency chain to later phases. Flag phases that are overloaded or that create bottlenecks in the critical path. Message the risk-assessor with the proposed phasing for risk evaluation."
+    plan_approval: false
+
+  - name: risk-assessor
+    agent: chaos-engineer
+    model: opus
+    focus: "Evaluate each proposed roadmap phase for risk. For each phase: estimate blast radius if it slips (how many downstream phases are blocked), identify the riskiest feature within the phase, and flag phases with too many cross-dependencies. Check that the critical path is realistic — are early phases overloaded with foundational work? Are late phases dependent on assumptions from early phases that might not hold? Propose risk mitigation: which features could be descoped or moved between phases to reduce overall risk. Message the phasing-advisor if a phase needs restructuring."
+    plan_approval: false
