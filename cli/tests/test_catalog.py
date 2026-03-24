@@ -75,5 +75,4 @@ def test_workflow_type_from_str_plural():
     assert WorkflowType.from_str("rules") == WorkflowType.RULE
     assert WorkflowType.from_str("skills") == WorkflowType.SKILL
     assert WorkflowType.from_str("agents") == WorkflowType.AGENT
-    assert WorkflowType.from_str("starters") == WorkflowType.STARTER
     assert WorkflowType.from_str("personas") == WorkflowType.PERSONA

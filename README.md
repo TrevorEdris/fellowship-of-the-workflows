@@ -18,7 +18,7 @@ A complete AI agent workflow system for software engineering. Author workflows o
 
 All core skills, agents, and hooks are auto-discovered immediately. Use `/code-review`, `/security-review`, `/terraform`, etc.
 
-> **Rules and starters** need to live in your project directory. Use `fotw setup` to install them:
+> **Rules** need to live in your project directory. Use `fotw setup` to install them:
 > ```bash
 > git clone https://github.com/TrevorEdris/fellowship-of-the-workflows.git
 > cd fellowship-of-the-workflows && ./bin/bootstrap
@@ -35,7 +35,6 @@ cd fellowship-of-the-workflows
 ./bin/bootstrap                                                     # Python 3.10+ required
 
 ./bin/fotw list                                                     # See what's available
-./bin/fotw install starters/standard ~/my-project --for claude-code # Starter template
 ./bin/fotw install skills/code-review ~/my-project --for cursor     # Individual skill
 ./bin/fotw install rules/git-safety --global --for claude-code      # Global rule
 ```
@@ -96,25 +95,6 @@ Rules are authored once in Cursor `.mdc` format. On install, the translator rewr
 Skills are instruction documents invoked as slash commands. Agents are specialist subprocesses that execute focused tasks in isolation. Skills may invoke agents and synthesize results.
 
 For full architecture details, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
----
-
-## Starter Templates
-
-Starters give you a ready-made project config file with bundled rules.
-
-```bash
-./bin/fotw install starters/standard ~/my-project --for claude-code  # → CLAUDE.md
-./bin/fotw install starters/standard ~/my-project --for cursor       # → AGENTS.md
-```
-
-| Tier | Description | Bundled Rules |
-|------|-------------|---------------|
-| `minimal` | Git safety, output style (~20 lines) | `git-safety`, `output-style` |
-| `standard` | + 5-phase QRSPI workflow (~40 lines) | + `discover-plan-implement`, `ai-session` |
-| `full` | + Persona system (12 characters), multi-repo safety (~50 lines) | + `multi-repo-safety`, `persona-integration` + all personas |
-
-See [starters/README.md](starters/README.md) for details and modular snippets.
 
 ---
 

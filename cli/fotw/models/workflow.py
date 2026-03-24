@@ -32,10 +32,8 @@ class WorkflowType(str, Enum):
     RULE = "rule"
     SKILL = "skill"
     AGENT = "agent"
-    STARTER = "starter"
     PERSONA = "persona"
     HOOK = "hook"
-    ROLE = "role"
 
     @classmethod
     def from_str(cls, value: str) -> "WorkflowType":
@@ -48,11 +46,8 @@ _PLURAL_MAP: dict[str, str] = {
     "rules": "rule",
     "skills": "skill",
     "agents": "agent",
-    "starters": "starter",
     "personas": "persona",
     "hooks": "hook",
-    "roles": "role",
-    "rosters": "role",
 }
 
 
