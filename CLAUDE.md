@@ -25,7 +25,6 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 ./bin/fotw new agent/my-agent     # New agent definition
 
 # Install to target project (prompts before overwriting)
-./bin/fotw install starters/standard ~/project --for claude-code
 ./bin/fotw install skills/code-review ~/project --for copilot
 ./bin/fotw install rules/ai-session --global --for cursor
 ./bin/fotw install --all ~/project --for claude-code --force  # Install everything
@@ -148,14 +147,6 @@ model: sonnet
 - `matcher` — Tool name filter (e.g., `"Bash"`, `"Edit|Write|Bash"`). Empty string = all tools.
 - `description` — Short description for `fotw list`.
 
-### Starter Tiers
-
-| Tier | Content | Bundled Rules |
-|------|---------|---------------|
-| `minimal` | Git safety, output style (~20 lines) | `git-safety`, `output-style` |
-| `standard` | + Discover → Plan → Implement workflow (~30 lines) | + `discover-plan-implement`, `ai-session` |
-| `full` | + Persona system, multi-repo safety (~40 lines) | + `multi-repo-safety`, `persona-integration` + all personas |
-
 ### Dynamic Context Injection
 
 Skills can embed live command output using `` !`command` `` syntax:
@@ -191,7 +182,7 @@ Workflow files (skills, agents, rules) must be **persona-agnostic**. No characte
 
 Standard severity levels used across all workflow files: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**.
 
-Phase names in workflow files use plain labels: **Discover**, **Plan**, **Implement**. Persona-flavored phase names (The Palantír, The Council of Elrond, The Journey) belong only in persona definitions under `starters/personas/`.
+Phase names in workflow files use plain labels: **Discover**, **Plan**, **Implement**. Persona-flavored phase names (The Palantír, The Council of Elrond, The Journey) belong only in persona definitions under `personas/`.
 
 ### Tool Scoping (Least Privilege)
 
