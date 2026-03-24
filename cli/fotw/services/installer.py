@@ -1,4 +1,4 @@
-"""Core installation logic for workflows, starters, and personas."""
+"""Core installation logic for workflows and personas."""
 
 import shutil
 import sys
@@ -9,8 +9,8 @@ from pathlib import Path
 from fotw.models.workflow import Hook
 from fotw.services.agents import AgentConfig, expand_tools, get_agent_config
 from fotw.services.catalog import (
+    PERSONAS_DIR,
     REPO_ROOT,
-    STARTERS_DIR,
     WORKFLOWS_DIR,
     _EXTRA_AGENT_DIRS,
     _EXTRA_RULE_DIRS,
@@ -420,8 +420,8 @@ def install_single_workflow(
 
 def install_personas(ctx: InstallContext) -> bool:
     """Install persona files to the target."""
-    personas_source = STARTERS_DIR / "personas"
-    config_source = STARTERS_DIR / "snippets" / "persona-config-example.yaml"
+    personas_source = PERSONAS_DIR
+    config_source = PERSONAS_DIR / "_persona-config-example.yaml"
 
     if not personas_source.is_dir():
         if not ctx.quiet:
@@ -434,7 +434,7 @@ def install_personas(ctx: InstallContext) -> bool:
 
     if not ctx.quiet:
         console.print()
-        console.print("Personas: starters/personas/")
+        console.print("Personas: personas/")
         console.print(f"Tool:     {ctx.tool}")
         scope = f"Global ({base}/)" if ctx.is_global else f"Project ({ctx.target_repo})"
         console.print(f"Scope:    {scope}")
@@ -479,102 +479,6 @@ def install_personas(ctx: InstallContext) -> bool:
         console.print(f"[yellow]![/yellow] Persona config already exists: {config_target} (skipped)")
 
     return True
-
-
-# ---------------------------------------------------------------------------
-# Role install
-# ---------------------------------------------------------------------------
-
-def install_role(role_name: str, ctx: InstallContext) -> bool:
-    """Install a role from the roster. Installs all referenced skills and rules."""
-    from fotw.services.catalog import scan_roles
-
-    roles = scan_roles()
-    role = next((r for r in roles if r.name == role_name), None)
-    if role is None:
-        err_console.print(f"[red]Error: Role not found: {role_name}[/red]")
-        available = [r.name for r in roles]
-        if available:
-            err_console.print(f"Available roles: {', '.join(available)}")
-        return False
-
-    if not ctx.quiet:
-        console.print()
-        console.print(f"Role:     {role.name}")
-        console.print(f"Tool:     {ctx.tool}")
-        scope = "Global" if ctx.is_global else f"Project ({ctx.target_repo})"
-        console.print(f"Scope:    {scope}")
-        console.print(f"Skills:   {', '.join(role.allowed_skills)}")
-        if role.rules:
-            console.print(f"Rules:    {', '.join(role.rules)}")
-        if role.persona:
-            console.print(f"Persona:  {role.persona}")
-        console.print()
-
-    if ctx.dry_run:
-        console.print("[yellow][DRY RUN] Would install:[/yellow]")
-        for skill in role.allowed_skills:
-            console.print(f"  skill: {skill}")
-        for rule in role.rules:
-            console.print(f"  rule:  {rule}")
-        console.print(f"  config: roster.yaml")
-        return True
-
-    tools_to_install = expand_tools(ctx.tool)
-    succeeded = []
-    failed = []
-
-    for t in tools_to_install:
-        skill_ctx = InstallContext(
-            tool=t,
-            target_repo=ctx.target_repo,
-            is_global=ctx.is_global,
-            dry_run=ctx.dry_run,
-            force=ctx.force,
-            quiet=True,
-            sticky_action=ctx.sticky_action,
-        )
-
-        # Install skills
-        for skill_name in role.allowed_skills:
-            wf_id = f"skills/{skill_name}"
-            if install_single_workflow(wf_id, skill_ctx):
-                succeeded.append(wf_id)
-            else:
-                failed.append(wf_id)
-
-        # Install rules
-        for rule_name in role.rules:
-            wf_id = f"rules/{rule_name}"
-            if install_single_workflow(wf_id, skill_ctx):
-                succeeded.append(wf_id)
-            else:
-                failed.append(wf_id)
-
-        # Write roster.yaml config
-        cfg = get_agent_config(t)
-        if cfg:
-            base = ctx.target_repo / cfg.config_dir if not ctx.is_global else Path.home() / cfg.config_dir
-            roster_config = base / "roster.yaml"
-            base.mkdir(parents=True, exist_ok=True)
-            config_content = (
-                f"# Active role — installed by fotw\n"
-                f"role: {role.name}\n"
-            )
-            if role.persona:
-                config_content += f"persona: {role.persona}\n"
-            roster_config.write_text(config_content)
-            if not ctx.quiet:
-                console.print(f"[green]\u2713[/green] Created {roster_config}")
-
-    # Summary
-    if not ctx.quiet:
-        console.print()
-        console.print(f"[green]Installed role '{role.name}': {len(succeeded)} workflows[/green]")
-        if failed:
-            console.print(f"[red]Failed: {', '.join(failed)}[/red]")
-
-    return len(failed) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -659,130 +563,6 @@ def install_skill_phased(
 # ---------------------------------------------------------------------------
 # Starter install
 # ---------------------------------------------------------------------------
-
-TIER_RULES = {
-    "minimal": ["git-safety", "output-style"],
-    "standard": ["git-safety", "output-style", "discover-plan-implement", "ai-session"],
-    "full": [
-        "git-safety", "output-style", "discover-plan-implement",
-        "ai-session", "multi-repo-safety", "persona-integration",
-    ],
-}
-
-
-def install_starter(tier: str, ctx: InstallContext) -> bool:
-    """Install a starter template with tier-appropriate rules."""
-    # Find source
-    source = STARTERS_DIR / f"{tier}.md"
-    if not source.is_file():
-        # Fall back to old format
-        source = STARTERS_DIR / f"CLAUDE.md.{tier}"
-        if not source.is_file():
-            err_console.print(f"[red]Error: Unknown starter tier: {tier}[/red]")
-            err_console.print("Available tiers: minimal, standard, full")
-            return False
-
-    # Determine targets based on tool
-    targets: list[Path] = []
-    if ctx.tool == "both":
-        # Special case: install for both claude-code and cursor
-        if ctx.to_claude_dir:
-            targets.append(ctx.target_repo / ".claude" / "CLAUDE.md")
-        else:
-            targets.append(ctx.target_repo / "CLAUDE.md")
-        targets.append(ctx.target_repo / "AGENTS.md")
-    else:
-        cfg = get_agent_config(ctx.tool)
-        if cfg:
-            starter_name = cfg.starter_filename
-            if ctx.to_claude_dir and ctx.tool == "claude-code":
-                targets.append(ctx.target_repo / cfg.config_dir / starter_name)
-            else:
-                targets.append(ctx.target_repo / starter_name)
-
-    # Info
-    console.print()
-    console.print(f"Starter:  {tier}")
-    console.print(f"Tool:     {ctx.tool}")
-    console.print(f"Source:   {source}")
-    for t in targets:
-        console.print(f"Target:   {t}")
-    console.print()
-
-    if ctx.dry_run:
-        console.print("[yellow][DRY RUN] Would copy:[/yellow]")
-        for t in targets:
-            console.print(f"  {source} -> {t}")
-        if tier == "full":
-            console.print()
-            console.print("[yellow][DRY RUN] Would also install personas[/yellow]")
-        rules = TIER_RULES.get(tier, [])
-        if rules:
-            console.print()
-            console.print(f"[yellow][DRY RUN] Would bundle rules for {tier} tier: {', '.join(rules)}[/yellow]")
-        return True
-
-    # Copy starter files
-    source_content = source.read_text()
-    for t in targets:
-        if not _resolve_conflict(ctx, t, source_content):
-            continue
-        t.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, t)
-        console.print(f"[green]\u2713[/green] Installed {t.name}")
-
-    tools_to_install = expand_tools(ctx.tool)
-
-    # Full tier gets personas
-    if tier == "full":
-        for t in tools_to_install:
-            persona_ctx = InstallContext(
-                tool=t,
-                target_repo=ctx.target_repo,
-                is_global=False,
-                dry_run=ctx.dry_run,
-                force=ctx.force,
-                quiet=True,
-            )
-            install_personas(persona_ctx)
-
-        # Show persona summary
-        persona_source = STARTERS_DIR / "personas"
-        persona_count = sum(1 for p in persona_source.glob("*.md") if p.name != "_template.md")
-        for t in tools_to_install:
-            cfg = get_agent_config(t)
-            if cfg:
-                base = ctx.target_repo / cfg.config_dir
-                console.print(f"[green]\u2713[/green] Installed {persona_count} personas to {base / 'personas'}/")
-
-    # Bundle tier rules
-    rules = TIER_RULES.get(tier, [])
-    if rules:
-        console.print()
-        console.print(f"Bundled rules for {tier} tier: {' '.join(rules)}")
-        for t in tools_to_install:
-            rule_ctx = InstallContext(
-                tool=t,
-                target_repo=ctx.target_repo,
-                is_global=False,
-                dry_run=ctx.dry_run,
-                force=ctx.force,
-                quiet=True,
-                sticky_action=ctx.sticky_action,
-            )
-            for rule_name in rules:
-                install_single_workflow(f"rules/{rule_name}", rule_ctx)
-
-    # Next steps
-    console.print()
-    console.print("Next steps:")
-    console.print("  1. Edit the starter file(s) to fill in your project details")
-    console.print(f"  2. Install workflows: ./bin/fotw install skills/code-review {ctx.target_repo} --for {tools_to_install[0]}")
-    if tier == "full":
-        console.print(f"  3. Switch personas: ./bin/fotw install skills/switch-persona {ctx.target_repo} --for {tools_to_install[0]}")
-
-    return True
-
 
 # ---------------------------------------------------------------------------
 # Hooks install

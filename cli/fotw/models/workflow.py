@@ -76,40 +76,12 @@ class Workflow:
 
 
 @dataclass
-class Starter:
-    """A starter template."""
-
-    tier: str
-    description: str = ""
-    path: Path = field(default_factory=lambda: Path("."))
-
-
-@dataclass
 class Persona:
     """A persona definition."""
 
     name: str
     tagline: str = ""
     path: Path = field(default_factory=lambda: Path("."))
-
-
-@dataclass
-class Role:
-    """A role definition from the roster."""
-
-    name: str
-    description: str = ""
-    tags: list[str] = field(default_factory=list)
-    allowed_skills: list[str] = field(default_factory=list)
-    denied_skills: list[str] = field(default_factory=list)
-    preferred_model: str = ""
-    rules: list[str] = field(default_factory=list)
-    persona: str = ""
-    path: Path = field(default_factory=lambda: Path("."))
-
-    @property
-    def workflow_id(self) -> str:
-        return f"rosters/{self.name}"
 
 
 @dataclass

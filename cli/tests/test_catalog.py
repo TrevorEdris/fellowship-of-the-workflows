@@ -7,7 +7,6 @@ from fotw.services.catalog import (
     scan_personas,
     scan_rules,
     scan_skills,
-    scan_starters,
     validate_all,
 )
 
@@ -35,16 +34,6 @@ def test_scan_agents_returns_list():
     assert len(agents) >= 1
     names = [a.name for a in agents]
     assert "pragmatic-code-review" in names
-
-
-def test_scan_starters_returns_list():
-    starters = scan_starters()
-    assert isinstance(starters, list)
-    assert len(starters) == 3
-    tiers = [s.tier for s in starters]
-    assert "minimal" in tiers
-    assert "standard" in tiers
-    assert "full" in tiers
 
 
 def test_scan_personas_returns_list():

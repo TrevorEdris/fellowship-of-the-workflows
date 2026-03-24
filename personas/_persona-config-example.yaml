@@ -4,7 +4,7 @@
 #   - Cursor: .cursor/persona.yaml
 #   - Other tools: check their documentation
 
-# Available personas (see starters/personas/ for full list):
+# Available personas (see personas/ for full list):
 #   - gandalf      (Lord of the Rings)
 #   - yoda         (Star Wars)
 #   - picard       (Star Trek: TNG)
