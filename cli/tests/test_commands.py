@@ -87,7 +87,6 @@ def isolated_workflows(tmp_path: Path, monkeypatch):
     import fotw.services.catalog as catalog
     monkeypatch.setattr(catalog, "REPO_ROOT", fake_root)
     monkeypatch.setattr(catalog, "WORKFLOWS_DIR", fake_root)
-    monkeypatch.setattr(catalog, "STARTERS_DIR", fake_root / "starters")
     # Also patch the imported reference in the new command module
     import fotw.commands.new as new_mod
     monkeypatch.setattr(new_mod, "WORKFLOWS_DIR", fake_root)

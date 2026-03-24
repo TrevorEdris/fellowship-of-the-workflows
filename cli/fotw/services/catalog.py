@@ -11,8 +11,6 @@ import yaml
 from fotw.models.workflow import (
     Hook,
     Persona,
-    Role,
-    Starter,
     TeamRoster,
     ValidationResult,
     Workflow,
@@ -64,8 +62,7 @@ _EXTRA_AGENT_DIRS: list[tuple] = [
     (TEAMS_DIR / "agents", "teams"),
 ]
 
-STARTERS_DIR = REPO_ROOT / "starters"
-ROSTERS_DIR = STARTERS_DIR / "rosters"
+PERSONAS_DIR = REPO_ROOT / "personas"
 
 
 def _parse_frontmatter(path: Path) -> dict:
@@ -164,58 +161,13 @@ def scan_agents() -> list[Workflow]:
     return results
 
 
-def scan_starters() -> list[Starter]:
-    """Scan starters/ for starter templates."""
-    if not STARTERS_DIR.is_dir():
-        return []
-
-    tier_descs = {
-        "minimal": "Bare essentials (~20 lines)",
-        "standard": "Recommended defaults (~30 lines)",
-        "full": "Power user + persona system (~40 lines)",
-    }
-
-    results = []
-    seen_tiers = set()
-
-    # Check for new consolidated format (minimal.md, standard.md, full.md)
-    for tier_name in ("minimal", "standard", "full"):
-        path = STARTERS_DIR / f"{tier_name}.md"
-        if path.is_file():
-            seen_tiers.add(tier_name)
-            results.append(
-                Starter(
-                    tier=tier_name,
-                    description=tier_descs.get(tier_name, ""),
-                    path=path,
-                )
-            )
-
-    # Fall back to old paired format (CLAUDE.md.minimal, etc.)
-    for path in sorted(STARTERS_DIR.iterdir()):
-        if not path.name.startswith("CLAUDE.md."):
-            continue
-        tier = path.name.split(".")[-1]
-        if tier not in seen_tiers:
-            results.append(
-                Starter(
-                    tier=tier,
-                    description=tier_descs.get(tier, ""),
-                    path=path,
-                )
-            )
-
-    return results
-
-
 def scan_personas() -> list[Persona]:
-    """Scan starters/personas/ for persona files."""
-    personas_dir = STARTERS_DIR / "personas"
-    if not personas_dir.is_dir():
+    """Scan personas/ for persona files."""
+    if not PERSONAS_DIR.is_dir():
         return []
 
     results = []
-    for path in sorted(personas_dir.iterdir()):
+    for path in sorted(PERSONAS_DIR.iterdir()):
         if path.suffix != ".md":
             continue
         if path.name == "_template.md":
@@ -231,46 +183,6 @@ def scan_personas() -> list[Persona]:
             pass
         results.append(
             Persona(name=path.stem, tagline=tagline, path=path)
-        )
-    return results
-
-
-def scan_roles() -> list[Role]:
-    """Scan starters/rosters/ for role definitions."""
-    if not ROSTERS_DIR.is_dir():
-        return []
-
-    results = []
-    for path in sorted(ROSTERS_DIR.iterdir()):
-        if path.suffix != ".md":
-            continue
-        if path.name == "README.md":
-            continue
-        meta = _parse_frontmatter(path)
-        tags = meta.get("tags", [])
-        if isinstance(tags, str):
-            tags = [t.strip() for t in tags.split(",")]
-        allowed_skills = meta.get("allowed-skills", [])
-        if isinstance(allowed_skills, str):
-            allowed_skills = [s.strip() for s in allowed_skills.split(",")]
-        denied_skills = meta.get("denied-skills", [])
-        if isinstance(denied_skills, str):
-            denied_skills = [s.strip() for s in denied_skills.split(",")]
-        rules = meta.get("rules", [])
-        if isinstance(rules, str):
-            rules = [r.strip() for r in rules.split(",")]
-        results.append(
-            Role(
-                name=path.stem,
-                description=meta.get("description", ""),
-                tags=tags,
-                allowed_skills=allowed_skills,
-                denied_skills=denied_skills,
-                preferred_model=meta.get("preferred-model", ""),
-                rules=rules,
-                persona=meta.get("persona", ""),
-                path=path,
-            )
         )
     return results
 
@@ -566,54 +478,6 @@ def validate_agent(path: Path) -> ValidationResult:
     return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
 
 
-def validate_role(path: Path) -> ValidationResult:
-    """Validate a single role definition."""
-    name = f"rosters/{path.stem}"
-    meta = _parse_frontmatter(path)
-    errors = []
-    warnings = []
-
-    if not meta.get("name"):
-        warnings.append("Missing 'name' in frontmatter")
-    if not meta.get("description"):
-        warnings.append("Missing 'description' in frontmatter")
-    if not meta.get("allowed-skills"):
-        errors.append("Missing 'allowed-skills' in frontmatter (a role must include at least one skill)")
-
-    # Validate allowed-skills reference real skills (core or language/platform/vendor)
-    allowed = meta.get("allowed-skills", [])
-    if isinstance(allowed, str):
-        allowed = [s.strip() for s in allowed.split(",")]
-    skills_dir = WORKFLOWS_DIR / "skills"
-    extra_skill_dirs = [d for d, _ in _EXTRA_SKILL_DIRS]
-    for skill_name in allowed:
-        exists = (skills_dir / skill_name).is_dir() or any(
-            (d / skill_name).is_dir() for d in extra_skill_dirs
-        )
-        if not exists:
-            warnings.append(f"allowed-skills references non-existent skill: {skill_name}")
-
-    # Validate rules reference real rules (core or language/platform/vendor)
-    rules = meta.get("rules", [])
-    if isinstance(rules, str):
-        rules = [r.strip() for r in rules.split(",")]
-    rules_dir = WORKFLOWS_DIR / "rules"
-    extra_rule_dirs = [d for d, _ in _EXTRA_RULE_DIRS]
-    for rule_name in rules:
-        exists = (
-            (rules_dir / f"{rule_name}.mdc").is_file()
-            or (rules_dir / f"{rule_name}.md").is_file()
-            or any(
-                (d / f"{rule_name}.mdc").is_file() or (d / f"{rule_name}.md").is_file()
-                for d in extra_rule_dirs
-            )
-        )
-        if not exists:
-            warnings.append(f"rules references non-existent rule: {rule_name}")
-
-    return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
-
-
 def validate_all(target_path: str | None = None) -> list[ValidationResult]:
     """Validate all workflows (or a specific path)."""
     results = []
@@ -662,13 +526,6 @@ def validate_all(target_path: str | None = None) -> list[ValidationResult]:
             if path.suffix != ".js":
                 continue
             results.append(validate_hook(path))
-
-    # Validate roles
-    if ROSTERS_DIR.is_dir():
-        for path in sorted(ROSTERS_DIR.iterdir()):
-            if path.suffix != ".md" or path.name == "README.md":
-                continue
-            results.append(validate_role(path))
 
     # Validate team rosters
     teams_rosters_dir = REPO_ROOT / "teams" / "rosters"

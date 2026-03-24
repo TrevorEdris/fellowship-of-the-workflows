@@ -15,7 +15,6 @@ from fotw.services.installer import (
     install_filtered,
     install_personas,
     install_single_workflow,
-    install_starter,
 )
 from fotw.services.catalog import WORKFLOWS_DIR, filter_workflows
 from fotw.models.workflow import Workflow, WorkflowType
@@ -145,40 +144,6 @@ def test_dry_run_no_files(tmp_target: Path):
 
 
 # --- Starters ---
-
-
-def test_install_starter_minimal_claude(tmp_target: Path):
-    """Minimal starter creates CLAUDE.md and bundles 2 rules."""
-    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True)
-    assert install_starter("minimal", ctx)
-    assert (tmp_target / "CLAUDE.md").is_file()
-    assert (tmp_target / ".claude" / "rules" / "git-safety.md").is_file()
-    assert (tmp_target / ".claude" / "rules" / "output-style.md").is_file()
-
-
-def test_install_starter_standard_cursor(tmp_target: Path):
-    """Standard starter creates AGENTS.md and bundles 4 rules."""
-    ctx = InstallContext(tool="cursor", target_repo=tmp_target, force=True)
-    assert install_starter("standard", ctx)
-    assert (tmp_target / "AGENTS.md").is_file()
-    rules_dir = tmp_target / ".cursor" / "rules"
-    assert (rules_dir / "git-safety.mdc").is_file()
-    assert (rules_dir / "discover-plan-implement.mdc").is_file()
-    assert (rules_dir / "ai-session.mdc").is_file()
-
-
-def test_install_starter_full_claude(tmp_target: Path):
-    """Full starter bundles all 6 rules and personas."""
-    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True)
-    assert install_starter("full", ctx)
-    rules_dir = tmp_target / ".claude" / "rules"
-    assert (rules_dir / "multi-repo-safety.md").is_file()
-    assert (rules_dir / "persona-integration.md").is_file()
-    # Personas
-    personas_dir = tmp_target / ".claude" / "personas"
-    assert personas_dir.is_dir()
-    persona_files = list(personas_dir.glob("*.md"))
-    assert len(persona_files) >= 1
 
 
 # --- Personas ---
@@ -361,32 +326,6 @@ def test_install_all_copilot(tmp_target: Path):
     assert (tmp_target / ".github" / "skills").is_dir()
     # No agents directory for copilot
     assert not (tmp_target / ".github" / "agents").exists()
-
-
-def test_install_starter_copilot(tmp_target: Path):
-    """Starter for copilot creates AGENTS.md."""
-    ctx = InstallContext(tool="copilot", target_repo=tmp_target, force=True)
-    assert install_starter("minimal", ctx)
-    assert (tmp_target / "AGENTS.md").is_file()
-    assert (tmp_target / ".github" / "instructions" / "git-safety.instructions.md").is_file()
-
-
-def test_install_starter_both(tmp_target: Path):
-    """Starter for 'both' creates CLAUDE.md and AGENTS.md with rules."""
-    ctx = InstallContext(tool="both", target_repo=tmp_target, force=True)
-    assert install_starter("minimal", ctx)
-    assert (tmp_target / "CLAUDE.md").is_file()
-    assert (tmp_target / "AGENTS.md").is_file()
-    assert (tmp_target / ".claude" / "rules" / "git-safety.md").is_file()
-    assert (tmp_target / ".cursor" / "rules" / "git-safety.mdc").is_file()
-
-
-def test_install_starter_both_full(tmp_target: Path):
-    """Full starter for 'both' installs personas for both tools."""
-    ctx = InstallContext(tool="both", target_repo=tmp_target, force=True)
-    assert install_starter("full", ctx)
-    assert (tmp_target / ".claude" / "personas").is_dir()
-    assert (tmp_target / ".cursor" / "personas").is_dir()
 
 
 def test_translate_content_copilot():

@@ -16,12 +16,10 @@ import pytest
 
 from fotw.services.catalog import (
     WORKFLOWS_DIR,
-    STARTERS_DIR,
     _EXTRA_AGENT_DIRS,
     _EXTRA_RULE_DIRS,
     _EXTRA_SKILL_DIRS,
 )
-from fotw.services.installer import TIER_RULES
 
 
 def _parse(path):
@@ -112,21 +110,6 @@ def test_skill_agent_references_exist():
 # --- Starter validation ---
 
 
-def test_starter_tier_rules_exist():
-    """Every rule referenced in TIER_RULES must exist in rules/."""
-    rules_dir = WORKFLOWS_DIR / "rules"
-    missing = []
-
-    for tier, rules in TIER_RULES.items():
-        for rule_name in rules:
-            mdc = rules_dir / f"{rule_name}.mdc"
-            md = rules_dir / f"{rule_name}.md"
-            if not mdc.is_file() and not md.is_file():
-                missing.append(f"{tier} tier: '{rule_name}' not found")
-
-    assert not missing, f"Missing tier rules:\n" + "\n".join(missing)
-
-
 # --- Hooks.json integrity ---
 
 
@@ -168,13 +151,6 @@ def test_hooks_json_valid_structure():
     from fotw.services.catalog import KNOWN_HOOK_EVENTS
     for event in data["hooks"]:
         assert event in KNOWN_HOOK_EVENTS, f"Unknown event in hooks.json: {event}"
-
-
-def test_starter_files_exist():
-    """minimal.md, standard.md, full.md must all exist in starters/."""
-    for tier in ("minimal", "standard", "full"):
-        path = STARTERS_DIR / f"{tier}.md"
-        assert path.is_file(), f"Missing starter: {path}"
 
 
 # --- File hygiene ---
