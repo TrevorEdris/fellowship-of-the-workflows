@@ -143,7 +143,7 @@ def test_dry_run_no_files(tmp_target: Path):
     assert not rules_dir.exists()
 
 
-# --- Starters ---
+# --- Personas ---
 
 
 # --- Personas ---

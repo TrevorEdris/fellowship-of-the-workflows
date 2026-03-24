@@ -43,7 +43,7 @@ flowchart LR
 
 ## Plugin Mode vs Install Mode
 
-**Plugin mode** loads the entire repo as a Claude Code plugin in one command. Skills and agents are auto-discovered and available immediately as slash commands. This is the fastest way to get started — no per-workflow installation needed. Rules and starters are not auto-discovered because they need to live inside your project's config directory; use `fotw setup` to install them.
+**Plugin mode** loads the entire repo as a Claude Code plugin in one command. Skills and agents are auto-discovered and available immediately as slash commands. This is the fastest way to get started — no per-workflow installation needed. Rules are not auto-discovered because they need to live inside your project's config directory; use `fotw setup` to install them.
 
 **Install mode** copies individual workflows into a target project, translating format as needed. Use this for non-Claude tools, for selecting specific workflows, or for distributing workflows to teammates who use different tools.
 
@@ -72,7 +72,7 @@ This repo is structured as a [Claude Code plugin](https://code.claude.com/docs/e
 | Agents | `agents/*.md` | Auto — Claude invokes based on task context |
 | Hooks | `hooks/hooks.json` | Auto — registered as event handlers |
 | Rules | `rules/*.mdc` | **Manual** — requires `fotw install` to copy to project |
-| Starters | `starters/*.md` | **Manual** — requires `fotw install` to copy to project |
+| Personas | `personas/*.md` | **Manual** — requires `fotw install personas` |
 | Language skills/rules | `languages/` | **Manual** — excluded from auto-discovery |
 | Platform skills/rules/agents | `platforms/` | **Manual** — excluded from auto-discovery |
 | Vendor skills/rules/agents | `vendors/` | **Manual** — excluded from auto-discovery |

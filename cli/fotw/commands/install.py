@@ -78,7 +78,7 @@ def install_cmd(
         None, "--tag", "-t", help="Filter by tag (repeatable, AND logic)"
     ),
 ) -> None:
-    """Install workflows, starters, or personas to a target project."""
+    """Install workflows or personas to a target project."""
     try:
         _install_cmd_inner(
             workflow_id, target_repo, for_tool, all_workflows,

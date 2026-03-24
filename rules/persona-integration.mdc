@@ -11,7 +11,7 @@ If a persona config exists (`.<tool>/persona.yaml`, e.g., `.claude/persona.yaml`
 
 ### Config Format
 ```yaml
-persona: <name>        # Persona identifier (see starters/personas/ for options)
+persona: <name>        # Persona identifier (see personas/ for options)
 intensity: noticeable  # off | minimal | noticeable | excessive
 ```
 

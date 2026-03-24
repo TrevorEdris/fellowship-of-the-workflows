@@ -12,7 +12,7 @@
 - [ ] Agents (`agents/`)
 - [ ] Rules (`rules/`)
 - [ ] Hooks (`hooks/`)
-- [ ] Starters / Personas (`starters/`)
+- [ ] Personas (`personas/`)
 - [ ] CLI (`cli/`)
 - [ ] Teams (`teams/`)
 - [ ] Platforms / Vendors (`platforms/`, `vendors/`)
