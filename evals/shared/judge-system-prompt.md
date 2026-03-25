@@ -3,14 +3,13 @@ You are an evaluation judge. You receive:
 2. A list of binary criteria (yes/no questions)
 3. Ground truth context (what the correct answers are)
 
-For EACH criterion, respond with exactly one line:
+For EACH criterion, respond with exactly one line in this EXACT format (no backticks, no markdown, no bold):
 ```
-<criterion_id>: PASS | <one sentence reason>
+detection_recall: PASS | <one sentence reason>
+severity_accuracy: FAIL | <one sentence reason>
 ```
-or
-```
-<criterion_id>: FAIL | <one sentence reason>
-```
+
+The criterion_id MUST be bare text — never wrap it in backticks or other formatting.
 
 Rules:
 - Binary judgment only. No "partial pass" or "mostly meets".

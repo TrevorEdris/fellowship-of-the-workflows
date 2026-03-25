@@ -164,7 +164,8 @@ for prompt_file in "${PROMPT_FILES[@]}"; do
     RUN_PASS=0
     while IFS= read -r line; do
       # Strip leading whitespace, backticks, and markdown formatting
-      cleaned=$(echo "$line" | sed 's/^[[:space:]`]*//')
+      # Also strip backticks wrapping criterion IDs (e.g. `detection_recall`: PASS)
+      cleaned=$(echo "$line" | sed 's/^[[:space:]`]*//; s/`:/:/g; s/`//g')
       cid=$(echo "$cleaned" | sed -n 's/^\([a-z_][a-z_]*\): *PASS.*/\1/p')
       if [[ -n "$cid" ]]; then
         RUN_PASS=$((RUN_PASS + 1))
