@@ -204,8 +204,8 @@ echo "Per-criterion breakdown:"
 if [[ -s "$CRITERION_LOG" ]]; then
   # Get unique criterion IDs, then count PASS/total for each
   for cid in $(awk '{print $1}' "$CRITERION_LOG" | sort -u); do
-    total=$(grep -c "^$cid " "$CRITERION_LOG" || echo 0)
-    passes=$(grep -c "^$cid PASS" "$CRITERION_LOG" || echo 0)
+    total=$(grep -c "^$cid " "$CRITERION_LOG" 2>/dev/null) || total=0
+    passes=$(grep -c "^$cid PASS" "$CRITERION_LOG" 2>/dev/null) || passes=0
     if [[ $total -gt 0 ]]; then
       rate=$(awk "BEGIN {printf \"%.0f\", ($passes / $total) * 100}")
       echo "  $cid: $passes/$total ($rate%)"
