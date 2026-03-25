@@ -5,6 +5,7 @@
 #   ./evals/autoresearch.sh <target_name>                          # Run one eval iteration
 #   ./evals/autoresearch.sh <target_name> --baseline               # Establish baseline
 #   ./evals/autoresearch.sh <target_name> --report                 # Show results.tsv
+#   ./evals/autoresearch.sh <target_name> --dashboard              # Open visual dashboard
 #   ./evals/autoresearch.sh <target_name> --describe "what changed" # Tag the run
 #
 # For the full autonomous loop, use autoresearch-program.md with a
@@ -31,6 +32,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --baseline) MODE="baseline"; DESCRIPTION="baseline"; shift ;;
     --report) MODE="report"; shift ;;
+    --dashboard) MODE="dashboard"; shift ;;
     --describe) DESCRIPTION="$2"; shift 2 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
@@ -55,6 +57,22 @@ if [[ "$MODE" == "report" ]]; then
   else
     echo "No results yet for $TARGET_NAME"
   fi
+  exit 0
+fi
+
+# --- Dashboard mode ---
+if [[ "$MODE" == "dashboard" ]]; then
+  PYTHON="$REPO_ROOT/cli/.venv/bin/python"
+  if [[ ! -x "$PYTHON" ]]; then
+    echo "ERROR: CLI venv not found. Run ./bin/bootstrap first." >&2
+    exit 1
+  fi
+  # Check for pandas/matplotlib
+  if ! "$PYTHON" -c "import pandas, matplotlib" 2>/dev/null; then
+    echo "Installing dashboard dependencies..."
+    "$PYTHON" -m pip install pandas matplotlib --quiet 2>/dev/null
+  fi
+  "$PYTHON" "$EVALS_DIR/dashboard.py" "$TARGET_NAME"
   exit 0
 fi
 

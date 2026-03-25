@@ -2,5 +2,9 @@
 targets/*/results.tsv
 targets/*/cron.log
 
+# Generated dashboards
+targets/*/dashboard.png
+dashboard-all.png
+
 # Temporary eval output
 *.tmp
