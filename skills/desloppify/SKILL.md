@@ -14,16 +14,29 @@ tier: core
 
 Identify and remove AI-generated noise from code and text. Every comment, sentence, and code pattern must earn its place. If removing it loses no information, it is slop.
 
+## FIRST: Check if the Input is Clean
+
+Before listing ANY findings, evaluate: does this code/text actually contain slop patterns? Well-written code with comments explaining WHY, business logic, non-obvious decisions, external system behavior, performance tradeoffs, or API details is CLEAN — not slop.
+
+**If the input is clean:** Report ONLY this: "No slop patterns detected. The code/documentation is clean." Then STOP. Do not add caveats, suggestions, or "minor observations." Clean code requires zero findings.
+
+**Examples of comments that are NOT slop:**
+- "Stripe sends signatures as 't=timestamp,v1=hash' format" (explains external protocol)
+- "Keep memory tier small to avoid GC pressure" (explains performance decision)
+- "EX sets TTL in seconds; Redis handles expiry server-side" (explains API behavior)
+- "Constant-time comparison prevents timing side-channel attacks" (explains security decision)
+- "Evict oldest entry (Map preserves insertion order)" (explains implementation detail)
+
 ## Output Format
 
-For EVERY finding, you MUST include ALL of these:
-1. **File location** — filename and line number(s)
-2. **Quoted text** — the exact slop text
-3. **Pattern match** — which slop pattern it matches (e.g., "Narrator comment", "Filler opener", "Unnecessary try-catch")
+For each finding, include ALL of these on a single entry:
+1. **Location** — filename and line number(s)
+2. **Text** — the exact slop text quoted
+3. **Pattern** — which slop pattern (e.g., "Narrator comment", "Filler opener")
 4. **Severity** — CRITICAL, HIGH, MEDIUM, or LOW
-5. **Suggested fix** — concrete rewrite OR "Delete entirely"
+5. **Fix** — concrete rewrite OR "Delete entirely"
 
-**When input has NO slop:** Report "No slop patterns detected. The code/documentation is clean." Do NOT invent problems. Legitimate why-comments, business logic explanations, TODO/FIXME with context, and useful API docs are NOT slop.
+Keep findings concise. End with a summary count by severity.
 
 ## Severity Levels
 
