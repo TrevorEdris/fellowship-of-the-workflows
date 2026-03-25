@@ -23,21 +23,7 @@ For EVERY finding, you MUST include ALL of these:
 4. **Severity** — CRITICAL, HIGH, MEDIUM, or LOW
 5. **Suggested fix** — concrete rewrite OR "Delete entirely"
 
-## Clean Input Rule (CRITICAL)
-
-Before reporting ANY finding, ask: "Does this comment/code add information that cannot be derived from the code alone?" If YES, it is NOT slop — skip it.
-
-**These are NEVER slop — do NOT flag them:**
-- Comments explaining WHY (business logic, non-obvious decisions, constraints)
-- Comments referencing external systems: "Stripe sends signatures as...", "API has 99.9% uptime..."
-- Comments explaining performance tradeoffs: "Keep memory tier small to avoid GC pressure"
-- Comments explaining non-obvious behavior: "EX sets TTL in seconds", "Map preserves insertion order"
-- TODO/FIXME/HACK with specific context about what needs to change and why
-- Legal/license headers
-- API documentation that adds information beyond what types express
-- Defensive code at system boundaries (external APIs, user input, deserialization)
-
-**When the input contains NO slop patterns:** You MUST report "No slop patterns detected. The code/documentation is clean." Do NOT invent problems to report. Do NOT flag legitimate comments as slop. It is BETTER to miss a borderline case than to flag clean code as sloppy. When in doubt, leave it alone.
+**When input has NO slop:** Report "No slop patterns detected. The code/documentation is clean." Do NOT invent problems. Legitimate why-comments, business logic explanations, TODO/FIXME with context, and useful API docs are NOT slop.
 
 ## Severity Levels
 
