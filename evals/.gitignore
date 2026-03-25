@@ -3,8 +3,8 @@ targets/*/results.tsv
 targets/*/cron.log
 
 # Generated dashboards
-targets/*/dashboard.png
-dashboard-all.png
+targets/*/dashboard.html
+dashboard.html
 
 # Temporary eval output
 *.tmp
