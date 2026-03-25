@@ -5,6 +5,9 @@ measure the effect, keep improvements, discard regressions. Repeat forever.
 
 ## Setup
 
+> This program is launched by `./evals/run.sh <target>`. The wrapper handles
+> branch creation and baseline. If those are already done, start at "The Loop".
+
 When the user tells you which target to optimize:
 
 1. Read this file fully.
@@ -22,7 +25,7 @@ When the user tells you which target to optimize:
 Run the baseline eval with unmodified files:
 
 ```bash
-./evals/autoresearch.sh <target> --baseline
+./evals/eval.sh <target> --baseline
 ```
 
 Read the output. Record the baseline score. This is your starting point.
@@ -54,7 +57,7 @@ Write your hypothesis down in the commit message.
 Modify ONLY the files listed in `variable_files` in config.yaml.
 NEVER modify:
 - Files in `read_only_files`
-- The eval harness scripts (`evals/shared/*`, `evals/autoresearch.sh`)
+- The eval harness scripts (`evals/shared/*`, `evals/eval.sh`, `evals/run.sh`)
 - The target config, criteria, prompts, or judge context
 - Any files outside the target skill's directory
 
@@ -68,7 +71,7 @@ git commit -m "<hypothesis description>"
 ### 5. Evaluate
 
 ```bash
-./evals/autoresearch.sh <target> --describe "<short description of change>"
+./evals/eval.sh <target> --describe "<short description of change>"
 ```
 
 Capture the output. Parse:

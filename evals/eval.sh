@@ -2,18 +2,13 @@
 # FOTW Autoresearch — Run a single eval iteration for a target.
 #
 # Usage:
-#   ./evals/autoresearch.sh <target_name>                          # Run one eval iteration
-#   ./evals/autoresearch.sh <target_name> --baseline               # Establish baseline
-#   ./evals/autoresearch.sh <target_name> --report                 # Show results.tsv
-#   ./evals/autoresearch.sh <target_name> --dashboard              # Open visual dashboard
-#   ./evals/autoresearch.sh <target_name> --describe "what changed" # Tag the run
+#   ./evals/eval.sh <target_name>                          # Run one eval iteration
+#   ./evals/eval.sh <target_name> --baseline               # Establish baseline
+#   ./evals/eval.sh <target_name> --report                 # Show results.tsv
+#   ./evals/eval.sh <target_name> --dashboard              # Open visual dashboard
+#   ./evals/eval.sh <target_name> --describe "what changed" # Tag the run
 #
-# For the full autonomous loop, use autoresearch-program.md with a
-# long-lived Claude session (Option D):
-#
-#   claude --dangerously-skip-permissions \
-#     --system-prompt "$(cat evals/autoresearch-program.md)" \
-#     "Run autoresearch on <target_name>"
+# For the full autonomous loop, use ./evals/run.sh instead.
 
 set -euo pipefail
 
@@ -22,7 +17,7 @@ EVALS_DIR="$REPO_ROOT/evals"
 SHARED_DIR="$EVALS_DIR/shared"
 
 # --- Parse args ---
-TARGET_NAME="${1:?Usage: autoresearch.sh <target_name> [--baseline|--report|--describe \"desc\"]}"
+TARGET_NAME="${1:?Usage: eval.sh <target_name> [--baseline|--report|--dashboard|--describe \"desc\"]}"
 shift
 
 MODE="eval"

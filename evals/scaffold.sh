@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Generate an eval target scaffold for a skill.
 #
-# Usage: ./evals/generate-target.sh <skill_name>
+# Usage: ./evals/scaffold.sh <skill_name>
 #
 # Creates evals/targets/<skill_name>/ with config.yaml, criteria.yaml,
 # judge-context.md, and a prompts/ directory. Uses Claude to analyze
@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-SKILL_NAME="${1:?Usage: generate-target.sh <skill_name>}"
+SKILL_NAME="${1:?Usage: scaffold.sh <skill_name>}"
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SKILL_DIR="$REPO_ROOT/skills/$SKILL_NAME"

@@ -506,7 +506,7 @@ function renderTarget(t, idx) {{
         : `<div class="sparse-notice">
              <strong>Not enough data for charts yet</strong>
              Run ${{MIN_EXPERIMENTS_FOR_CHARTS - n}} more experiment${{MIN_EXPERIMENTS_FOR_CHARTS - n !== 1 ? 's' : ''}} to unlock progress visualization.
-             <br>Use: <code>./evals/autoresearch.sh ${{t.name}}</code>
+             <br>Use: <code>./evals/run.sh ${{t.name}}</code>
            </div>`
       }}
     </div>
