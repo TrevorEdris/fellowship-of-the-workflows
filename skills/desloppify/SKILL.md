@@ -23,7 +23,14 @@ For EVERY finding, you MUST include ALL of these:
 4. **Severity** — CRITICAL, HIGH, MEDIUM, or LOW
 5. **Suggested fix** — concrete rewrite OR "Delete entirely"
 
-**When input has NO slop:** Report "No slop patterns detected. The code/documentation is clean." Do NOT invent problems. Legitimate why-comments, business logic explanations, TODO/FIXME with context, and useful API docs are NOT slop.
+**When input has NO slop:** You MUST report "No slop patterns detected. The code/documentation is clean." and STOP. Do NOT invent problems. Do NOT flag legitimate code as slop.
+
+**These are NEVER slop — do NOT flag:**
+- Comments explaining WHY (business logic, non-obvious decisions, external system behavior)
+- Comments about performance tradeoffs ("avoid GC pressure", "preserves insertion order")
+- Comments explaining API/protocol details ("EX sets TTL in seconds", "Stripe sends signatures as...")
+- Defensive code around external APIs, network calls, or user input
+- TODO/FIXME with specific context
 
 ## Severity Levels
 
