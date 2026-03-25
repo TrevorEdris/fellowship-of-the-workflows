@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # FOTW Autoresearch — Run a single eval iteration for a target.
 #
 # Usage:
@@ -119,9 +119,9 @@ TOTAL_JUDGMENTS=0
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-# Per-criterion tracking
-declare -A CRITERION_PASS
-declare -A CRITERION_TOTAL
+# Per-criterion tracking via flat file: each line is "criterion_id PASS" or "criterion_id FAIL"
+CRITERION_LOG="$TMPDIR/criterion_log.txt"
+touch "$CRITERION_LOG"
 
 for prompt_file in "${PROMPT_FILES[@]}"; do
   prompt_name=$(basename "$prompt_file" .md)
@@ -134,10 +134,8 @@ for prompt_file in "${PROMPT_FILES[@]}"; do
     JUDGE_FILE="$TMPDIR/${prompt_name}_run${run}_judge.txt"
 
     # Run skill, with fallback on failure
-    USED_MODEL="$SKILL_MODEL"
     if ! "$SHARED_DIR/run-skill-eval.sh" "$SKILL_NAME" "$prompt_file" "$SKILL_MODEL" > "$OUTPUT_FILE" 2>/dev/null; then
       echo -n "(fallback:$FALLBACK_MODEL) "
-      USED_MODEL="$FALLBACK_MODEL"
       if ! "$SHARED_DIR/run-skill-eval.sh" "$SKILL_NAME" "$prompt_file" "$FALLBACK_MODEL" > "$OUTPUT_FILE" 2>/dev/null; then
         echo "SKIP (invocation failed)"
         continue
@@ -156,24 +154,23 @@ for prompt_file in "${PROMPT_FILES[@]}"; do
       continue
     fi
 
-    # Parse judge output — count criterion PASS lines (format: "criterion_id: PASS | reason")
+    # Parse judge output — count criterion PASS/FAIL lines
+    # Format: "criterion_id: PASS | reason" or "criterion_id: FAIL | reason"
+    # Judge may wrap lines in code fences or add leading whitespace
     RUN_PASS=0
     while IFS= read -r line; do
-      criterion_id=$(echo "$line" | sed -n 's/^\([a-z_]*\): *PASS.*/\1/p')
-      if [[ -n "$criterion_id" ]]; then
+      # Strip leading whitespace, backticks, and markdown formatting
+      cleaned=$(echo "$line" | sed 's/^[[:space:]`]*//')
+      cid=$(echo "$cleaned" | sed -n 's/^\([a-z_][a-z_]*\): *PASS.*/\1/p')
+      if [[ -n "$cid" ]]; then
         RUN_PASS=$((RUN_PASS + 1))
-        CRITERION_PASS[$criterion_id]=$(( ${CRITERION_PASS[$criterion_id]:-0} + 1 ))
+        echo "$cid PASS" >> "$CRITERION_LOG"
       fi
-      criterion_id_fail=$(echo "$line" | sed -n 's/^\([a-z_]*\): *FAIL.*/\1/p')
-      if [[ -n "$criterion_id_fail" ]]; then
-        CRITERION_TOTAL[$criterion_id_fail]=$(( ${CRITERION_TOTAL[$criterion_id_fail]:-0} + 1 ))
+      cid=$(echo "$cleaned" | sed -n 's/^\([a-z_][a-z_]*\): *FAIL.*/\1/p')
+      if [[ -n "$cid" ]]; then
+        echo "$cid FAIL" >> "$CRITERION_LOG"
       fi
     done < "$JUDGE_FILE"
-
-    # Also count passes in totals
-    for cid in "${!CRITERION_PASS[@]}"; do
-      CRITERION_TOTAL[$cid]=$(( ${CRITERION_TOTAL[$cid]:-0} ))
-    done
 
     TOTAL_PASS=$((TOTAL_PASS + RUN_PASS))
     TOTAL_JUDGMENTS=$((TOTAL_JUDGMENTS + CRITERIA_COUNT))
@@ -195,15 +192,17 @@ echo ""
 
 # --- Per-criterion breakdown ---
 echo "Per-criterion breakdown:"
-for cid in $(echo "${!CRITERION_TOTAL[@]}" | tr ' ' '\n' | sort); do
-  p=${CRITERION_PASS[$cid]:-0}
-  t=${CRITERION_TOTAL[$cid]:-0}
-  total_for_cid=$((p + t))
-  if [[ $total_for_cid -gt 0 ]]; then
-    rate=$(awk "BEGIN {printf \"%.0f\", ($p / $total_for_cid) * 100}")
-    echo "  $cid: $p/$total_for_cid ($rate%)"
-  fi
-done
+if [[ -s "$CRITERION_LOG" ]]; then
+  # Get unique criterion IDs, then count PASS/total for each
+  for cid in $(awk '{print $1}' "$CRITERION_LOG" | sort -u); do
+    total=$(grep -c "^$cid " "$CRITERION_LOG" || echo 0)
+    passes=$(grep -c "^$cid PASS" "$CRITERION_LOG" || echo 0)
+    if [[ $total -gt 0 ]]; then
+      rate=$(awk "BEGIN {printf \"%.0f\", ($passes / $total) * 100}")
+      echo "  $cid: $passes/$total ($rate%)"
+    fi
+  done
+fi
 echo ""
 
 # --- Log to results.tsv ---

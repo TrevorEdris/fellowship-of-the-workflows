@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Score a skill's output against binary criteria using an LLM judge.
 #
 # Usage: ./score-output.sh <target_dir> <output_file> <judge_model>

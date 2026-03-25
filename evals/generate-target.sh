@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Generate an eval target scaffold for a skill.
 #
 # Usage: ./evals/generate-target.sh <skill_name>

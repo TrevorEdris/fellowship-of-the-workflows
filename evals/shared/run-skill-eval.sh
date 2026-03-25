@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Run a skill against a single test prompt and capture the output.
 #
 # Usage: ./run-skill-eval.sh <skill_name> <prompt_file> <model>
