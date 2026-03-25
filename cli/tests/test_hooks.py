@@ -24,10 +24,9 @@ from fotw.services.settings_merger import (
 def test_scan_hooks_returns_list():
     hooks = scan_hooks()
     assert isinstance(hooks, list)
-    assert len(hooks) == 6
+    assert len(hooks) == 5
     names = [h.name for h in hooks]
     assert "block-dangerous-commands" in names
-    assert "branch-guard" in names
     assert "context-snapshot" in names
     assert "plan-validator-reminder" in names
     assert "protect-secrets" in names
@@ -221,6 +220,5 @@ def test_scan_hooks_detect_tests():
     hooks = scan_hooks()
     hooks_with_tests = [h for h in hooks if h.has_tests]
     names = [h.name for h in hooks_with_tests]
-    assert "branch-guard" in names
     assert "context-snapshot" in names
     assert "session-reminder" in names

@@ -11,15 +11,6 @@
         ]
       },
       {
-        "matcher": "Edit|Write|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/branch-guard.js"
-          }
-        ]
-      },
-      {
         "matcher": "Read|Edit|Write|Bash",
         "hooks": [
           {
