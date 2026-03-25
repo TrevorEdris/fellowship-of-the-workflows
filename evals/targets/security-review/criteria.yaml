@@ -1,0 +1,11 @@
+criteria:
+  - id: vuln_detection
+    question: "Did the review identify at least 80% of the planted security vulnerabilities?"
+  - id: false_positive_rate
+    question: "Did the review avoid flagging secure code patterns as vulnerabilities? No more than 1 false positive per review."
+  - id: confidence_calibration
+    question: "Are findings reported with appropriate confidence? HIGH confidence for clear exploitable vulns, not for theoretical/unlikely scenarios."
+  - id: exploitation_context
+    question: "Does each finding explain HOW the vulnerability could be exploited, not just THAT it exists?"
+  - id: remediation_quality
+    question: "Does each finding include a specific, correct code fix — not just 'use parameterized queries' but the actual parameterized query?"

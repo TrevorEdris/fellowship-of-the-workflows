@@ -1,0 +1,11 @@
+criteria:
+  - id: bug_detection
+    question: "Did the review identify at least 80% of the planted real issues (security bugs, correctness errors, migration risks)?"
+  - id: false_positive_restraint
+    question: "Did the review avoid flagging planted red herrings as issues? For clean-code scenarios, did it avoid inventing phantom problems?"
+  - id: severity_calibration
+    question: "Are findings categorized with appropriate severity? Critical security bugs as CRITICAL/HIGH, style nits as LOW?"
+  - id: actionable_specificity
+    question: "Does each finding reference a specific file location (line number or code snippet) with a concrete fix suggestion, not vague advice?"
+  - id: report_structure
+    question: "Is the output a well-structured review with clear sections (summary, findings by severity, recommendations), not unstructured prose?"

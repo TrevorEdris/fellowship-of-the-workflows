@@ -1,0 +1,11 @@
+criteria:
+  - id: detection_recall
+    question: "Did the skill identify at least 80% of the planted slop patterns in the input?"
+  - id: false_positive_safety
+    question: "Did the skill leave ALL legitimate comments, code, and documentation intact without flagging them as slop?"
+  - id: severity_accuracy
+    question: "Are severity levels correctly assigned? CRITICAL for pure noise, HIGH for restated-the-obvious, MEDIUM for verbose-but-has-signal, LOW for borderline?"
+  - id: actionable_output
+    question: "Does the output include specific file locations and concrete suggested rewrites for each finding?"
+  - id: clean_input_handling
+    question: "For inputs with no slop, does the skill correctly report no issues rather than inventing problems?"
