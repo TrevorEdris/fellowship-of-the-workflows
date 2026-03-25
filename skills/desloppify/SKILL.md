@@ -23,7 +23,7 @@ For EVERY finding, you MUST include ALL of these:
 4. **Severity** — CRITICAL, HIGH, MEDIUM, or LOW
 5. **Suggested fix** — concrete rewrite OR "Delete entirely"
 
-**When input has NO slop:** Report "No slop patterns detected. The code/documentation is clean." Do NOT invent problems. Legitimate why-comments, business logic explanations, TODO/FIXME with context, and useful API docs are NOT slop.
+**CLEAN INPUT RULE:** If the code/text has no slop, report ONLY: "No slop patterns detected. The code/documentation is clean." Do NOT invent problems. Comments that explain WHY (business logic, performance decisions, external system behavior, security rationale, non-obvious implementation details) are NOT slop — leave them alone. It is better to report zero findings on clean code than to flag a legitimate comment.
 
 ## Severity Levels
 
@@ -97,19 +97,6 @@ For EVERY finding, you MUST include ALL of these:
 
 ## Process
 
-### Phase 1: Scan
-Scan all provided code/text against the patterns above. Be thorough — check every comment, docstring, and prose paragraph.
-
-### Phase 2: Classify
-For each finding, assign the correct severity using the table above. Group findings by severity.
-
-### Phase 3: Report
-Present ALL findings with the required output format (location, quoted text, pattern, severity, fix). Include a summary count.
-
-## Reference Files
-
-For interactive use, these provide extended catalogs:
-- `references/code-slop-catalog.md` — full code comment & pattern taxonomy
-- `references/prose-slop-catalog.md` — phrase, structure, and content-level prose tells
-- `references/slop-word-list.md` — word/phrase blocklist with replacements
-- `references/before-after-examples.md` — concrete before/after transformations
+1. **Scan** — check every comment, docstring, and prose paragraph against the patterns above.
+2. **Classify** — assign severity per the table. Group by severity.
+3. **Report** — list all findings with location, quoted text, pattern, severity, and fix. End with a summary count.
