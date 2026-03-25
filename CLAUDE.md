@@ -31,7 +31,7 @@ Fellowship of the Workflows is a centralized repository for sharing AI agent wor
 
 # Install hooks (Claude Code only, global only)
 ./bin/fotw install hooks --global --for claude-code           # All hooks
-./bin/fotw install hooks/branch-guard --global --for claude-code  # Single hook
+./bin/fotw install hooks/protect-secrets --global --for claude-code  # Single hook
 ./bin/fotw install hooks --global --for claude-code --include-tests  # With test files
 
 # Setup — install all rules with lock file tracking
