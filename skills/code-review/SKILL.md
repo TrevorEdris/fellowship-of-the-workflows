@@ -60,7 +60,7 @@ Scan the diff for each of these in order. If found, report it at the listed seve
 **CRITICAL — must block merge:**
 - SQL injection: string interpolation/f-strings in SQL queries (e.g., `f"SELECT ... WHERE x = '{user_input}'"`) — NOT parameterized queries with `%s`
 - XSS: `dangerouslySetInnerHTML` with user-supplied data, unescaped user input rendered as HTML
-- Dangerous migrations: `ALTER TABLE ... ADD COLUMN` without `NOT NULL DEFAULT` on tables with existing rows — this WILL break existing rows by inserting NULL into a new column with no default. Severity is CRITICAL, not MEDIUM.
+- Dangerous migrations: `ALTER TABLE ... ADD COLUMN` without `NOT NULL DEFAULT` — ALWAYS CRITICAL regardless of nullability. Even nullable columns without defaults break existing rows by producing unexpected NULLs. Do not rationalize this as safe. Do not downgrade to HIGH or MEDIUM.
 - Command injection, SSRF, path traversal
 
 **HIGH — strong recommendation to fix:**
@@ -79,14 +79,16 @@ Scan the diff for each of these in order. If found, report it at the listed seve
 ### False Positive Avoidance
 
 DO NOT flag these as issues:
-- `import hashlib` when the code actually uses `hashlib.sha256` — this is correct standard library usage
+- `import hashlib` when the code actually uses `hashlib.sha256` — correct standard library usage
 - Valid `async` keyword usage, even if it looks unusual in context
-- Inline style objects with dynamic computed values in React — this is correct, not a "should be CSS" issue
-- Clean, well-structured code that works correctly — do NOT invent problems
+- Inline style objects with dynamic computed values in React — idiomatic React, not a "should be CSS" issue
 - Parameterized SQL queries using `%s` placeholders — this is SAFE, not injection
-- When a refactor is sound and improves code quality, say so explicitly. A clean review with no bugs found is a valid outcome.
+- Clean, well-structured code that works correctly — do NOT invent problems
+- When a refactor improves code structure (e.g., replacing globals with dependency injection), acknowledge it is sound. Do not flag issues in unchanged context lines of a clean refactor.
 
-**Before you write your report, review each finding and ask:** "Is this a real bug with a real consequence, or am I manufacturing a finding?" Remove any finding you cannot justify with a concrete exploit or failure scenario. If a file has no real issues, do not mention it in Findings.
+**Findings vs. Recommendations:** Only put actual bugs, vulnerabilities, and correctness errors in Findings. Put suggestions like missing indexes, optional input validation, naming preferences, and operational improvements in Recommendations. If the code uses parameterized queries and handles errors correctly, it belongs in Recommendations at most — not in Findings.
+
+**Before you write your report, review each finding and ask:** "Is this a real bug with a real consequence, or am I manufacturing a finding?" Remove any finding you cannot justify with a concrete exploit or failure scenario.
 
 ### Output Requirements
 
