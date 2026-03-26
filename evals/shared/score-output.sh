@@ -47,6 +47,5 @@ claude -p \
   --model "$JUDGE_MODEL" \
   --system-prompt "$(cat "$JUDGE_SYSTEM")" \
   --dangerously-skip-permissions \
-  --bare \
   --output-format text \
   "$JUDGE_PROMPT" 2>/dev/null

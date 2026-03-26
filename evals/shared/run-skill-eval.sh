@@ -47,14 +47,14 @@ else
   SYSTEM_PROMPT="$(cat "$SKILL_MD")"
 fi
 
-# --bare skips hooks/LSP/plugin overhead for faster eval runs
 # --dangerously-skip-permissions avoids interactive prompts during eval
 # --add-dir gives the model Read access to skill references, assets, etc.
+# Note: --bare is intentionally omitted; it requires ANTHROPIC_API_KEY and
+# bypasses subscription/OAuth auth (keychain). Without it, normal auth applies.
 claude -p \
   --model "$MODEL" \
   --system-prompt "$SYSTEM_PROMPT" \
   --dangerously-skip-permissions \
-  --bare \
   --add-dir "$SKILL_DIR" \
   --output-format text \
   "$PROMPT" 2>/dev/null
