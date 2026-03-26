@@ -45,9 +45,18 @@ DIFF CONTENT:
 
 ## Objective
 
-Use the design-review agent to review the UI/UX changes above. Execute the 7-phase review process with live browser testing. Your final reply must contain the markdown report with screenshots.
+Use the design-review agent to review the UI/UX changes above. Execute the 8-phase review process (including AI slop check) with live browser testing. Your final reply must contain the markdown report with screenshots.
 
 ## References
 
-- `references/DESIGN_PRINCIPLES.md` — S-tier design checklist
+- `references/DESIGN_PRINCIPLES.md` — Design philosophy and quick review checklist
+- `references/ai-slop-test.md` — AI generation fingerprint checklist
+- `references/typography.md` — Modular scales, font selection, loading
+- `references/color-and-contrast.md` — OKLCH, tinted neutrals, dark mode, contrast
+- `references/spatial-design.md` — Spacing systems, grids, hierarchy, container queries
+- `references/motion-design.md` — Duration ladder, easing curves, reduced motion
 - `references/CLAUDE_MD_SNIPPET.md` — CLAUDE.md integration guide
+
+## Extending with Impeccable
+
+For finer-grained design commands (audit, normalize, polish, bolder, harden, and 15 more), consider installing the [impeccable](https://github.com/pbakaus/impeccable) plugin alongside FOTW. Impeccable provides actionable design steering commands and a persistent project design context file (`.impeccable.md`).

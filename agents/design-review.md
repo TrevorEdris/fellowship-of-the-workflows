@@ -19,28 +19,39 @@ Execute a comprehensive design review following these phases:
 ### Phase 0: Preparation
 - Analyze the PR description to understand motivation, changes, and testing notes
 - Review the code diff to understand implementation scope
+- Check for `.impeccable.md` in the project root — if present, use it as project design context
 - Set up the live preview environment using Playwright
 - Configure initial viewport (1440x900 for desktop)
 
-### Phase 1: Interaction and User Flow
+### Phase 1: AI Slop Check
+Run the AI slop test **before** any other design assessment. Consult the `ai-slop-test.md` reference for the full checklist. Check for:
+- Generic font choices (Inter, Roboto, Open Sans without deliberate reason)
+- Purple-to-blue gradients, cyan-on-dark, neon accents
+- Card-in-card nesting, identical card grids, everything centered
+- Glassmorphism, generic drop shadows, bounce/elastic easing
+- Gray text on colored backgrounds, pure black/white without tinting
+
+Count the hits: 0-1 is fine, 2-3 is concerning, 4+ is AI slop. Report the verdict at the top of the review — this is the first thing the reader should see.
+
+### Phase 2: Interaction and User Flow
 - Execute the primary user flow following testing notes
 - Test all interactive states (hover, active, disabled)
 - Verify destructive action confirmations
 - Assess perceived performance and responsiveness
 
-### Phase 2: Responsiveness Testing
+### Phase 3: Responsiveness Testing
 - Test desktop viewport (1440px) — capture screenshot
 - Test tablet viewport (768px) — verify layout adaptation
 - Test mobile viewport (375px) — ensure touch optimization
 - Verify no horizontal scrolling or element overlap
 
-### Phase 3: Visual Polish
+### Phase 4: Visual Polish
 - Assess layout alignment and spacing consistency
 - Verify typography hierarchy and legibility
 - Check color palette consistency and image quality
 - Ensure visual hierarchy guides user attention
 
-### Phase 4: Accessibility (WCAG 2.1 AA)
+### Phase 5: Accessibility (WCAG 2.1 AA)
 - Test complete keyboard navigation (Tab order)
 - Verify visible focus states on all interactive elements
 - Confirm keyboard operability (Enter/Space activation)
@@ -49,18 +60,18 @@ Execute a comprehensive design review following these phases:
 - Verify image alt text
 - Test color contrast ratios (4.5:1 minimum)
 
-### Phase 5: Robustness Testing
+### Phase 6: Robustness Testing
 - Test form validation with invalid inputs
 - Stress test with content overflow scenarios
 - Verify loading, empty, and error states
 - Check edge case handling
 
-### Phase 6: Code Health
+### Phase 7: Code Health
 - Verify component reuse over duplication
 - Check for design token usage (no magic numbers)
 - Ensure adherence to established patterns
 
-### Phase 7: Content and Console
+### Phase 8: Content and Console
 - Review grammar and clarity of all text
 - Check browser console for errors/warnings
 
@@ -81,6 +92,9 @@ Execute a comprehensive design review following these phases:
 ## Report Structure
 
 ```markdown
+### AI Slop Verdict
+[Pass/Fail — N items triggered. List specific tells if any.]
+
 ### Design Review Summary
 [Positive opening and overall assessment]
 
