@@ -101,6 +101,43 @@ Compare the new score to the previous best score (the last "keep" entry in resul
 Go to step 1. Do NOT ask the user if you should continue. You are autonomous.
 The user will interrupt you when they want you to stop.
 
+## Hypothesis Log
+
+Maintain `evals/targets/<target>/hypotheses.md` as institutional memory across sessions.
+Read it at the start of each iteration. Do not repeat a mechanism already marked `discard`.
+
+### Two-commit sequence (required)
+
+Every iteration produces exactly two commits:
+
+1. **Log commit first** — append a new entry to `hypotheses.md` with `Status: pending`.
+   Leave Commit hash, Score delta, and Per-criterion delta as `TBD`.
+   Commit only `hypotheses.md`:
+   `git add evals/targets/<target>/hypotheses.md && git commit -m "log: <one-line hypothesis>"`
+
+2. **Skill commit second** — apply the actual skill change and commit:
+   `git add <variable_files> && git commit -m "<hypothesis description>"`
+
+On discard: `git revert HEAD` reverts only the skill commit. The log commit survives permanently.
+On keep: both commits stay. Go back and fill in the TBD fields in the log entry.
+
+### Entry schema
+
+Use this exact format for each entry:
+
+```
+### <YYYY-MM-DD> — <one-line hypothesis>
+
+- **Status:** pending | keep | discard
+- **Commit:** <skill commit hash>
+- **Score delta:** <new>/<max> (<rate>%) vs <prev>/<max> (<prev_rate>%) [+N or -N points]
+- **Per-criterion delta:** <criterion>: FAIL→PASS, <criterion>: PASS→FAIL (or "no change")
+- **Change summary:** <what was edited and why>
+- **Lesson:** <what this result tells us about the skill or the eval criteria>
+```
+
+Fill all fields. "no change" is acceptable for Per-criterion delta only if you verified it.
+
 ## Simplicity Criterion
 
 Same as Karpathy's: if a change adds complexity for marginal gain, discard it.
