@@ -1,0 +1,10 @@
+name: security-review
+type: skill
+variable_files:
+  - skills/security-review/SKILL.md
+read_only_files:
+  - agents/security-review.md
+runs_per_iteration: 3
+model: opus
+judge_model: sonnet
+fallback_model: opus

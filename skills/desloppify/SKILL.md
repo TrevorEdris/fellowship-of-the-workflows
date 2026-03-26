@@ -12,108 +12,91 @@ tier: core
 
 # Desloppify
 
-## Overview
+Identify and remove AI-generated noise from code and text. Every comment, sentence, and code pattern must earn its place. If removing it loses no information, it is slop.
 
-AI-generated content regresses to statistical means: verbose comments that restate the code, defensive error handling for impossible cases, and prose stuffed with "robust", "leverage", and "it's worth noting." This skill identifies those patterns and removes them — or rewrites them to carry actual signal.
+## Output Format
 
-## When to Use This Skill
+For EVERY finding, you MUST include ALL of these:
+1. **File location** — filename and line number(s)
+2. **Quoted text** — the exact slop text
+3. **Pattern match** — which slop pattern it matches (e.g., "Narrator comment", "Filler opener", "Unnecessary try-catch")
+4. **Severity** — CRITICAL, HIGH, MEDIUM, or LOW
+5. **Suggested fix** — concrete rewrite OR "Delete entirely"
 
-- After AI generates or modifies code — clean up the comments and patterns it left behind
-- Before committing AI-assisted work — strip the tells
-- Reviewing a PR that smells like unedited AI output
-- Cleaning up documentation that reads like marketing copy
-- Tightening commit messages or PR descriptions
+**CLEAN INPUT RULE:** If the code/text has no slop, report ONLY: "No slop patterns detected. The code/documentation is clean." Do NOT invent problems. Comments that explain WHY (business logic, performance decisions, external system behavior, security rationale, non-obvious implementation details) are NOT slop — leave them alone. It is better to report zero findings on clean code than to flag a legitimate comment.
 
-## Modes
+## Severity Levels
 
-| Argument | Behavior |
-|----------|----------|
-| (none) | Auto-detect from git diff context — scan changed files, classify by type |
-| `code` | Scan code files for sloppy comments and AI code patterns |
-| `docs` | Scan markdown/documentation files for AI prose patterns |
-| `prose` | Desloppify specific text files (commit messages, PR descriptions, READMEs) |
-| `review` | Report-only — identify and classify slop without modifying files |
+| Severity | Meaning | Examples | Action |
+|----------|---------|----------|--------|
+| CRITICAL | Pure noise, zero information | `# Increment counter` on `counter += 1`; `# Return the result` on `return result`; section dividers `# ===== MAIN =====` | Delete entirely |
+| HIGH | Restates what code/types already say | Docstrings that restate function name with buzzwords; narrator comments like "Now we initialize..." | Delete or reduce to essential |
+| MEDIUM | Verbose but has buried signal | Apologetic "This shouldn't happen but just in case" around unnecessary try-catch; filler-heavy prose with some real content | Rewrite concisely |
+| LOW | Borderline, stylistic | Single-use constants; minor hedging | Flag for human decision |
 
-## Context
+## Code Slop Patterns
 
-GIT STATUS:
-```
-!`git status --short`
-```
+### Comment Slop (detect these in comments/docstrings)
 
-RECENT CHANGES:
-```
-!`git diff --cached --stat 2>/dev/null || git diff --stat`
-```
+1. **Narrator comments** — restate function name: "This function processes the user request" above `processUserRequest()`. Severity: CRITICAL.
+2. **Obvious comments** — restate the code: `counter += 1 # Increment counter`, `return result # Return the result`. Severity: CRITICAL.
+3. **Section dividers** — decorative separators: `# ===== MAIN LOGIC =====`. Severity: HIGH.
+4. **Step comments** — procedural narration: "Step 1: Validate", "First, we...", "Next, we...". Severity: HIGH.
+5. **Over-documented trivials** — multi-line docstring on a one-liner where the type signature says everything. Severity: HIGH.
+6. **Language tutorial comments** — explain what a for-loop or dictionary is. Severity: CRITICAL.
+7. **Redundant type docs** — `@param {string} name` when TypeScript signature already has `name: string`. Severity: HIGH.
+8. **Apologetic comments** — "This shouldn't happen but just in case", "This might not be the best approach". Severity: MEDIUM.
+9. **Placeholder comments** — "TODO: implement", "Add your logic here", "Replace with actual". Severity: CRITICAL.
+
+### Code Pattern Slop (detect these in the code itself)
+
+1. **Unnecessary try-catch** — wrapping code that cannot throw (dict access on known keys, arithmetic, string ops) with defensive error handling. Look for: apologetic catch comments ("shouldn't happen", "just in case", "being extra cautious"), try-catch around infallible operations. Severity: HIGH.
+2. **Defensive impossible-case handling** — null checks on non-optional params, type guards on already-typed values. Severity: HIGH.
+3. **Single-use constants** — `MAGIC_OFFSET = 1` used exactly once, name restates the value. Severity: LOW.
+4. **Empty/silent catch blocks** — catch errors and do nothing or just log. Severity: HIGH.
+
+### CRITICAL: Distinguishing Justified vs. Unjustified Defensive Code
+
+**Unjustified (SLOP):**
+- Try-catch around `dict["known_key"]` when the dict structure is controlled
+- Try-catch around `Path.read_text()` when the path is pre-validated
+- Comments like "shouldn't happen", "just in case", "being extra cautious"
+
+**Justified (NOT SLOP — leave these alone):**
+- Try-catch around external API calls (HTTP requests, database queries)
+- Try-catch around file I/O with user-provided paths
+- Try-catch around deserialization of external data (JSON.parse of API response)
+- Comments explaining specific failure modes: "API has 99.9% uptime but we've seen transient failures"
+
+## Prose Slop Patterns
+
+### Filler Phrases (always delete — the sentence after them is the real content)
+- "It's worth noting that..."
+- "It's important to consider..."
+- "Interestingly, ..."
+- "As mentioned previously..."
+- "In order to..." (use "To")
+- "Let's dive in" / "Let's explore"
+
+### AI Vocabulary (replace with simpler words)
+- robust -> strong, reliable, solid
+- leverage -> use
+- seamless -> smooth, easy
+- comprehensive -> thorough, complete
+- cutting-edge -> modern, current
+- streamlined -> simple, efficient
+- performant -> fast, efficient
+
+### Promotional Adjectives (delete or replace with specifics)
+- "groundbreaking", "revolutionary", "state-of-the-art"
+- "powerful", "elegant", "innovative"
+
+### Content Patterns
+- **Idea repetition** — same concept restated in different words across paragraphs. Severity: HIGH.
+- **Buzzword-stuffed docstrings** — function docs full of "robust", "comprehensive", "leverages". Severity: HIGH.
 
 ## Process
 
-### Phase 1: Scan
-
-Identify target files from git context or user specification.
-
-**For code files:**
-- Match comments against the comment slop catalog (narrator, step, obvious, section dividers, over-documented trivials, language tutorials, placeholders, apologetic, redundant type docs)
-- Match code patterns against the code pattern catalog (defensive impossible-case handling, unnecessary try-catch, redundant type assertions, single-use constants, premature abstractions, speculative generality, empty catch blocks)
-
-**For documentation/prose files:**
-- Match against the prose slop catalog (filler phrases, AI vocabulary, promotional adjectives, structural tells, content-level patterns)
-- Cross-reference the slop word list for specific term replacements
-
-### Phase 2: Classify
-
-Group findings and assign severity:
-
-| Severity | Meaning | Action |
-|----------|---------|--------|
-| CRITICAL | Pure noise — zero information content | Remove entirely |
-| HIGH | Restates what code, types, or context already says | Remove or reduce to essential |
-| MEDIUM | Verbose but contains some signal buried in noise | Rewrite concisely |
-| LOW | Stylistic preference, borderline call | Flag for human decision |
-
-Present a summary table:
-```
-Category           | CRITICAL | HIGH | MEDIUM | LOW
--------------------+----------+------+--------+----
-Comment slop       |        3 |    5 |      2 |   1
-Code pattern slop  |        0 |    2 |      1 |   0
-Prose slop         |        1 |    4 |      3 |   2
-```
-
-### Phase 3: Transform
-
-**In `review` mode:** Stop here. Present findings with file locations and suggested fixes.
-
-**In all other modes:**
-1. Present proposed changes grouped by severity
-2. **Wait for user approval before applying changes**
-3. Apply transformations:
-   - CRITICAL: Delete entirely
-   - HIGH: Remove redundant content, keep only what types/code don't already express
-   - MEDIUM: Rewrite to be concise and direct
-   - LOW: Add inline comment flagging the pattern for human review
-4. One logical change per edit — don't batch unrelated fixes
-
-### Phase 4: Verify
-
-- Confirm no meaning was lost in transformations
-- Run available linters/formatters if configured
-- Present before/after summary with counts per severity
-
-## Relationship to Other Skills
-
-This skill **complements** but does not replace:
-- `writing-clearly-and-concisely` — teaches good writing principles. Desloppify **detects and removes** specific AI patterns.
-- `code-review` — holistic PR review. Desloppify is a **narrow, targeted pass** for AI noise.
-- `refactoring` — structural code smells. Desloppify targets **AI-characteristic** noise patterns specifically.
-
-## Reference Files
-
-| Reference | File | ~Tokens |
-|-----------|------|---------|
-| Code comment & pattern taxonomy | `references/code-slop-catalog.md` | 2,500 |
-| Prose & documentation taxonomy | `references/prose-slop-catalog.md` | 2,000 |
-| Word/phrase blocklist with replacements | `references/slop-word-list.md` | 800 |
-| Concrete before/after transformations | `references/before-after-examples.md` | 1,500 |
-
-**For most tasks**, the relevant catalog (code or prose) plus the word list is sufficient. Load `before-after-examples.md` when you need transformation guidance.
+1. **Scan** — check every comment, docstring, and prose paragraph against the patterns above.
+2. **Classify** — assign severity per the table. Group by severity.
+3. **Report** — list all findings with location, quoted text, pattern, severity, and fix. End with a summary count.

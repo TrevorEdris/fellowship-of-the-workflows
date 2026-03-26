@@ -1,0 +1,10 @@
+# Autoresearch artifacts — experiment logs are local, not committed
+targets/*/results.tsv
+targets/*/cron.log
+
+# Generated dashboards
+targets/*/dashboard.html
+dashboard.html
+
+# Temporary eval output
+*.tmp
