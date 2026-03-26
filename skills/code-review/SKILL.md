@@ -51,17 +51,71 @@ If Atlassian MCP is connected, fetch linked ticket details and validate implemen
 
 ## Objective
 
-Use the pragmatic-code-review agent to review the complete diff above. Your final reply must contain the markdown report.
+Review the complete diff above. Your final reply MUST contain the structured markdown report below. Every real issue must be found. Every finding must cite a specific file and line.
 
-## Scripts
+### Review Checklist
 
-```bash
-scripts/pr-context.sh 123              # Fetch PR metadata via gh
-scripts/extract-ticket-ids.sh 123      # Extract Jira IDs from PR
-python scripts/diff-analysis.py --staged  # Analyze diff patterns
+Scan the diff for each of these in order. If found, report it at the listed severity.
+
+**CRITICAL — must block merge:**
+- SQL injection: string interpolation/f-strings in SQL queries (e.g., `f"SELECT ... WHERE x = '{user_input}'"`)
+- XSS: `dangerouslySetInnerHTML` with user-supplied data, unescaped user input rendered as HTML
+- Dangerous migrations: `ALTER TABLE ... ADD COLUMN` without `NOT NULL DEFAULT` on tables with existing rows — this breaks existing data
+- Command injection, SSRF, path traversal
+
+**HIGH — strong recommendation to fix:**
+- Missing input validation (no format/type checks on user-supplied parameters)
+- Non-constant-time password/token comparison (using `==` instead of `hmac.compare_digest` or equivalent)
+- Unsafe cryptographic patterns
+
+**MEDIUM — should fix:**
+- Missing React `key` prop on list items
+- Incomplete API documentation (new endpoint parameters not documented, missing response field descriptions)
+
+**LOW — optional:**
+- Style nits, naming suggestions, minor improvements
+- Process concerns like vague/empty PR descriptions (note these in Recommendations, not as code bugs)
+
+### False Positive Avoidance
+
+DO NOT flag these as issues:
+- `import hashlib` when the code actually uses `hashlib.sha256` — this is correct standard library usage
+- Valid `async` keyword usage, even if it looks unusual in context
+- Inline style objects with dynamic computed values in React — this is correct, not a "should be CSS" issue
+- Clean, well-structured code that works correctly — do NOT invent problems
+- When a refactor is sound and improves code quality, say so explicitly. A clean review with no bugs found is a valid outcome.
+
+### Output Requirements
+
+Every finding MUST include:
+- **Exact file and line:** e.g., `auth_service.py:18` or quote the specific code snippet
+- **Concrete fix:** Show corrected code or describe the exact change. Never say "consider improving security" — say exactly what to change.
+
+### Required Report Format
+
+```markdown
+### Code Review Summary
+[1-3 sentence overall assessment. State if code is clean or has issues.]
+
+### Findings
+
+#### Critical
+- **file.ext:line** — [Description: what the vulnerability is, why it's dangerous]
+  - Fix: [exact code change or specific action]
+
+#### High
+- **file.ext:line** — [Description and engineering rationale]
+  - Fix: [exact code change or specific action]
+
+#### Medium
+- **file.ext:line** — [Description and rationale]
+  - Fix: [exact code change or specific action]
+
+#### Low
+- **file.ext:line** — [Minor observation]
+
+### Recommendations
+[Architecture, process, or documentation suggestions. Vague PR descriptions go here.]
 ```
 
-## References
-
-- `references/REVIEW_CHECKLIST.md` — Detailed checklist
-- `assets/feedback-templates.md` — Common feedback patterns
+Omit severity sections with no findings. If the code is clean, state that in the summary and omit the Findings section entirely.
