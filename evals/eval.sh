@@ -23,7 +23,7 @@ shift
 
 MODE="eval"
 DESCRIPTION="eval run"
-MAX_PARALLEL=5
+MAX_PARALLEL=3
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
