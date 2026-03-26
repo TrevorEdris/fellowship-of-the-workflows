@@ -7,6 +7,7 @@
 #   ./evals/eval.sh <target_name> --report                 # Show results.tsv
 #   ./evals/eval.sh <target_name> --dashboard              # Open visual dashboard
 #   ./evals/eval.sh <target_name> --describe "what changed" # Tag the run
+#   ./evals/eval.sh <target_name> --max-parallel 10        # Concurrent pairs (default 5)
 #
 # For the full autonomous loop, use ./evals/run.sh instead.
 
@@ -17,11 +18,12 @@ EVALS_DIR="$REPO_ROOT/evals"
 SHARED_DIR="$EVALS_DIR/shared"
 
 # --- Parse args ---
-TARGET_NAME="${1:?Usage: eval.sh <target_name> [--baseline|--report|--dashboard|--describe \"desc\"]}"
+TARGET_NAME="${1:?Usage: eval.sh <target_name> [--baseline|--report|--dashboard|--describe \"desc\"|--max-parallel N]}"
 shift
 
 MODE="eval"
 DESCRIPTION="eval run"
+MAX_PARALLEL=5
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -29,6 +31,7 @@ while [[ $# -gt 0 ]]; do
     --report) MODE="report"; shift ;;
     --dashboard) MODE="dashboard"; shift ;;
     --describe) DESCRIPTION="$2"; shift 2 ;;
+    --max-parallel) MAX_PARALLEL="$2"; shift 2 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
@@ -114,7 +117,7 @@ MAX_SCORE=$((RUNS_PER_ITERATION * NUM_PROMPTS * CRITERIA_COUNT))
 echo "=== FOTW Autoresearch: $TARGET_NAME ==="
 echo "Type: $TARGET_TYPE | Model: $SKILL_MODEL | Judge: $JUDGE_MODEL | Fallback: $FALLBACK_MODEL"
 echo "Prompts: $NUM_PROMPTS | Runs/prompt: $RUNS_PER_ITERATION | Criteria: $CRITERIA_COUNT"
-echo "Max possible score: $MAX_SCORE"
+echo "Max possible score: $MAX_SCORE | Max parallel: $MAX_PARALLEL"
 echo ""
 
 # --- Run eval ---
@@ -123,66 +126,112 @@ TOTAL_JUDGMENTS=0
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-# Per-criterion tracking via flat file: each line is "criterion_id PASS" or "criterion_id FAIL"
 CRITERION_LOG="$TMPDIR/criterion_log.txt"
 touch "$CRITERION_LOG"
 
-for prompt_file in "${PROMPT_FILES[@]}"; do
-  prompt_name=$(basename "$prompt_file" .md)
-  echo "--- Prompt: $prompt_name ---"
+# --- Try parallel Python runner, fall back to sequential bash ---
+PYTHON=$(command -v python3 2>/dev/null || true)
+EVAL_RUNNER="$SHARED_DIR/eval_runner.py"
 
-  for run in $(seq 1 "$RUNS_PER_ITERATION"); do
-    echo -n "  Run $run/$RUNS_PER_ITERATION... "
+if [[ -n "$PYTHON" ]] && [[ -f "$EVAL_RUNNER" ]]; then
+  # ===== PARALLEL PATH (Python) =====
+  RESULT_JSON=$("$PYTHON" "$EVAL_RUNNER" \
+    --target-dir "$TARGET_DIR" \
+    --skill-name "$SKILL_NAME" \
+    --model "$SKILL_MODEL" \
+    --judge-model "$JUDGE_MODEL" \
+    --fallback-model "$FALLBACK_MODEL" \
+    --runs-per-iteration "$RUNS_PER_ITERATION" \
+    --max-parallel "$MAX_PARALLEL" \
+    --shared-dir "$SHARED_DIR" \
+  )
 
-    OUTPUT_FILE="$TMPDIR/${prompt_name}_run${run}.txt"
-    JUDGE_FILE="$TMPDIR/${prompt_name}_run${run}_judge.txt"
+  # Parse JSON output
+  TOTAL_PASS=$(echo "$RESULT_JSON" | "$PYTHON" -c "import sys,json; d=json.load(sys.stdin); print(d['total_pass'])")
+  TOTAL_JUDGMENTS=$(echo "$RESULT_JSON" | "$PYTHON" -c "import sys,json; d=json.load(sys.stdin); print(d['total_judgments'])")
 
-    # Run skill, with fallback on failure
-    if ! "$SHARED_DIR/run-skill-eval.sh" "$SKILL_NAME" "$prompt_file" "$SKILL_MODEL" > "$OUTPUT_FILE" 2>/dev/null; then
-      echo -n "(fallback:$FALLBACK_MODEL) "
-      if ! "$SHARED_DIR/run-skill-eval.sh" "$SKILL_NAME" "$prompt_file" "$FALLBACK_MODEL" > "$OUTPUT_FILE" 2>/dev/null; then
-        echo "SKIP (invocation failed)"
+  # Populate criterion log from JSON
+  echo "$RESULT_JSON" | "$PYTHON" -c "
+import sys, json
+d = json.load(sys.stdin)
+for c in d['criterion_log']:
+    print(f\"{c['cid']} {c['result']}\")
+" > "$CRITERION_LOG"
+
+  # Print per-prompt details
+  echo "$RESULT_JSON" | "$PYTHON" -c "
+import sys, json
+d = json.load(sys.stdin)
+current_prompt = ''
+for det in d['details']:
+    if det['prompt'] != current_prompt:
+        current_prompt = det['prompt']
+        print(f\"--- Prompt: {current_prompt} ---\")
+    fb = ' (fallback)' if det.get('fallback') else ''
+    if det['status'] == 'ok':
+        print(f\"  Run {det['run']}/{len([x for x in d['details'] if x['prompt']==current_prompt])}: {det['pass']}/{det['total']}{fb}\")
+    else:
+        print(f\"  Run {det['run']}: SKIP ({det['status']}){fb}\")
+" 2>/dev/null || true
+
+else
+  # ===== SEQUENTIAL FALLBACK (Bash) =====
+  echo "(python3 not found — running sequentially)"
+  echo ""
+
+  for prompt_file in "${PROMPT_FILES[@]}"; do
+    prompt_name=$(basename "$prompt_file" .md)
+    echo "--- Prompt: $prompt_name ---"
+
+    for run in $(seq 1 "$RUNS_PER_ITERATION"); do
+      echo -n "  Run $run/$RUNS_PER_ITERATION... "
+
+      OUTPUT_FILE="$TMPDIR/${prompt_name}_run${run}.txt"
+      JUDGE_FILE="$TMPDIR/${prompt_name}_run${run}_judge.txt"
+
+      # Run skill, with fallback on failure
+      if ! "$SHARED_DIR/run-skill-eval.sh" "$SKILL_NAME" "$prompt_file" "$SKILL_MODEL" > "$OUTPUT_FILE" 2>/dev/null; then
+        echo -n "(fallback:$FALLBACK_MODEL) "
+        if ! "$SHARED_DIR/run-skill-eval.sh" "$SKILL_NAME" "$prompt_file" "$FALLBACK_MODEL" > "$OUTPUT_FILE" 2>/dev/null; then
+          echo "SKIP (invocation failed)"
+          continue
+        fi
+      fi
+
+      # Check for empty output
+      if [[ ! -s "$OUTPUT_FILE" ]]; then
+        echo "SKIP (empty output)"
         continue
       fi
-    fi
 
-    # Check for empty output
-    if [[ ! -s "$OUTPUT_FILE" ]]; then
-      echo "SKIP (empty output)"
-      continue
-    fi
-
-    # Judge output
-    if ! "$SHARED_DIR/score-output.sh" "$TARGET_DIR" "$OUTPUT_FILE" "$JUDGE_MODEL" > "$JUDGE_FILE" 2>/dev/null; then
-      echo "SKIP (judge failed)"
-      continue
-    fi
-
-    # Parse judge output — count criterion PASS/FAIL lines
-    # Format: "criterion_id: PASS | reason" or "criterion_id: FAIL | reason"
-    # Judge may wrap lines in code fences or add leading whitespace
-    RUN_PASS=0
-    while IFS= read -r line; do
-      # Strip leading whitespace, backticks, and markdown formatting
-      # Also strip backticks wrapping criterion IDs (e.g. `detection_recall`: PASS)
-      cleaned=$(echo "$line" | sed 's/^[[:space:]`]*//; s/`:/:/g; s/`//g')
-      cid=$(echo "$cleaned" | sed -n 's/^\([a-z_][a-z_]*\): *PASS.*/\1/p')
-      if [[ -n "$cid" ]]; then
-        RUN_PASS=$((RUN_PASS + 1))
-        echo "$cid PASS" >> "$CRITERION_LOG"
+      # Judge output
+      if ! "$SHARED_DIR/score-output.sh" "$TARGET_DIR" "$OUTPUT_FILE" "$JUDGE_MODEL" > "$JUDGE_FILE" 2>/dev/null; then
+        echo "SKIP (judge failed)"
+        continue
       fi
-      cid=$(echo "$cleaned" | sed -n 's/^\([a-z_][a-z_]*\): *FAIL.*/\1/p')
-      if [[ -n "$cid" ]]; then
-        echo "$cid FAIL" >> "$CRITERION_LOG"
-      fi
-    done < "$JUDGE_FILE"
 
-    TOTAL_PASS=$((TOTAL_PASS + RUN_PASS))
-    TOTAL_JUDGMENTS=$((TOTAL_JUDGMENTS + CRITERIA_COUNT))
+      # Parse judge output
+      RUN_PASS=0
+      while IFS= read -r line; do
+        cleaned=$(echo "$line" | sed 's/^[[:space:]`]*//; s/`:/:/g; s/`//g')
+        cid=$(echo "$cleaned" | sed -n 's/^\([a-z_][a-z_]*\): *PASS.*/\1/p')
+        if [[ -n "$cid" ]]; then
+          RUN_PASS=$((RUN_PASS + 1))
+          echo "$cid PASS" >> "$CRITERION_LOG"
+        fi
+        cid=$(echo "$cleaned" | sed -n 's/^\([a-z_][a-z_]*\): *FAIL.*/\1/p')
+        if [[ -n "$cid" ]]; then
+          echo "$cid FAIL" >> "$CRITERION_LOG"
+        fi
+      done < "$JUDGE_FILE"
 
-    echo "$RUN_PASS/$CRITERIA_COUNT"
+      TOTAL_PASS=$((TOTAL_PASS + RUN_PASS))
+      TOTAL_JUDGMENTS=$((TOTAL_JUDGMENTS + CRITERIA_COUNT))
+
+      echo "$RUN_PASS/$CRITERIA_COUNT"
+    done
   done
-done
+fi
 
 # --- Compute aggregate ---
 if [[ $TOTAL_JUDGMENTS -gt 0 ]]; then
@@ -198,7 +247,6 @@ echo ""
 # --- Per-criterion breakdown ---
 echo "Per-criterion breakdown:"
 if [[ -s "$CRITERION_LOG" ]]; then
-  # Get unique criterion IDs, then count PASS/total for each
   for cid in $(awk '{print $1}' "$CRITERION_LOG" | sort -u); do
     total=$(grep -c "^$cid " "$CRITERION_LOG" 2>/dev/null) || total=0
     passes=$(grep -c "^$cid PASS" "$CRITERION_LOG" 2>/dev/null) || passes=0
