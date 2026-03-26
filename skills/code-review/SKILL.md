@@ -58,9 +58,9 @@ Review the complete diff above. Your final reply MUST contain the structured mar
 Scan the diff for each of these in order. If found, report it at the listed severity.
 
 **CRITICAL — must block merge:**
-- SQL injection: string interpolation/f-strings in SQL queries (e.g., `f"SELECT ... WHERE x = '{user_input}'"`)
+- SQL injection: string interpolation/f-strings in SQL queries (e.g., `f"SELECT ... WHERE x = '{user_input}'"`) — NOT parameterized queries with `%s`
 - XSS: `dangerouslySetInnerHTML` with user-supplied data, unescaped user input rendered as HTML
-- Dangerous migrations: `ALTER TABLE ... ADD COLUMN` without `NOT NULL DEFAULT` on tables with existing rows — this breaks existing data
+- Dangerous migrations: `ALTER TABLE ... ADD COLUMN` without `NOT NULL DEFAULT` on tables with existing rows — this WILL break existing rows by inserting NULL into a new column with no default. Severity is CRITICAL, not MEDIUM.
 - Command injection, SSRF, path traversal
 
 **HIGH — strong recommendation to fix:**
@@ -83,7 +83,10 @@ DO NOT flag these as issues:
 - Valid `async` keyword usage, even if it looks unusual in context
 - Inline style objects with dynamic computed values in React — this is correct, not a "should be CSS" issue
 - Clean, well-structured code that works correctly — do NOT invent problems
+- Parameterized SQL queries using `%s` placeholders — this is SAFE, not injection
 - When a refactor is sound and improves code quality, say so explicitly. A clean review with no bugs found is a valid outcome.
+
+**Before you write your report, review each finding and ask:** "Is this a real bug with a real consequence, or am I manufacturing a finding?" Remove any finding you cannot justify with a concrete exploit or failure scenario. If a file has no real issues, do not mention it in Findings.
 
 ### Output Requirements
 
