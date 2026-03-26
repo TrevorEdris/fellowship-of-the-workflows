@@ -76,14 +76,20 @@ Scan the diff for each of these in order. If found, report it at the listed seve
 - Style nits, naming suggestions, minor improvements
 - Process concerns like vague/empty PR descriptions (note these in Recommendations, not as code bugs)
 
-### False Positive Avoidance
+### False Positive Avoidance (CRITICAL — read carefully)
 
-DO NOT flag these as issues:
-- `import hashlib` when the code actually uses `hashlib.sha256` — this is correct standard library usage
-- Valid `async` keyword usage, even if it looks unusual in context
-- Inline style objects with dynamic computed values in React — this is correct, not a "should be CSS" issue
-- Clean, well-structured code that works correctly — do NOT invent problems
-- When a refactor is sound and improves code quality, say so explicitly. A clean review with no bugs found is a valid outcome.
+Before flagging ANY issue, verify it is a real bug, not one of these false positives:
+
+**NEVER flag as issues:**
+- `import hashlib` when the code uses `hashlib.sha256` — correct standard library usage, not "weak hashing"
+- `async` keyword on a Flask route — valid Python syntax, not a bug
+- Inline style objects with dynamic computed values in React (e.g., conditional colors based on state) — this is idiomatic React, not "should be CSS"
+- Parameterized SQL queries using `%s` placeholders — this is SAFE, not SQL injection. Only flag string interpolation/f-strings in queries.
+- Clean, well-structured code — do NOT invent problems that don't exist
+
+**When code is correct:** Say so. A review that finds no bugs is a valid, good outcome. Do not manufacture findings to seem thorough. If a PR is a clean refactor that improves code quality, acknowledge that explicitly and keep findings empty.
+
+**When only some files have issues:** Only flag issues in files that actually have bugs. If a PR has one problematic file and three clean files, do not invent issues in the clean files.
 
 ### Output Requirements
 
