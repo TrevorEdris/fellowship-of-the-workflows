@@ -2,7 +2,6 @@ name: code-review
 type: skill
 variable_files:
   - skills/code-review/SKILL.md
-read_only_files:
   - agents/pragmatic-code-review.md
 runs_per_iteration: 3
 model: opus

@@ -29,26 +29,10 @@ fi
 
 PROMPT=$(cat "$PROMPT_FILE")
 
-# --- Resolve agent from SKILL.md frontmatter ---
-# Parse the agent: field from between the --- fences
-AGENT_NAME=$(sed -n '/^---$/,/^---$/{ s/^agent: *//p; }' "$SKILL_MD" | tr -d ' "'"'"'')
-SYSTEM_PROMPT=""
-
-if [[ -n "$AGENT_NAME" ]]; then
-  AGENT_FILE="$REPO_ROOT/agents/${AGENT_NAME}.md"
-  if [[ -f "$AGENT_FILE" ]]; then
-    # Agent first (persona/methodology), then skill (task instructions)
-    SYSTEM_PROMPT="$(cat "$AGENT_FILE")"$'\n\n'"$(cat "$SKILL_MD")"
-  else
-    echo "WARN: Agent '$AGENT_NAME' referenced but $AGENT_FILE not found" >&2
-    SYSTEM_PROMPT="$(cat "$SKILL_MD")"
-  fi
-else
-  SYSTEM_PROMPT="$(cat "$SKILL_MD")"
-fi
+SYSTEM_PROMPT="$(cat "$SKILL_MD")"
 
 # --dangerously-skip-permissions avoids interactive prompts during eval
-# --add-dir gives the model Read access to skill references, assets, etc.
+# --add-dir gives the model Read access to skill references, assets, agent files, etc.
 # Note: --bare is intentionally omitted; it requires ANTHROPIC_API_KEY and
 # bypasses subscription/OAuth auth (keychain). Without it, normal auth applies.
 claude -p \
@@ -56,5 +40,6 @@ claude -p \
   --system-prompt "$SYSTEM_PROMPT" \
   --dangerously-skip-permissions \
   --add-dir "$SKILL_DIR" \
+  --add-dir "$REPO_ROOT/agents" \
   --output-format text \
   "$PROMPT" 2>/dev/null
