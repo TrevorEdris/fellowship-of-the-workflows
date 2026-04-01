@@ -3,6 +3,7 @@ name: orchestrate
 description: "Coordinate multiple subagents to complete a large task. Decomposes work, delegates to specialists, aggregates results, handles failures. Use for tasks spanning multiple domains or requiring parallel workstreams."
 context: fork
 agent: multi-agent-orchestrator
+effort: high
 allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git status), Bash(git branch:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr list:*), Glob, Grep, Read, Write, Task
 tags: [meta]
 tier: core
@@ -100,6 +101,7 @@ Execute subtasks in topological order. For each executable batch:
 2. Invoke each agent in the batch via the `Task` tool
    - For independent subtasks, invoke multiple `Task` calls in the same turn (parallel)
    - For sequential subtasks, wait for each to complete before invoking the next
+   - Agents that declare `initialPrompt` in their frontmatter will auto-submit their first turn; omit an explicit startup prompt for these agents
 
 3. Collect and validate output
    - Check that output addresses the acceptance criteria

@@ -1,7 +1,7 @@
 {
   "name": "fotw",
   "description": "Fellowship of the Workflows — reusable skills, rules, agents, and hooks for AI coding tools",
-  "version": "1.12.1",
+  "version": "1.12.2",
   "author": {
     "name": "TrevorEdris",
     "url": "https://github.com/TrevorEdris/fellowship-of-the-workflows"
