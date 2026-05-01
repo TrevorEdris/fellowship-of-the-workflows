@@ -100,6 +100,7 @@ Execute subtasks in topological order. For each executable batch:
 2. Invoke each agent in the batch via the `Task` tool
    - For independent subtasks, invoke multiple `Task` calls in the same turn (parallel)
    - For sequential subtasks, wait for each to complete before invoking the next
+   - For critical subtasks requiring deep reasoning, set `/effort xhigh` before dispatch (Opus 4.7+)
 
 3. Collect and validate output
    - Check that output addresses the acceptance criteria
