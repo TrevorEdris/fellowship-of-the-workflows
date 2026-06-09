@@ -29,7 +29,7 @@ Analyze code for design pattern correctness using the code-pattern-advisor agent
 GIT STATUS:
 
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 FILES MODIFIED:

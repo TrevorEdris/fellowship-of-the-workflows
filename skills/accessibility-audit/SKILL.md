@@ -17,7 +17,7 @@ Audit the pending UI changes against WCAG 2.1/2.2.
 GIT STATUS:
 
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 PR METADATA:
