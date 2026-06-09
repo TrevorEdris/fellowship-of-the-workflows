@@ -17,7 +17,7 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 Current repository state:
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 Project manifest:

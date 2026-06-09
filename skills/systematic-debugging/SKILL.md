@@ -85,7 +85,7 @@ debug: build succeeds locally but fails in CI with exit code 137
 Current repo state:
 
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 Recent changes that may be relevant:

@@ -21,7 +21,7 @@ Analyze recent code changes and synchronize documentation to match the current s
 GIT STATUS:
 
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 RECENT COMMITS (last 20):

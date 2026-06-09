@@ -19,7 +19,7 @@ Systematically detect code smells, produce a prioritized refactoring plan, and e
 GIT STATUS:
 
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 TEST SUITE BASELINE:

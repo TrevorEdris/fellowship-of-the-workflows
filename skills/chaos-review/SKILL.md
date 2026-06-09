@@ -17,7 +17,7 @@ Adversarial review of pending changes. Assumes the worst about every line.
 GIT STATUS:
 
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 PR METADATA:

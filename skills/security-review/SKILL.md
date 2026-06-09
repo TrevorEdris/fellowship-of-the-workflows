@@ -18,7 +18,7 @@ Conduct a security-focused code review of the pending changes.
 GIT STATUS:
 
 ```
-!`git status`
+!`git status 2>/dev/null || echo "(not a git repository — no local changes to show)"`
 ```
 
 PR METADATA:
