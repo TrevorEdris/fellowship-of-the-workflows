@@ -159,6 +159,102 @@ def test_install_personas(tmp_target: Path):
     assert config.is_file()
 
 
+def test_install_personas_styles_symlinked_for_claude_code(tmp_target: Path):
+    """claude-code persona installs also symlink the generated output styles."""
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    styles_dir = tmp_target / ".claude" / "output-styles"
+    styles = sorted(styles_dir.glob("persona-*.md"))
+    assert len(styles) >= 14
+    assert all(p.is_symlink() for p in styles)
+    assert (styles_dir / "persona-rocky.md").is_file()
+
+
+def test_install_personas_no_styles_for_cursor(tmp_target: Path):
+    """Output styles are Claude Code-only; other tools get personas without styles."""
+    ctx = InstallContext(tool="cursor", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    assert (tmp_target / ".cursor" / "personas").is_dir()
+    assert not (tmp_target / ".cursor" / "output-styles").exists()
+    assert not (tmp_target / ".claude" / "output-styles").exists()
+
+
+def test_install_personas_styles_skipped_when_plugin_enabled(tmp_target: Path):
+    """When the fotw plugin is enabled, the plugin already ships the styles —
+    installing project copies would create duplicate picker entries."""
+    import json
+
+    claude_dir = tmp_target / ".claude"
+    claude_dir.mkdir()
+    (claude_dir / "settings.json").write_text(
+        json.dumps({"enabledPlugins": {"fotw@TrevorEdris/fellowship-of-the-workflows": True}})
+    )
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    assert (claude_dir / "personas").is_dir()
+    assert not (claude_dir / "output-styles").exists()
+
+
+def test_install_personas_settings_merge_with_preexisting_config(tmp_target: Path):
+    """A pre-existing persona.yaml means the user already chose a persona:
+    install activates its style + spinner verbs and records previous values."""
+    import json
+
+    claude_dir = tmp_target / ".claude"
+    claude_dir.mkdir()
+    (claude_dir / "persona.yaml").write_text("persona: rocky\nintensity: noticeable\n")
+    (claude_dir / "settings.local.json").write_text(json.dumps({"outputStyle": "Explanatory"}))
+
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+
+    settings = json.loads((claude_dir / "settings.local.json").read_text())
+    assert settings["outputStyle"] == "Persona: Rocky"
+    assert settings["spinnerVerbs"]["mode"] == "replace"
+    assert "Bumping fists" in settings["spinnerVerbs"]["verbs"]
+
+    config_text = (claude_dir / "persona.yaml").read_text()
+    assert "previous-output-style: Explanatory" in config_text
+
+
+def test_install_personas_no_settings_merge_on_fresh_config(tmp_target: Path):
+    """A persona.yaml created by the install itself must not activate
+    anything — no surprise voice/spinner for users who never chose a persona."""
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    settings_path = tmp_target / ".claude" / "settings.local.json"
+    if settings_path.exists():
+        import json
+
+        settings = json.loads(settings_path.read_text())
+        assert "outputStyle" not in settings
+        assert "spinnerVerbs" not in settings
+
+
+def test_uninstall_personas_restores_settings(tmp_target: Path):
+    """Uninstall removes persona artifacts and restores recorded settings."""
+    import json
+
+    from fotw.services.installer import uninstall_personas
+
+    claude_dir = tmp_target / ".claude"
+    claude_dir.mkdir()
+    (claude_dir / "persona.yaml").write_text("persona: rocky\nintensity: noticeable\n")
+    (claude_dir / "settings.local.json").write_text(json.dumps({"outputStyle": "Explanatory"}))
+
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    assert uninstall_personas(ctx)
+
+    assert not (claude_dir / "output-styles").exists()
+    assert not (claude_dir / "personas").exists()
+    settings = json.loads((claude_dir / "settings.local.json").read_text())
+    assert settings.get("outputStyle") == "Explanatory"
+    assert "spinnerVerbs" not in settings
+    # persona.yaml is user config — left in place
+    assert (claude_dir / "persona.yaml").is_file()
+
+
 # --- Install all ---
 
 
