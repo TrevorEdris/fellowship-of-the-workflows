@@ -2,6 +2,7 @@
 
 import typer
 
+from fotw.commands.generate import generate_cmd
 from fotw.commands.install import install_cmd
 from fotw.commands.list import list_cmd
 from fotw.commands.new import new_cmd
@@ -16,6 +17,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+app.command("generate")(generate_cmd)
 app.command("install")(install_cmd)
 app.command("list")(list_cmd)
 app.command("new")(new_cmd)

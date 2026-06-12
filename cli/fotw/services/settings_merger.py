@@ -89,3 +89,75 @@ def write_settings(settings: dict, path: Path) -> None:
     """Write settings dict as formatted JSON."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(settings, indent=2) + "\n")
+
+
+# ---------------------------------------------------------------------------
+# Persona settings (outputStyle + spinnerVerbs)
+#
+# These keys are a derived cache of .claude/persona.yaml, never authoritative.
+# The previous-value record lives in persona.yaml (fotw-owned), so a user's
+# own outputStyle choice (e.g. "Explanatory") survives persona on/off cycles.
+# ---------------------------------------------------------------------------
+
+PERSONA_STYLE_PREFIX = "Persona: "
+
+
+def _fotw_style_active(settings: dict) -> bool:
+    style = settings.get("outputStyle")
+    return isinstance(style, str) and style.startswith(PERSONA_STYLE_PREFIX)
+
+
+def merge_output_style(existing_settings: dict, style_name: str) -> dict:
+    """Set the outputStyle key, preserving all other settings."""
+    merged = dict(existing_settings)
+    merged["outputStyle"] = style_name
+    return merged
+
+
+def merge_spinner_verbs(existing_settings: dict, verbs: list[str]) -> dict:
+    """Set spinnerVerbs to replace-mode persona verbs, preserving other settings."""
+    merged = dict(existing_settings)
+    merged["spinnerVerbs"] = {"mode": "replace", "verbs": list(verbs)}
+    return merged
+
+
+def capture_previous(settings: dict, record: dict) -> dict:
+    """Record the user's pre-persona outputStyle/spinnerVerbs for later restore.
+
+    Records only when the current values are not fotw-written, and never
+    overwrites an existing record — so the original user state is preserved
+    across persona A -> persona B switches. Absent values are recorded as
+    None, meaning "delete the key on restore".
+    """
+    new_record = dict(record)
+    if "previous-output-style" in new_record or "previous-spinner-verbs" in new_record:
+        return new_record
+    if _fotw_style_active(settings):
+        # Already persona-managed with no prior record: nothing safe to record.
+        return new_record
+    new_record["previous-output-style"] = settings.get("outputStyle")
+    new_record["previous-spinner-verbs"] = settings.get("spinnerVerbs")
+    return new_record
+
+
+def remove_persona_keys(settings: dict, record: dict) -> dict:
+    """Deactivate persona settings, restoring recorded previous values.
+
+    Restores only while the current outputStyle is still fotw-written; if the
+    user manually changed styles after activation, their choice wins and
+    nothing is touched.
+    """
+    if not _fotw_style_active(settings):
+        return dict(settings)
+    result = dict(settings)
+    previous_style = record.get("previous-output-style")
+    if previous_style:
+        result["outputStyle"] = previous_style
+    else:
+        result.pop("outputStyle", None)
+    previous_verbs = record.get("previous-spinner-verbs")
+    if previous_verbs is not None:
+        result["spinnerVerbs"] = previous_verbs
+    else:
+        result.pop("spinnerVerbs", None)
+    return result
