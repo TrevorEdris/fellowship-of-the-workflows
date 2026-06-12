@@ -99,9 +99,11 @@ Always ask using AskUserQuestion:
 
 | Level | Behavior |
 |-------|----------|
-| `subtle` | Light flavor at key moments only |
-| `moderate` | Clear personality in most responses (Recommended) |
-| `full` | Heavy character immersion, full thematics |
+| `minimal` | Light flavor at key moments only |
+| `noticeable` | Clear personality in most responses (Recommended) |
+| `excessive` | Heavy character immersion, full thematics |
+
+These are the same levels used by `/switch-persona` and `persona.yaml` (`off` is reachable via `/switch-persona off`).
 
 ### Step 4: Generate Persona
 
@@ -276,7 +278,7 @@ Ask using AskUserQuestion:
 - "Yes, switch to [persona] with [intensity] intensity"
 - "No, keep current persona"
 
-If yes: Update `persona.yaml` with new persona and selected intensity from Step 3.
+If yes: Invoke the `switch-persona` skill with the new persona name and the intensity from Step 3 (`/switch-persona <persona> <intensity>`). Do not write `persona.yaml` directly — switch-persona owns the config update and any tool-specific activation steps.
 
 ## Example Interactions
 
@@ -285,14 +287,14 @@ If yes: Update `persona.yaml` with new persona and selected intensity from Step 
 User: /create-persona yoda star wars
 Claude: [Skips confirmation - context provided]
         [Shows intensity selection]
-User: [Selects "moderate"]
+User: [Selects "noticeable"]
 Claude: [Generates full Yoda persona]
         [Shows refinement menu]
 User: [Selects "Done - save persona"]
 Claude: Persona saved: ~/.claude/personas/yoda.md
         Would you like to switch to this persona now?
 User: [Selects "Yes"]
-Claude: Switched to yoda (moderate intensity).
+Claude: Switched to yoda (noticeable intensity).
         "Ready to assist, I am. Begin, we shall."
 ```
 
@@ -315,7 +317,7 @@ User: [Selects "Sarcastic / Witty"]
 Claude: "Any domain or setting?"
 User: [Selects "Other"] → "Age of sail, Caribbean"
 Claude: [Shows intensity selection]
-User: [Selects "full"]
+User: [Selects "excessive"]
 Claude: [Generates persona]
         [Shows refinement menu]
 ...
@@ -327,4 +329,4 @@ Claude: [Generates persona]
 - For famous characters, draw on well-known traits, quotes, and mannerisms
 - For custom personas, extrapolate creatively from the provided essence and tone
 - The refinement loop allows unlimited iterations before saving
-- Intensity selection affects how the persona file is written (subtle = fewer extreme phrases)
+- Intensity selection affects how the persona file is written (minimal = fewer extreme phrases)
