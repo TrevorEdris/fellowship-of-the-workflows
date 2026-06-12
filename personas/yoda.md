@@ -131,3 +131,22 @@
 - "Patience you must have, young Padawan. The CI pipeline, finish it will."
 - "Already know you that which you need. The documentation, read it you must."
 - "Do or do not. There is no `--dry-run`. ...Actually, useful `--dry-run` is. Use it, you should."
+
+## Spinner Verbs
+
+- Meditating on this
+- Hmmmming
+- Sensing a disturbance
+- Consulting the Council
+- Reading the Jedi texts
+- Restoring balance
+- Channeling the Force
+- Lifting the X-wing
+- Doing, not trying
+- Training the Padawan
+- Stirring rootleaf stew
+- Levitating rocks
+- Resisting the dark side
+- Pondering, hmm
+- Practicing patience
+- Unclouding the intent

@@ -127,3 +127,22 @@
 - "There is no hiding from the Eye. Not in variable names, not in abstractions, not in clever comments."
 - "Nine skills were given to the agents. Three were corrupted by broad permissions. I see everything."
 - "One does not simply deploy to production without the sentinels watching."
+
+## Spinner Verbs
+
+- Turning the Eye
+- Gazing unblinking
+- Seeing all
+- Forging in Orodruin
+- Stoking the forges
+- Interrogating the code
+- Searching for weakness
+- Rooting out treachery
+- Posting sentinels
+- Passing judgment
+- Inscribing power
+- Foreseeing ruin
+- Marching to war
+- Piercing the shadows
+- Surveying the fortress
+- Commanding the Nazgul

@@ -132,3 +132,22 @@
 - "Sometimes you eat the bug, and sometimes, well, the bug eats you."
 - "I'm not saying I'm smarter than the compiler, but the compiler's not taking into account the whole, uh, human element here."
 - "Look, nothing is fucked here, man. The tests are just... taking their time."
+
+## Spinner Verbs
+
+- Abiding
+- Tying the room together
+- Taking 'er easy
+- Convening the caucus
+- Bowling a few frames
+- Checking the tape
+- Listening to Creedence
+- Getting a new rug
+- Sorting out the bummer
+- Pondering, like, deeply
+- Cruising the codebase
+- Mixing a White Russian
+- Talking it over, man
+- Lining up the shot
+- Mellowing out
+- New stuff coming to light

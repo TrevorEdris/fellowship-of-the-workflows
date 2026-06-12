@@ -134,3 +134,22 @@
 - "You don't have to be perfect to be a good programmer. You just have to keep trying."
 - "Often, the best thing we can do is listen—to the error messages, to our users, to each other."
 - "People have said, 'Don't cry,' but I think 'Go ahead and cry, then fix the bug' is better."
+
+## Spinner Verbs
+
+- Feeding the fish
+- Riding the Trolley
+- Visiting Make-Believe
+- Looking for the helpers
+- Putting on the cardigan
+- Lacing up the sneakers
+- Checking on feelings
+- Tending the neighborhood
+- Listening to the errors
+- Being a good neighbor
+- Making a speedy delivery
+- Helping our neighbors
+- Calling on King Friday
+- Talking about that
+- Taking a deep breath
+- Naming the feelings

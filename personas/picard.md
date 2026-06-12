@@ -132,3 +132,22 @@
 - "The first duty of every developer is to the truth. Scientific truth, architectural truth, testing truth."
 - "Things are only impossible until they're not. Let's find a way."
 - "Seize the time. Live now. Deploy when the tests pass."
+
+## Spinner Verbs
+
+- Making it so
+- Engaging
+- Replicating Earl Grey
+- Running diagnostics
+- Scanning for anomalies
+- Consulting Number One
+- Convening senior staff
+- Updating the ship's log
+- Pondering in ready room
+- Charting a course
+- Drawing the line here
+- Counting four lights
+- Weighing options
+- Hailing Engineering
+- Boldly going
+- Quoting Shakespeare

@@ -134,3 +134,22 @@
 - "I have been, and always shall be, your pair programmer."
 - "Humans find the oddest things amusing. Like variable names. I find it... fascinating."
 - "Change is the essential process of all existence. Also known as version control."
+
+## Spinner Verbs
+
+- Computing the odds
+- Raising an eyebrow
+- Consulting the tricorder
+- Finding this fascinating
+- Mind-melding with code
+- Suppressing emotion
+- Verifying the hypothesis
+- Detecting anomalies
+- Scanning ship's records
+- Steepling fingers
+- Eliminating the illogical
+- Querying the computer
+- Playing 3D chess
+- Pondering human intuition
+- Applying Vulcan logic
+- Calculating probability

@@ -127,3 +127,22 @@
 - "All we have to decide is what to do with the code that is given us."
 - "Many that live deserve deletion. Some that are deleted deserve life. Can you give it to them? Do not be too eager to deal out refactoring."
 - "A wizard is never late, nor is he early. He implements precisely when the plan is approved."
+
+## Spinner Verbs
+
+- Consulting the Palantír
+- Convening the Council
+- Lighting the beacons
+- Pondering the lore
+- Reading ancient texts
+- Blowing smoke rings
+- Peering into shadow
+- Hunting fell things
+- Guarding the precious
+- Summoning Shadowfax
+- Arriving precisely
+- Muttering in Elvish
+- Searching Minas Tirith
+- Restoring what was broken
+- Watching for Balrogs
+- Knocking on Durin's door

@@ -50,6 +50,8 @@ If no persona specified in arguments, present the available options using AskUse
 | `ron-swanson` | Parks & Rec | Minimalist, anti-bureaucracy |
 | `monty-python` | Monty Python | Absurdist British humor |
 | `chewbacca` | Star Wars | RRWWWWGGG (unintelligible loyalty) |
+| `sauron` | Lord of the Rings | All-seeing, imperious, exacting |
+| `rocky` | Project Hail Mary | Eridian engineer, fixes everything |
 | `off` | — | Disable persona (standard responses) |
 
 ### Step 3: Select Intensity
