@@ -60,6 +60,7 @@ Filter via CLI: `./bin/fotw list`, `./bin/fotw list --tag aws`, `./bin/fotw list
 |-------|------|-------------|
 | `brainstorm` | `meta` | Structured design thinking: constraint capture, alternatives, trade-offs, ADR |
 | `create-persona` | `meta` | Create a new AI assistant persona interactively |
+| `make-no-mistakes` | `meta` | Maximum-rigor dev relay: researcher → planner → critic → implementer → review, gated (Claude Code only) |
 | `orchestrate` | `meta` | Coordinate multiple subagents to complete a large task |
 | `plan-validator` | `meta` | Validate implementation plans for completeness, specificity, and actionability |
 | `session-handoff` | `meta` | Create handoff documents for AI agent session transitions |
@@ -141,16 +142,20 @@ Specialist subagents auto-discovered in plugin mode.
 | `ascii-ui-mockup-generator` | Text-based UI wireframes and terminal UI mockups |
 | `chaos-engineer` | Adversarial failure mode and resilience review |
 | `codebase-pattern-finder` | Pattern detection and consistency checking at scale |
+| `critic` | Adversarial plan review — refutes the plan against actual code before any code is written |
 | `design-review` | Visual design review with Playwright live testing |
 | `desloppify` | AI slop detection and removal from code and docs |
 | `documentation-sync` | Post-implementation doc sync and staleness audit |
 | `e2e-test-reviewer` | E2E/integration test quality review |
 | `general-purpose` | Fallback catch-all for broad or multi-domain tasks |
+| `implementer` | Executes one approved plan phase test-first, with false-green check and three-fix limit |
 | `mermaid-diagram-specialist` | Architecture, sequence, flowchart, ERD diagrams |
 | `multi-agent-orchestrator` | Multi-agent task decomposition and delegation |
 | `performance-optimization` | N+1, caching, bundle size, algorithmic complexity |
+| `planner` | Turns a discovery doc into an atomic, test-first, traceable plan; runs critique revisions |
 | `pragmatic-code-review` | PR review using Pragmatic Quality framework |
 | `refactoring-specialist` | Code smell detection and safe refactoring execution |
+| `researcher` | Evidence-cited pre-plan investigation; writes a discovery doc for downstream agents |
 | `scope-analyzer` | Read-only codebase reverse engineering |
 | `security-review` | HIGH-CONFIDENCE vulnerability analysis |
 | `system-design-reviewer` | Distributed systems architecture review |

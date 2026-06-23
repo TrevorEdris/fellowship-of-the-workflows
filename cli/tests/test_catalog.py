@@ -1,14 +1,29 @@
 """Tests for catalog scanning."""
 
+import pytest
+
 from fotw.models.workflow import WorkflowType
 from fotw.services.catalog import (
+    VALID_MODELS,
     scan_agents,
     scan_all,
     scan_personas,
     scan_rules,
     scan_skills,
+    validate_agent,
     validate_all,
 )
+
+
+def _write_agent(dir_path, model=None):
+    """Write a minimal valid agent file, optionally with a model field."""
+    lines = ["---", "name: probe-agent", "description: A probe agent for tests."]
+    if model is not None:
+        lines.append(f"model: {model}")
+    lines += ["---", "", "Body."]
+    path = dir_path / "probe-agent.md"
+    path.write_text("\n".join(lines))
+    return path
 
 
 def test_scan_rules_returns_list():
@@ -63,6 +78,37 @@ def test_validate_all_no_errors():
     results = validate_all()
     errors = [r for r in results if not r.ok]
     assert len(errors) == 0, f"Validation errors: {errors}"
+
+
+def test_validate_agent_warns_on_unknown_model(tmp_path):
+    """An agent with a model outside the allowed set produces a warning."""
+    path = _write_agent(tmp_path, model="gpt-4")
+    result = validate_agent(path)
+    model_warnings = [w for w in result.warnings if "model" in w.lower()]
+    assert model_warnings, f"Expected a model warning, got: {result.warnings}"
+    assert "gpt-4" in model_warnings[0]
+
+
+@pytest.mark.parametrize("model", sorted(VALID_MODELS))
+def test_validate_agent_accepts_known_models(tmp_path, model):
+    """Every model in the allowed set passes without a model warning."""
+    path = _write_agent(tmp_path, model=model)
+    result = validate_agent(path)
+    model_warnings = [w for w in result.warnings if "model" in w.lower()]
+    assert not model_warnings, f"Unexpected model warning for '{model}': {model_warnings}"
+
+
+def test_validate_agent_missing_model_ok(tmp_path):
+    """An agent with no model field produces no model warning."""
+    path = _write_agent(tmp_path, model=None)
+    result = validate_agent(path)
+    model_warnings = [w for w in result.warnings if "model" in w.lower()]
+    assert not model_warnings, f"Unexpected model warning: {model_warnings}"
+
+
+def test_inherit_is_a_valid_model():
+    """`inherit` must be accepted so relay agents can defer to the session model."""
+    assert "inherit" in VALID_MODELS
 
 
 def test_workflow_type_from_str_singular():

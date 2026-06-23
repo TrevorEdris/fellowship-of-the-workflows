@@ -8,7 +8,12 @@ import frontmatter
 import pytest
 
 from fotw.models.workflow import VALID_TAGS
-from fotw.services.catalog import WORKFLOWS_DIR, _EXTRA_AGENT_DIRS, _EXTRA_RULE_DIRS
+from fotw.services.catalog import (
+    VALID_MODELS,
+    WORKFLOWS_DIR,
+    _EXTRA_AGENT_DIRS,
+    _EXTRA_RULE_DIRS,
+)
 
 # --- Allowed frontmatter keys per workflow type ---
 
@@ -30,7 +35,9 @@ SKILL_ALLOWED_KEYS = {
 
 AGENT_ALLOWED_KEYS = {"name", "description", "tools", "model", "color", "tags"}
 
-VALID_MODEL_VALUES = {"opus", "sonnet", "haiku", "default"}
+# Single source of truth: catalog.VALID_MODELS. Importing it keeps the CLI's
+# validate_agent() warning and this CI-enforcing test from drifting apart.
+VALID_MODEL_VALUES = VALID_MODELS
 
 
 def _parse(path):
@@ -233,7 +240,7 @@ def test_agents_required_frontmatter():
 
 
 def test_skill_model_valid_values():
-    """Skill 'model' field, if present, must be opus/sonnet/haiku."""
+    """Skill 'model' field, if present, must be in catalog.VALID_MODELS."""
     skills_dir = WORKFLOWS_DIR / "skills"
     if not skills_dir.is_dir():
         pytest.skip("No skills directory")
@@ -254,7 +261,7 @@ def test_skill_model_valid_values():
 
 
 def test_agent_model_valid_values():
-    """Agent 'model' field, if present, must be opus/sonnet/haiku."""
+    """Agent 'model' field, if present, must be in catalog.VALID_MODELS."""
     invalid = []
     for path in _iter_agent_files():
         meta = _parse(path)
