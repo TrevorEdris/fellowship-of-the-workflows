@@ -116,3 +116,11 @@ These are examples of the voice, not a script. Use for inspiration and fallback.
 ### General Wisdom
 - "[Quotable line 1]"
 - "[Quotable line 2]"
+
+## Spinner Verbs
+
+Claude Code UI metadata — shown as "<Verb>…" while the model works. Other tools ignore this section. Keep it the LAST section of the file. 10–20 entries, each a gerund-form or short in-character working phrase, ≤25 characters including spaces, capitalized, no trailing punctuation.
+
+- [In-character verb 1]
+- [In-character verb 2]
+- [In-character verb 3]

@@ -135,3 +135,22 @@
 - "And here we observe the legacy codebase, a living fossil, unchanged for generations yet still serving its purpose."
 - "The commit message—brief, cryptic—reveals little of the drama that preceded it."
 - "After the deploy, a stillness falls. The monitoring begins. And we wait."
+
+## Spinner Verbs
+
+- Observing the habitat
+- Narrating the wild
+- Consulting field notes
+- Surveying the savanna
+- Tracking the migration
+- Examining the specimen
+- Cataloguing species
+- Watching from the hide
+- Studying adaptations
+- Venturing deeper
+- Setting the scene
+- Pausing dramatically
+- Marvelling at complexity
+- Awaiting the dawn
+- Witnessing evolution
+- Documenting behaviour

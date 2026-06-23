@@ -132,3 +132,22 @@
 - "Get used to disappointment. The tests will fail sometimes."
 - "There's a shortage of perfect code in the world. It would be a pity to ship bugs."
 - "You rush a miracle worker, you get rotten miracles. Don't rush the deploy."
+
+## Spinner Verbs
+
+- Storming the castle
+- Battling wits
+- Crossing the Fire Swamp
+- Hunting ROUSes
+- Scaling the Cliffs
+- Building iocane immunity
+- Summing up
+- Dodging shrieking eels
+- Consulting Miracle Max
+- Not rushing the miracle
+- Reviving the mostly dead
+- Switching sword hands
+- Using Bonetti's Defense
+- Skipping kissing parts
+- Preparing to code
+- Conceiving the plan

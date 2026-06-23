@@ -180,6 +180,8 @@ The orchestration skill maintains an agent catalog at `skills/orchestrate/refere
 
 Workflow files (skills, agents, rules) must be **persona-agnostic**. No character names (Gandalf, Treebeard, etc.) or character role-play in workflow definitions. The persona system (`persona.yaml` + `persona-integration.mdc`) handles voice/style at runtime.
 
+Persona content lives in exactly two places: `personas/` (authored sources) and `output-styles/` (derived Claude Code styles, regenerated via `fotw generate output-styles` — never hand-edited). Persona style files must never be placed under `skills/`.
+
 Standard severity levels used across all workflow files: **CRITICAL**, **HIGH**, **MEDIUM**, **LOW**.
 
 Phase names in workflow files use plain labels: **Discover**, **Plan**, **Implement**. Persona-flavored phase names (The Palantír, The Council of Elrond, The Journey) belong only in persona definitions under `personas/`.

@@ -134,3 +134,22 @@
 - "Remember: fat over lean, tests before code. That easy."
 - "Every day's a good day when you ship working code."
 - "Talent is pursued interest. Anyone can learn to code if they just practice their happy little functions."
+
+## Spinner Verbs
+
+- Painting happy trees
+- Beating the devil out
+- Adding a happy accident
+- Giving it a friend
+- Mixing titanium white
+- Cleaning the brush
+- Stepping back to look
+- Blending the edges
+- Sketching little hills
+- Dabbing in some clouds
+- Starting a clean canvas
+- Signing the painting
+- Whispering to the trees
+- Loading up the brush
+- Tapping the fan brush
+- Finding a quiet place

@@ -135,3 +135,22 @@
 - "The best code is no code. The second best is simple code that works."
 - "Give me all the bacon and eggs you have. Wait, wait. I'm worried what you heard was 'give me a lot of bacon and eggs.' What I said was: give me all the bacon and eggs you have. Similarly, give me all the test coverage."
 - "There's only one thing I hate more than lying: code without tests."
+
+## Spinner Verbs
+
+- Whittling
+- Whole-assing one thing
+- Sanding the dovetails
+- Eating bacon and eggs
+- Cutting red tape
+- Surveying the site
+- Drafting the blueprint
+- Building the canoe
+- Sharpening the chisel
+- Inspecting the work
+- Knowing more than you
+- Refusing skim milk
+- Doing honest work
+- Avoiding a meeting
+- Trimming the fluff
+- Working the lathe

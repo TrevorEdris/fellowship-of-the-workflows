@@ -146,7 +146,15 @@ def test_dry_run_no_files(tmp_target: Path):
 # --- Personas ---
 
 
-# --- Personas ---
+@pytest.fixture
+def clean_home(tmp_path, monkeypatch) -> Path:
+    """Isolate the global ~/.claude lookup to an empty dir so the project-level
+    plugin-detection check is deterministic regardless of the test machine's
+    real global plugin config."""
+    home_claude = tmp_path / "home" / ".claude"
+    home_claude.mkdir(parents=True)
+    monkeypatch.setattr("fotw.services.installer._home_claude_dir", lambda: home_claude)
+    return home_claude
 
 
 def test_install_personas(tmp_target: Path):
@@ -157,6 +165,180 @@ def test_install_personas(tmp_target: Path):
     assert personas_dir.is_dir()
     config = tmp_target / ".claude" / "persona.yaml"
     assert config.is_file()
+
+
+def test_install_personas_styles_symlinked_for_claude_code(tmp_target: Path, clean_home: Path):
+    """claude-code persona installs also symlink the generated output styles."""
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    styles_dir = tmp_target / ".claude" / "output-styles"
+    styles = sorted(styles_dir.glob("persona-*.md"))
+    assert len(styles) >= 14
+    assert all(p.is_symlink() for p in styles)
+    assert (styles_dir / "persona-rocky.md").is_file()
+
+
+def test_install_personas_styles_skipped_when_plugin_enabled_globally(
+    tmp_target: Path, clean_home: Path
+):
+    """A globally enabled fotw plugin ships styles into every project, so a
+    project-level install must skip the project style copies too."""
+    import json
+
+    (clean_home / "settings.json").write_text(
+        json.dumps({"enabledPlugins": {"fotw@fellowship-of-the-workflows": True}})
+    )
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    assert (tmp_target / ".claude" / "personas").is_dir()
+    assert not (tmp_target / ".claude" / "output-styles").exists()
+
+
+def test_install_personas_dry_run_previews_styles_and_settings(
+    tmp_target: Path, clean_home: Path, capsys
+):
+    """Dry-run must disclose the claude-code style symlinks and settings writes,
+    and must not create any files."""
+    claude_dir = tmp_target / ".claude"
+    claude_dir.mkdir()
+    (claude_dir / "persona.yaml").write_text("persona: rocky\nintensity: noticeable\n")
+
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, dry_run=True, quiet=False)
+    assert install_personas(ctx)
+
+    out = capsys.readouterr().out
+    assert "output-styles" in out
+    assert "outputStyle" in out
+    # Dry run writes nothing
+    assert not (claude_dir / "output-styles").exists()
+    assert not (claude_dir / "settings.local.json").exists()
+
+
+def test_install_personas_no_styles_for_cursor(tmp_target: Path):
+    """Output styles are Claude Code-only; other tools get personas without styles."""
+    ctx = InstallContext(tool="cursor", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    assert (tmp_target / ".cursor" / "personas").is_dir()
+    assert not (tmp_target / ".cursor" / "output-styles").exists()
+    assert not (tmp_target / ".claude" / "output-styles").exists()
+
+
+def test_install_personas_styles_skipped_when_plugin_enabled(tmp_target: Path):
+    """When the fotw plugin is enabled, the plugin already ships the styles —
+    installing project copies would create duplicate picker entries."""
+    import json
+
+    claude_dir = tmp_target / ".claude"
+    claude_dir.mkdir()
+    (claude_dir / "settings.json").write_text(
+        json.dumps({"enabledPlugins": {"fotw@TrevorEdris/fellowship-of-the-workflows": True}})
+    )
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    assert (claude_dir / "personas").is_dir()
+    assert not (claude_dir / "output-styles").exists()
+
+
+def test_install_personas_settings_merge_with_preexisting_config(
+    tmp_target: Path, clean_home: Path
+):
+    """A pre-existing persona.yaml means the user already chose a persona:
+    install activates its style + spinner verbs and records previous values."""
+    import json
+
+    claude_dir = tmp_target / ".claude"
+    claude_dir.mkdir()
+    (claude_dir / "persona.yaml").write_text("persona: rocky\nintensity: noticeable\n")
+    (claude_dir / "settings.local.json").write_text(json.dumps({"outputStyle": "Explanatory"}))
+
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+
+    settings = json.loads((claude_dir / "settings.local.json").read_text())
+    assert settings["outputStyle"] == "Persona: Rocky"
+    assert settings["spinnerVerbs"]["mode"] == "replace"
+    assert "Bumping fists" in settings["spinnerVerbs"]["verbs"]
+
+    config_text = (claude_dir / "persona.yaml").read_text()
+    assert "previous-output-style: Explanatory" in config_text
+
+
+def test_install_personas_no_settings_merge_on_fresh_config(tmp_target: Path):
+    """A persona.yaml created by the install itself must not activate
+    anything — no surprise voice/spinner for users who never chose a persona."""
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    settings_path = tmp_target / ".claude" / "settings.local.json"
+    if settings_path.exists():
+        import json
+
+        settings = json.loads(settings_path.read_text())
+        assert "outputStyle" not in settings
+        assert "spinnerVerbs" not in settings
+
+
+def test_uninstall_personas_restores_settings(tmp_target: Path, clean_home: Path):
+    """Uninstall removes persona artifacts and restores recorded settings."""
+    import json
+
+    from fotw.services.installer import uninstall_personas
+
+    claude_dir = tmp_target / ".claude"
+    claude_dir.mkdir()
+    (claude_dir / "persona.yaml").write_text("persona: rocky\nintensity: noticeable\n")
+    (claude_dir / "settings.local.json").write_text(json.dumps({"outputStyle": "Explanatory"}))
+
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+    assert uninstall_personas(ctx)
+
+    assert not (claude_dir / "output-styles").exists()
+    assert not (claude_dir / "personas").exists()
+    settings = json.loads((claude_dir / "settings.local.json").read_text())
+    assert settings.get("outputStyle") == "Explanatory"
+    assert "spinnerVerbs" not in settings
+    # persona.yaml is user config — left in place
+    assert (claude_dir / "persona.yaml").is_file()
+
+
+def test_uninstall_personas_preserves_foreign_symlinks(tmp_target: Path, clean_home: Path):
+    """Uninstall must only remove fotw-installed symlinks (pointing into the
+    repo), never a user's own persona symlinked from elsewhere."""
+    from fotw.services.installer import uninstall_personas
+
+    ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(ctx)
+
+    # A user's own persona, symlinked from outside the fotw repo
+    foreign_source = tmp_target / "my-custom.md"
+    foreign_source.write_text("# Persona: Custom\n\n> Mine.\n")
+    foreign_link = tmp_target / ".claude" / "personas" / "my-custom.md"
+    foreign_link.symlink_to(foreign_source)
+
+    assert uninstall_personas(ctx)
+
+    # fotw symlinks gone, foreign one survives
+    assert foreign_link.is_symlink()
+    assert not (tmp_target / ".claude" / "personas" / "rocky.md").exists()
+
+
+def test_uninstall_personas_dry_run_changes_nothing(tmp_target: Path, clean_home: Path):
+    """Dry-run uninstall previews removals but leaves all artifacts in place."""
+    from fotw.services.installer import uninstall_personas
+
+    install_ctx = InstallContext(tool="claude-code", target_repo=tmp_target, force=True, quiet=True)
+    assert install_personas(install_ctx)
+    styles_dir = tmp_target / ".claude" / "output-styles"
+    assert styles_dir.is_dir()
+
+    dry_ctx = InstallContext(
+        tool="claude-code", target_repo=tmp_target, dry_run=True, quiet=True
+    )
+    assert uninstall_personas(dry_ctx)
+
+    # Nothing removed
+    assert (tmp_target / ".claude" / "personas" / "rocky.md").exists()
+    assert (styles_dir / "persona-rocky.md").exists()
 
 
 # --- Install all ---

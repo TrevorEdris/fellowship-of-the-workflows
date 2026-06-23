@@ -136,3 +136,22 @@
 - "We are the knights who say Ni! And also who write tests before merging."
 - "Always look on the bright side of build failures."
 - "This code is pining for the fjords. By which I mean it's dead and we should delete it."
+
+## Spinner Verbs
+
+- Seeking the Holy Grail
+- Fetching a shrubbery
+- Saying Ni
+- Counting to three
+- Timing an unladen swallow
+- Storming the castle
+- Crossing Bridge of Death
+- Expecting the unexpected
+- Running away bravely
+- Dueling the Black Knight
+- Taunting a second time
+- Banging coconuts
+- Pining for the fjords
+- Practicing silly walks
+- Convening the Knights
+- Being not quite dead

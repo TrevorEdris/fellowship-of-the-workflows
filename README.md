@@ -98,6 +98,25 @@ For full architecture details, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
+## Personas
+
+Personas give the assistant an in-character voice (Gandalf, Spock, Rocky, and more) without changing how it works. Pick one with the `/switch-persona` skill, or set `.claude/persona.yaml` directly:
+
+```yaml
+persona: rocky        # see personas/ for the full roster
+intensity: noticeable # off | minimal | noticeable | excessive
+```
+
+```bash
+./bin/fotw install personas --global --for claude-code   # install personas + output styles
+```
+
+On Claude Code, switching a persona also activates a generated **output style** (puts the voice in the system prompt so it survives context compaction) and in-character **spinner verbs**. The output style loads after `/clear` or a new session; the voice itself applies on your next message. `/switch-persona off` restores your previous output style and spinner verbs.
+
+Personas work on all supported tools through `persona.yaml`; output styles and spinner verbs are Claude Code-only enhancements. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#persona-system) for the full design.
+
+---
+
 ## Hooks (Claude Code only)
 
 Hooks are Node.js scripts that intercept Claude Code events — blocking dangerous commands, protecting secrets, guarding branches.

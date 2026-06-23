@@ -16,7 +16,27 @@ from fotw.services.catalog import (
     _EXTRA_RULE_DIRS,
     _EXTRA_SKILL_DIRS,
 )
-from fotw.services.settings_merger import merge_env, merge_hooks, read_settings, write_settings
+from fotw.services.output_styles import (
+    OUTPUT_STYLES_DIR,
+    OutputStyleError,
+    parse_spinner_verbs,
+    style_name,
+)
+from fotw.services.persona_config import (
+    RECORD_KEYS,
+    read_persona_config,
+    write_persona_config,
+)
+from fotw.services.settings_merger import (
+    capture_previous,
+    merge_env,
+    merge_hooks,
+    merge_output_style,
+    merge_spinner_verbs,
+    read_settings,
+    remove_persona_keys,
+    write_settings,
+)
 from fotw.ui.console import console, err_console
 from fotw.ui.diff import files_are_identical, show_diff
 
@@ -450,6 +470,8 @@ def install_personas(ctx: InstallContext) -> bool:
                     continue
                 console.print(f"    {pfile.name}")
             console.print(f"  {config_source} -> {config_target}")
+            if ctx.tool == "claude-code":
+                _preview_persona_styles(ctx, base, config_target)
         return True
 
     # Symlink persona files — each file is a direct symlink to the repo source.
@@ -471,13 +493,250 @@ def install_personas(ctx: InstallContext) -> bool:
         console.print(f"[green]\u2713[/green] Symlinked {count} personas to {persona_target}/")
 
     # Config
-    if not config_target.exists():
+    config_preexisted = config_target.exists()
+    if not config_preexisted:
         shutil.copy2(config_source, config_target)
         if not ctx.quiet:
             console.print(f"[green]\u2713[/green] Created default persona config: {config_target}")
     elif not ctx.quiet:
         console.print(f"[yellow]![/yellow] Persona config already exists: {config_target} (skipped)")
 
+    # Claude Code only: output styles + settings activation
+    if ctx.tool == "claude-code":
+        _install_persona_styles(ctx, base)
+        if config_preexisted:
+            # The user already chose a persona \u2014 activate its style + spinner
+            # verbs. A config created by this install never activates anything.
+            _activate_persona_settings(ctx, base, config_target)
+
+    return True
+
+
+def _home_claude_dir() -> Path:
+    """The global ~/.claude directory. Isolated as a seam for tests."""
+    return Path.home() / ".claude"
+
+
+def _fotw_plugin_enabled(base: Path) -> bool:
+    """Detect an enabled fotw plugin via enabledPlugins in settings files."""
+    for settings_file in ("settings.json", "settings.local.json"):
+        enabled = read_settings(base / settings_file).get("enabledPlugins", {})
+        if not isinstance(enabled, dict):
+            continue
+        for key, value in enabled.items():
+            if value and (key == "fotw" or key.startswith("fotw@")):
+                return True
+    return False
+
+
+def _fotw_plugin_active(ctx: InstallContext, base: Path) -> bool:
+    """True if the fotw plugin (which already ships the styles) is enabled for
+    this install. Checks the target config and, for project installs, the
+    global ~/.claude config \u2014 a globally enabled plugin ships styles into
+    every project."""
+    if _fotw_plugin_enabled(base):
+        return True
+    if not ctx.is_global:
+        home = _home_claude_dir()
+        if home != base:
+            return _fotw_plugin_enabled(home)
+    return False
+
+
+def _install_persona_styles(ctx: InstallContext, base: Path) -> None:
+    """Symlink generated persona output styles into <base>/output-styles/.
+
+    Skipped when the fotw plugin is enabled \u2014 the plugin already ships the
+    same styles, and duplicate names would collide in the /config picker.
+    """
+    if _fotw_plugin_active(ctx, base):
+        if not ctx.quiet:
+            console.print(
+                "[yellow]![/yellow] fotw plugin enabled \u2014 skipping output-style install (plugin ships them)"
+            )
+        return
+
+    styles_dir = base / "output-styles"
+    styles_dir.mkdir(parents=True, exist_ok=True)
+    count = 0
+    for style in sorted(OUTPUT_STYLES_DIR.glob("persona-*.md")):
+        link = styles_dir / style.name
+        if link.is_symlink() and link.resolve() == style.resolve():
+            count += 1
+            continue
+        if link.is_symlink() or link.is_file():
+            link.unlink()
+        _atomic_symlink(link, style)
+        count += 1
+    if not ctx.quiet:
+        console.print(f"[green]\u2713[/green] Symlinked {count} persona output styles to {styles_dir}/")
+
+
+def _persona_settings_path(ctx: InstallContext, base: Path) -> Path:
+    """Settings file persona keys live in: user settings for global installs,
+    project-local settings otherwise (matching the /config picker's target)."""
+    return base / ("settings.json" if ctx.is_global else "settings.local.json")
+
+
+def _backup_settings(path: Path) -> None:
+    if path.is_file():
+        shutil.copy2(path, path.with_suffix(path.suffix + ".bak"))
+
+
+def _ensure_gitignored(ctx: InstallContext, base: Path, settings_path: Path) -> None:
+    """Claude Code git-ignores settings.local.json only when it creates the
+    file itself; mirror that when fotw creates it."""
+    if ctx.is_global:
+        return
+    entry = f"{base.name}/{settings_path.name}"
+    gitignore = ctx.target_repo / ".gitignore"
+    existing = gitignore.read_text() if gitignore.is_file() else ""
+    if entry in existing.splitlines():
+        return
+    prefix = "" if not existing or existing.endswith("\n") else "\n"
+    with gitignore.open("a") as fh:
+        fh.write(f"{prefix}{entry}\n")
+
+
+def _activate_persona_settings(ctx: InstallContext, base: Path, config_target: Path) -> None:
+    """Write outputStyle + spinnerVerbs for the persona configured in
+    persona.yaml, recording the user's previous values for restore."""
+    config = read_persona_config(config_target)
+    persona = config.get("persona")
+    if not persona or persona == "off" or config.get("intensity") == "off":
+        return
+    persona_path = PERSONAS_DIR / f"{persona}.md"
+    if not persona_path.is_file():
+        if not ctx.quiet:
+            console.print(f"[yellow]![/yellow] Unknown persona in config: {persona} (settings unchanged)")
+        return
+    try:
+        name = style_name(persona_path)
+        verbs = parse_spinner_verbs(persona_path)
+    except OutputStyleError as exc:
+        if not ctx.quiet:
+            console.print(f"[yellow]![/yellow] {exc} (settings unchanged)")
+        return
+
+    settings_path = _persona_settings_path(ctx, base)
+    settings_existed = settings_path.is_file()
+    settings = read_settings(settings_path)
+
+    record = {key: config[key] for key in RECORD_KEYS if key in config}
+    record = capture_previous(settings, record)
+
+    settings = merge_output_style(settings, name)
+    settings = merge_spinner_verbs(settings, verbs)
+    _backup_settings(settings_path)
+    write_settings(settings, settings_path)
+    if not settings_existed:
+        _ensure_gitignored(ctx, base, settings_path)
+
+    config.update(record)
+    write_persona_config(config_target, config)
+    if not ctx.quiet:
+        console.print(
+            f"[green]\u2713[/green] Activated '{name}' + spinner verbs in {settings_path} (takes effect after /clear)"
+        )
+
+
+def _preview_persona_styles(ctx: InstallContext, base: Path, config_target: Path) -> None:
+    """Dry-run preview of the Claude Code-only output-style + settings writes."""
+    if _fotw_plugin_active(ctx, base):
+        console.print("  (fotw plugin enabled \u2014 output styles ship with the plugin, none installed)")
+        return
+
+    styles_dir = base / "output-styles"
+    style_count = len(list(OUTPUT_STYLES_DIR.glob("persona-*.md")))
+    console.print(f"  {OUTPUT_STYLES_DIR}/persona-*.md -> {styles_dir}/ ({style_count} styles)")
+
+    if not config_target.exists():
+        # A config created by the install never activates settings.
+        return
+    config = read_persona_config(config_target)
+    persona = config.get("persona")
+    if not persona or persona == "off" or config.get("intensity") == "off":
+        return
+    settings_path = _persona_settings_path(ctx, base)
+    console.print(
+        f"  Would set outputStyle + spinnerVerbs in {settings_path} for persona '{persona}'"
+    )
+    console.print(f"  Would record previous outputStyle/spinnerVerbs in {config_target}")
+    if not settings_path.is_file():
+        console.print(f"  Would add {base.name}/{settings_path.name} to .gitignore")
+
+
+def _owned_symlink(link: Path, owner_dir: Path) -> bool:
+    """True if link is a symlink resolving to a file inside owner_dir \u2014 i.e.
+    an fotw-installed link, not a user's own symlink that happens to live here."""
+    if not link.is_symlink():
+        return False
+    try:
+        return owner_dir.resolve() in link.resolve().parents
+    except OSError:
+        return False
+
+
+def uninstall_personas(ctx: InstallContext) -> bool:
+    """Remove fotw-installed persona/style symlinks; restore recorded settings.
+
+    persona.yaml stays in place (user config) minus the previous-value record.
+    Only symlinks pointing into the fotw repo are removed \u2014 a user's own
+    persona symlinked from elsewhere is left untouched.
+    """
+    base = _base_dir(ctx)
+
+    removals = [
+        (base / "personas", "*.md", PERSONAS_DIR),
+        (base / "output-styles", "persona-*.md", OUTPUT_STYLES_DIR),
+    ]
+
+    config_target = base / "persona.yaml"
+    config = read_persona_config(config_target)
+    record = {key: config[key] for key in RECORD_KEYS if key in config}
+    settings_path = _persona_settings_path(ctx, base)
+
+    if ctx.dry_run:
+        if not ctx.quiet:
+            console.print("[yellow][DRY RUN] Would remove:[/yellow]")
+            for directory, pattern, owner in removals:
+                if not directory.is_dir():
+                    continue
+                owned = [p for p in sorted(directory.glob(pattern)) if _owned_symlink(p, owner)]
+                for link in owned:
+                    console.print(f"    {link}")
+            if settings_path.is_file():
+                restored = remove_persona_keys(read_settings(settings_path), record)
+                if restored != read_settings(settings_path):
+                    console.print(f"  Would restore persona keys in {settings_path}")
+            console.print(f"  persona.yaml kept: {config_target}")
+        return True
+
+    for directory, pattern, owner in removals:
+        if not directory.is_dir():
+            continue
+        for link in sorted(directory.glob(pattern)):
+            if _owned_symlink(link, owner):
+                link.unlink()
+        try:
+            directory.rmdir()
+        except OSError:
+            pass  # non-fotw files remain; leave the directory
+
+    if settings_path.is_file():
+        settings = read_settings(settings_path)
+        restored = remove_persona_keys(settings, record)
+        if restored != settings:
+            _backup_settings(settings_path)
+            write_settings(restored, settings_path)
+
+    if config and record:
+        for key in RECORD_KEYS:
+            config.pop(key, None)
+        write_persona_config(config_target, config)
+
+    if not ctx.quiet:
+        console.print(f"[green]\u2713[/green] Personas uninstalled from {base}/ (persona.yaml kept)")
     return True
 
 
