@@ -1,4 +1,4 @@
-"""Non-destructive JSON deep-merge for Claude Code settings.json hooks."""
+"""Non-destructive JSON merging for Claude Code settings.json."""
 
 import json
 from pathlib import Path

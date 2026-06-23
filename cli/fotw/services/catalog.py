@@ -188,7 +188,7 @@ def scan_personas() -> list[Persona]:
 
 
 KNOWN_HOOK_EVENTS = {"PreToolUse", "PostToolUse", "PreCompact", "PostCompact",
-                      "UserPromptSubmit", "Stop", "SubagentStop"}
+                      "UserPromptSubmit", "SessionStart", "Stop", "SubagentStop"}
 
 _HOOK_META_RE = re.compile(r'@fotw-hook\s*(\{[^}]+\})')
 
