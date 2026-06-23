@@ -2,6 +2,8 @@
 
 > Auto-generated samples showing how each persona sounds during typical coding sessions.
 > Generated with `./bin/generate-samples` using intensity: **noticeable**
+>
+> **Snapshot** — regenerated on demand via `./bin/generate-samples` (requires the `claude` CLI), not on every persona change. Newer personas (e.g. `rocky`) and the `## Spinner Verbs` sections are not reflected here until the next regeneration.
 
 ---
 

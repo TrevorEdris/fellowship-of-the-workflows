@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-PERSONAS_DIR="$REPO_ROOT/starters/personas"
+PERSONAS_DIR="$REPO_ROOT/personas"
 DEFAULT_OUTPUT="$REPO_ROOT/docs/persona-samples.md"
 
 # Colors

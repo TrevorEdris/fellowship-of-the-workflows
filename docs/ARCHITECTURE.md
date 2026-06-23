@@ -73,6 +73,7 @@ This repo is structured as a [Claude Code plugin](https://code.claude.com/docs/e
 | Hooks | `hooks/hooks.json` | Auto — registered as event handlers |
 | Rules | `rules/*.mdc` | **Manual** — requires `fotw install` to copy to project |
 | Personas | `personas/*.md` | **Manual** — requires `fotw install personas` |
+| Output styles | `output-styles/persona-*.md` | Auto — shipped in the plugin, selectable in `/config` |
 | Language skills/rules | `languages/` | **Manual** — excluded from auto-discovery |
 | Platform skills/rules/agents | `platforms/` | **Manual** — excluded from auto-discovery |
 | Vendor skills/rules/agents | `vendors/` | **Manual** — excluded from auto-discovery |
@@ -98,3 +99,35 @@ The command executes at skill invocation, injecting results into the prompt.
 ## Phase-Scoped Context
 
 Skills can declare which reference files are relevant to each phase (discover, plan, implement) via a `context-manifest` in their SKILL.md frontmatter. Only the files needed for the current phase are loaded into context, keeping prompts tight.
+
+---
+
+## Persona System
+
+A persona gives the assistant an in-character voice (Gandalf, Spock, Rocky, …) without changing what it does. The system has three layers. `persona.yaml` is the single runtime source of truth; the other two layers are derived from it and exist only to make activation more reliable on Claude Code.
+
+| Layer | Mechanism | Tools | Role |
+|-------|-----------|-------|------|
+| 1. Rule + config | `rules/persona-integration.mdc` reads `.<tool>/persona.yaml` (`persona`, `intensity`) | All 9 | Source of truth; takes effect on the next message |
+| 2. Output style | `output-styles/persona-<name>.md`, activated via `outputStyle` in `.claude/settings.local.json` | Claude Code | Puts the voice in the **system prompt** with adherence reminders, so it survives context compaction |
+| 3. Spinner verbs | `spinnerVerbs` (replace mode) in `.claude/settings.local.json` | Claude Code | In-character spinner words ("Consulting the Palantír…", "Bumping fists…") |
+
+### Single source, derived artifacts
+
+Each persona is authored once as `personas/<name>.md`. The output style is **generated**, never hand-edited:
+
+```bash
+fotw generate output-styles    # personas/*.md -> output-styles/persona-*.md
+```
+
+Generation is pure positional extraction (no model calls), so CI verifies the committed `output-styles/` byte-for-byte against a fresh run. Editing a persona without regenerating fails the freshness test. Spinner verbs live in a `## Spinner Verbs` section at the end of each persona file; other tools ignore it.
+
+Generated styles are self-sufficient (they never reference `personas/` on disk, which plugin-only installs lack) and defer to `persona.yaml` for both identity and intensity — if the config names a different persona or `intensity: off`, the style stands down. Styles always set `keep-coding-instructions: true` (so engineering behavior is unchanged) and never set `force-for-plugin` (so the plugin never overrides the user's own style choice).
+
+### Activation and timing
+
+`fotw install personas --for claude-code` (or the `/switch-persona` skill) symlinks the styles into `.claude/output-styles/` and, when a persona is already configured, writes `outputStyle` + `spinnerVerbs` into `settings.local.json`. The user's prior values are recorded in `persona.yaml` (`previous-output-style`, `previous-spinner-verbs`) and restored on `/switch-persona off` or `fotw uninstall personas`.
+
+The rule layer changes voice on the next message; the output style and spinner verbs load when the system prompt is rebuilt — after `/clear` or a new session. The `persona-context.js` SessionStart hook injects the active persona and intensity deterministically so activation never depends on the model remembering to read the config.
+
+When the fotw plugin is enabled, project-level style installs are skipped — the plugin already ships the styles, and duplicate names would collide in the `/config` picker.
