@@ -56,11 +56,14 @@ def _run_update(tmp_target: Path, force: bool = False, dry_run: bool = False):
 
 def test_update_no_lock_exits(tmp_target: Path):
     """Update without a lock file exits with error."""
-    from click.exceptions import Exit as ClickExit
+    import typer
 
     from fotw.commands.update import update_cmd
 
-    with pytest.raises((SystemExit, ClickExit)):
+    # typer.Exit is the public exit exception; recent typer versions vendor
+    # click as typer._click, so catching standalone click.exceptions.Exit no
+    # longer matches what the command raises.
+    with pytest.raises((SystemExit, typer.Exit)):
         update_cmd(target_repo=str(tmp_target), force=False, dry_run=False)
 
 
