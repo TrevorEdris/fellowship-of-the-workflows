@@ -82,11 +82,11 @@ def test_validate_all_no_errors():
 
 def test_validate_agent_warns_on_unknown_model(tmp_path):
     """An agent with a model outside the allowed set produces a warning."""
-    path = _write_agent(tmp_path, model="fable")
+    path = _write_agent(tmp_path, model="gpt-4")
     result = validate_agent(path)
     model_warnings = [w for w in result.warnings if "model" in w.lower()]
     assert model_warnings, f"Expected a model warning, got: {result.warnings}"
-    assert "fable" in model_warnings[0]
+    assert "gpt-4" in model_warnings[0]
 
 
 @pytest.mark.parametrize("model", sorted(VALID_MODELS))

@@ -447,10 +447,13 @@ def validate_skill(skill_dir: Path) -> ValidationResult:
 
 
 # Allowed values for the `model` frontmatter field on agents and skills.
-# `inherit`/`default` defer to the session model; the three named tiers pin a
-# specific Claude capability level. Anything else (a typo, a retired model name)
-# is almost certainly a mistake — validation warns so it surfaces before install.
-VALID_MODELS = frozenset({"opus", "sonnet", "haiku", "inherit", "default"})
+# `inherit`/`default` defer to the session model; `opus`/`sonnet`/`haiku`/`fable`
+# pin a specific Claude capability tier. Full model IDs (e.g. claude-opus-4-8) are
+# valid in Claude Code but intentionally flagged here — this repo standardizes on
+# aliases, so a bare model ID is more likely a stale pin than a deliberate choice.
+# Anything outside this set is almost certainly a typo or retired name; validation
+# warns so it surfaces before install.
+VALID_MODELS = frozenset({"opus", "sonnet", "haiku", "fable", "inherit", "default"})
 
 
 # Wildcards that grant overly broad access
