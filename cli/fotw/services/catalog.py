@@ -446,6 +446,13 @@ def validate_skill(skill_dir: Path) -> ValidationResult:
     return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
 
 
+# Allowed values for the `model` frontmatter field on agents and skills.
+# `inherit`/`default` defer to the session model; the three named tiers pin a
+# specific Claude capability level. Anything else (a typo, a retired model name)
+# is almost certainly a mistake — validation warns so it surfaces before install.
+VALID_MODELS = frozenset({"opus", "sonnet", "haiku", "inherit", "default"})
+
+
 # Wildcards that grant overly broad access
 _OVERLY_BROAD_PATTERNS = [
     ("Bash(git:*)", "Use specific git subcommands: Bash(git diff:*), Bash(git log:*), etc."),
@@ -474,6 +481,12 @@ def validate_agent(path: Path) -> ValidationResult:
         warnings.append("Missing 'name' in frontmatter")
     if not meta.get("description"):
         warnings.append("Missing 'description' in frontmatter")
+
+    model = meta.get("model")
+    if model and model not in VALID_MODELS:
+        warnings.append(
+            f"Unknown model '{model}' (valid: {', '.join(sorted(VALID_MODELS))})"
+        )
 
     return ValidationResult(workflow_id=name, ok=len(errors) == 0, errors=errors, warnings=warnings)
 

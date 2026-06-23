@@ -67,7 +67,7 @@ description: {description}
 # agent: agent-name                # Uncomment to link a subagent
 # allowed-tools: Read, Grep        # Uncomment to restrict tools
 # --- Claude Code only (ignored by Cursor) ---
-# model: sonnet                    # opus, sonnet, or haiku
+# model: sonnet                    # opus, sonnet, haiku, inherit, or default
 # argument-hint: "[args]"          # CLI autocomplete hint
 # disable-model-invocation: false  # Set true to require /command
 ---
