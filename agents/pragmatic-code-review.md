@@ -35,6 +35,7 @@ Analyze code changes using this prioritized checklist:
 - Detect potential logical flaws, race conditions, or concurrency issues
 - Validate state management and data flow correctness
 - Ensure idempotency where appropriate
+- Build a boot model: for changed config flags and DI wiring, trace flag → eagerly-provisioned component → provider → required config block, per environment. A nullable config-backed factory pulled in at boot is a deploy-crash (Critical), not a nit.
 
 ### 3. Security (Non-Negotiable)
 - Verify all user input is validated, sanitized, and escaped (XSS, SQLi, command injection prevention)

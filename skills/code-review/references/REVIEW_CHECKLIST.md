@@ -67,6 +67,14 @@ Apply in priority order. Critical issues block merge.
 - [ ] API documentation updated for contract changes
 - [ ] README updated if needed
 
+## 8. Boot-Time Wiring & Configuration Completeness (Critical)
+
+- [ ] For any changed config flag that gates a code path (e.g. `feature.enabled: true`), trace it to the component it activates and confirm every config block that component's DI provider dereferences is present in that environment's config file
+- [ ] Configuration diffed across ALL environments (dev / staging / prod and any regional variants) — a key present in one environment and absent in another is a finding unless intentional
+- [ ] For DI-provisioned services, identified which beans are eagerly provisioned at startup (registered with the app lifecycle in run/bootstrap); their full transitive provider chain executes at boot, so a null or thrown exception there crashes the deploy, not a single request
+- [ ] Config-backed factory fields that are nullable (no non-null validation, no default) but dereferenced by an eagerly-provisioned provider (e.g. `config.getX().build()`) are flagged — a missing config block means `getX()` returns null and an NPE at boot; verify a non-null validation annotation OR a safe default
+- [ ] "Compiles and unit tests pass" treated as insufficient for boot-crash risk — these defects are environment-specific and only surface on deploy
+
 ## Ticket Alignment (when Jira available)
 
 - [ ] Implementation matches ticket title/summary
