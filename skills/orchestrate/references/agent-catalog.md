@@ -53,6 +53,10 @@ Maps each available FotW agent to its capabilities, domain, and routing guidance
 | `pulumi-specialist` | Infrastructure | Pulumi program authoring (TS/Python/Go/C#), CrossGuard policy packs, state backend config, Terraform/CFN migration, multi-cloud patterns | sonnet | Bash, Glob, Grep, Read, Write |
 | `chaos-engineer` | Adversarial review | Failure mode analysis, race conditions, security gaps, edge cases, pessimistic code review (read-only) | opus | Bash, Glob, Grep, LS, Read, WebFetch |
 | `team-lead` | Agent Teams coordination | Creates and manages Agent Teams, spawns teammates, coordinates via shared task list and messaging. Claude Code only. | opus | Bash, Glob, Grep, Read, Write, Task, SendMessage |
+| `researcher` | Investigation | Pre-plan deep research, evidence-cited discovery docs that downstream planning agents consume | inherit | Glob, Grep, Read, Write, Task + read-only git |
+| `planner` | Planning | Discovery → atomic, test-first, traceable implementation plan; critique-driven revision rounds | inherit | Glob, Grep, Read, Write + read-only git |
+| `critic` | Adversarial review | Refuting an implementation plan against actual code before any code is written (read-only on code) | inherit | Glob, Grep, Read, Write + read-only git |
+| `implementer` | Implementation | Executing one approved plan phase test-first with a false-green check and a three-fix limit | sonnet | Bash, Glob, Grep, Read, Write, Edit |
 
 ---
 
@@ -340,6 +344,30 @@ Best used as part of the `ui-creation-team` roster where a `ui-ux-designer` prov
 Audits GCP IAM policy for over-privilege, public access bindings (`allUsers`/`allAuthenticatedUsers`), user-managed service account key files, default compute SA abuse, and missing Workload Identity Federation for CI/CD workloads. Applies the FotW triage matrix ([CRITICAL] / [HIGH] / [MEDIUM] / [LOW]) and produces a prioritized findings report with exact remediation `gcloud` commands. Strictly read-only during audit phase — presents specific remediation commands and waits for confirmation before executing any changes. Use over `security-review` when the concern is GCP infrastructure IAM posture rather than application-level vulnerabilities; use over `aws-iam-auditor` for GCP workloads; use after `cloud-run-specialist` deployment to validate the resulting IAM configuration.
 
 Best invoked with `gcloud config list` output to establish the active project; running with broad IAM read permissions (`roles/iam.securityReviewer` or `roles/viewer`) enables the most complete audit. If permissions are restricted, the agent will note the gaps.
+
+---
+
+### `researcher`
+
+First stage of the `make-no-mistakes` development relay. Answers a fixed research frame against the actual codebase, every claim carrying `path:line` evidence, and writes a discovery document the planner and critic consume. May fan out via `Task` to `scope-analyzer` or `codebase-pattern-finder` for broad sweeps. Read-only on production code — writes only its discovery output. Uses `model: inherit` so it runs at the session's top tier. Use when a non-trivial change needs a rigorous, evidence-cited factual base before planning; prefer `scope-analyzer` for pure functional-scope reverse engineering with no downstream plan.
+
+---
+
+### `planner`
+
+Second stage of the relay. Turns a discovery document into a concrete, granular, test-first plan: atomic steps with exact file paths, RED-GREEN marking, a Considered & Rejected section, traceability, and a git strategy. Verifies every file claim by reading actual code. Also runs revision rounds, responding point-by-point to a critique. Writes only the plan document; uses `model: inherit`. Use when discovery is done and the work needs a plan an implementer can execute step by step.
+
+---
+
+### `critic`
+
+Adversarial gate between planning and implementation. Tries to refute the plan's substance — wrong approach, missed constraint, infeasible step, untested assumption, scope creep, missing verification — verifying the riskiest steps against actual code. Produces findings only (APPROVE/REVISE verdict with severity-rated findings); never edits the plan or the code. Uses `model: inherit`. Complements `/plan-validator` (mechanical structure scoring) by attacking correctness; complements `chaos-engineer` (which attacks built code) by attacking the plan before any code exists.
+
+---
+
+### `implementer`
+
+Build stage of the relay. Executes exactly one approved plan phase, test-first, with a false-green check (the test must drive the real integration path, not a fake), a three-fix limit before stopping, and strict scope discipline (touches only the files its steps name). Reports actual test output and any deviation. Pinned to `model: sonnet`. Spawn a fresh instance per plan phase to avoid context exhaustion; use `tdd-enforcer` instead when you need cycle-by-cycle TDD gating rather than phase execution.
 
 ---
 

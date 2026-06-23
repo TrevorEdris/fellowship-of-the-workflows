@@ -5,6 +5,23 @@ globs: "**/*"
 alwaysApply: true
 ---
 
+## Effort-Scaled Execution
+
+Scale how these phases run to the configured effort level:
+
+- **Low effort** — phases may be compressed with the user's consent (for example,
+  Question and Structure folded together). Keep the gates; shorten the ceremony.
+- **Medium / High effort** — run the full workflow inline in the conversation, one
+  agent doing every phase. This is the default.
+- **Ultracode effort** — if the `make-no-mistakes` skill is available (Claude Code
+  only), execute this workflow through it. That skill runs each phase with a
+  dedicated agent — a researcher for Research, a planner for Plan, an adversarial
+  critic on the plan, an implementer for each phase, and code reviewers — with the
+  same gates defined below. If the skill is not available, run the full workflow
+  inline as in High effort.
+
+The phase definitions, outputs, and gates below apply regardless of effort level.
+
 ## Workflow Phases
 
 ### 1) Question
