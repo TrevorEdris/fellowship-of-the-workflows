@@ -125,6 +125,16 @@ def test_parse_spinner_verbs_missing_section(tmp_path):
         parse_spinner_verbs(broken)
 
 
+def test_parse_spinner_verbs_too_few(tmp_path):
+    """Fewer than 10 verbs fails at the parser, not just in CI."""
+    verbs = "\n".join(f"- Verb{i}" for i in range(5))
+    broken = tmp_path / "few-verbs.md"
+    broken.write_text(f"# Persona: Few\n\n> Few verbs.\n\n## Spinner Verbs\n\n{verbs}\n")
+    with pytest.raises(OutputStyleError) as exc:
+        parse_spinner_verbs(broken)
+    assert "10-20" in str(exc.value)
+
+
 def test_rocky_persona_exists():
     """Rocky (Project Hail Mary) is part of the persona roster."""
     rocky = PERSONAS_DIR / "rocky.md"

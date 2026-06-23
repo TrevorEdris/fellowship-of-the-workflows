@@ -108,14 +108,28 @@ def style_filename(path: Path) -> str:
     return f"persona-{path.stem}.md"
 
 
+SPINNER_VERB_MIN = 10
+SPINNER_VERB_MAX = 20
+SPINNER_VERB_MAXLEN = 25
+
+
 def parse_spinner_verbs(path: Path) -> list[str]:
-    """Extract the '## Spinner Verbs' entries from a persona file."""
+    """Extract and validate the '## Spinner Verbs' entries from a persona file.
+
+    Enforces the same contract the tests assert (10-20 entries, each <= 25
+    chars) at the parser, so a malformed persona fails at install time rather
+    than only in CI.
+    """
     lines = _read_lines(path)
     verbs = _required_bullets(lines, "## Spinner Verbs", path)
+    if not SPINNER_VERB_MIN <= len(verbs) <= SPINNER_VERB_MAX:
+        raise OutputStyleError(
+            f"{path.name}: expected {SPINNER_VERB_MIN}-{SPINNER_VERB_MAX} spinner verbs, found {len(verbs)}"
+        )
     for verb in verbs:
-        if len(verb) > 25:
+        if len(verb) > SPINNER_VERB_MAXLEN:
             raise OutputStyleError(
-                f"{path.name}: spinner verb over 25 chars: '{verb}' ({len(verb)})"
+                f"{path.name}: spinner verb over {SPINNER_VERB_MAXLEN} chars: '{verb}' ({len(verb)})"
             )
     return verbs
 

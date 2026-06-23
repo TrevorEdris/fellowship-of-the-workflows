@@ -86,9 +86,15 @@ def merge_env(existing_settings: dict, env_vars: dict[str, str]) -> dict:
 
 
 def write_settings(settings: dict, path: Path) -> None:
-    """Write settings dict as formatted JSON."""
+    """Write settings dict as formatted JSON.
+
+    Writes to a temp file then atomically replaces the target, so an
+    interrupted write cannot leave settings.json half-written and corrupt.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(settings, indent=2) + "\n")
+    tmp = path.with_suffix(path.suffix + ".__fotw_tmp")
+    tmp.write_text(json.dumps(settings, indent=2) + "\n")
+    tmp.replace(path)
 
 
 # ---------------------------------------------------------------------------

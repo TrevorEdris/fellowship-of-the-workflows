@@ -14,6 +14,7 @@ def uninstall_cmd(
     target_repo: str = typer.Argument(None, help="Target repository path"),
     for_tool: str = typer.Option("claude-code", "--for", help="Tool target"),
     global_install: bool = typer.Option(False, "--global", help="Uninstall from the global config dir"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview what would be removed without changing anything"),
 ) -> None:
     """Remove installed artifacts (currently: personas and their output styles/settings)."""
     if workflow_id != "personas":
@@ -36,7 +37,8 @@ def uninstall_cmd(
         raise typer.Exit(1)
 
     ctx = InstallContext(
-        tool=for_tool, target_repo=resolved_target, is_global=global_install
+        tool=for_tool, target_repo=resolved_target, is_global=global_install,
+        dry_run=dry_run,
     )
     if not uninstall_personas(ctx):
         raise typer.Exit(1)

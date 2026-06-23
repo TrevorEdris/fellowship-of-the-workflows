@@ -18,22 +18,37 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 // Minimal flat-YAML value extraction — persona.yaml is two scalar keys, and
-// hooks stay dependency-free, so a full YAML parser is not warranted.
+// hooks stay dependency-free, so a full YAML parser is not warranted. A '#'
+// inside a value is treated as an inline comment (persona slugs/intensities
+// never contain '#'), so quoted values containing '#' are unsupported.
 function yamlValue(text, key) {
   const match = text.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
   if (!match) return null;
   return match[1].split('#')[0].trim().replace(/^["']|["']$/g, '');
 }
 
-function personaContext(projectDir = process.cwd()) {
-  const configPath = path.join(projectDir, '.claude', 'persona.yaml');
+function personaContext(projectDir = process.cwd(), homeDir = os.homedir()) {
+  // Prefer the project config; fall back to the global ~/.claude config so
+  // global persona installs (which write ~/.claude/persona.yaml) still get
+  // deterministic injection.
+  const candidates = [
+    path.join(projectDir, '.claude', 'persona.yaml'),
+    path.join(homeDir, '.claude', 'persona.yaml'),
+  ];
   let text;
-  try {
-    text = fs.readFileSync(configPath, 'utf8');
-  } catch {
+  for (const configPath of candidates) {
+    try {
+      text = fs.readFileSync(configPath, 'utf8');
+      break;
+    } catch {
+      // try next candidate
+    }
+  }
+  if (text === undefined) {
     return { inject: false, message: '' };
   }
 
