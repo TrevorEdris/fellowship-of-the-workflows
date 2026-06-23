@@ -45,6 +45,12 @@ DIFF CONTENT:
 !`gh pr diff 2>/dev/null || git diff --merge-base origin/HEAD`
 ```
 
+CONFIG FILES (all environments):
+
+```
+!`for f in $(git ls-files '**/config*.yaml' '**/config*.yml' 2>/dev/null); do echo "=== $f ==="; cat "$f"; done`
+```
+
 ## Jira Integration
 
 If Atlassian MCP is connected, fetch linked ticket details and validate implementation against acceptance criteria.
