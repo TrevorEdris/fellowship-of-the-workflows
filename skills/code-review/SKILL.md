@@ -59,6 +59,10 @@ Use the pragmatic-code-review agent to review the complete diff above. Your fina
 scripts/pr-context.sh 123              # Fetch PR metadata via gh
 scripts/extract-ticket-ids.sh 123      # Extract Jira IDs from PR
 python scripts/diff-analysis.py --staged  # Analyze diff patterns
+
+# Non-interactive cloud review (CI-friendly, no session required):
+claude ultrareview                     # Review current branch changes
+claude ultrareview path/to/file.ts     # Review a specific file
 ```
 
 ## References
